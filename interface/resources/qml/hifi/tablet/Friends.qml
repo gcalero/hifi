@@ -11,11 +11,19 @@
 
 import QtQuick 2.5
 import QtQuick.Controls 1.4
+import QtQuick.Controls.Styles 1.4
 import QtQuick.Layouts 1.3
 import Qt.labs.settings 1.0
+import "../../styles-uit"
+import "../../controls-uit" as HifiControlsUit
+import "../../controls" as HifiControls
 
 ColumnLayout {
     objectName: "ColumnLayout"
+    property var nearbyUserModelData: [];
+
+    HifiConstants { id: hifi; }
+
     z:100
     spacing: 1
     Settings {
@@ -25,17 +33,18 @@ ColumnLayout {
     }
 
     ListModel {
-        id: friendsNearbyModel
+        id: nearbyModel
     }
 
     ListModel {
-        id: friendsOnlineModel
+        id: connectionsModel
     }
 
     Component {
-        id: friendDelegate
+        id: userDelegate
         Row {
             spacing: 1
+            objectName: sessionId
             Text { 
                 text: displayName + "(" + distance + ")"
                 font.family: "Helvetica"
@@ -50,6 +59,44 @@ ColumnLayout {
         }
     }
 
+    Component {
+        id: connectionDelegate
+        Row {
+            spacing: 1
+            Text { 
+                text: userName + "(" + connection + ")"
+                font.family: "Helvetica"
+                font.pointSize: 8
+                color: "#0f10fb"
+                MouseArea {
+                    anchors.fill: parent
+                    // onClicked: console.log("friend row clicked")
+                }
+            }
+
+        }
+    }
+
+    // Refresh button
+    Rectangle {
+        id: reloadNearbyContainer
+//        anchors.verticalCenter: parent.verticalCenter;
+        anchors.right: parent.right;
+        anchors.rightMargin: 15;
+        height: 12
+        width: height;
+        HifiControlsUit.GlyphButton {
+            id: reloadNearby;
+            width: reloadNearby.height;
+            glyph: hifi.glyphs.reload;
+            onClicked: {
+                refreshClicked();
+            }
+        }
+    }
+
+
+
     Text {
         objectName: "friendshereLabel"
         text: "Friends here"
@@ -62,8 +109,8 @@ ColumnLayout {
        ListView {
             id: friendsHereList
             height: 200
-            model: friendsNearbyModel
-            delegate: friendDelegate
+            model: nearbyModel
+            delegate: userDelegate
             spacing: 1
             MouseArea {
                 anchors.fill: parent
@@ -73,19 +120,19 @@ ColumnLayout {
     }
 
     Text {
-        objectName: "friendsonlineLabel"
-        text: "Friends online"
+        objectName: "connectionsLabel"
+        text: "Connections online"
         color: "green"
         font.family: "Helvetica"
         font.pointSize: 8
     }
     ScrollView {
         objectName: "scrollview-2"
-        id: friendsOnline
+        id: connectionsOnline
         ListView {
             height: 200
-            model: friendsOnlineModel
-            delegate: friendDelegate
+            model: connectionsModel
+            delegate: connectionDelegate
             spacing: 1
             MouseArea {
                 anchors.fill: parent
@@ -95,43 +142,97 @@ ColumnLayout {
 
     }
 
-    function loadNearbyFriend(f) {
-        friendsNearbyModel.append (f);
+    function loadNearbyUser(f, index) {
+        if (typeof index !== 'undefined') {
+            console.log("[FRIENDS] inser nearby user at index " + index);
+            nearbyModel.insert(index, f);
+            nearbyUserModelData.splice(index, 0, f);
+        } else {
+            console.log("[FRIENDS] append nearby user");
+            nearbyModel.append (f);
+            nearbyUserModelData.push(f);
+        }
     }
 
-    function loadOnlineFriend(f) {
-        friendsOnlineModel.append (f);
+    function removeNearbyUserById(userId) {
+        var i=0;
+        console.log("[FRIENDS] removeNearbyUserById search " + userId + " among " + nearbyModel.count);
+        for(;i<nearbyUserModelData.length;i++) {
+            console.log("[FRIENDS] i: " + i + " comparing " + nearbyUserModelData[i] + " sessionId: " + nearbyUserModelData[i].sessionId);
+            if (nearbyUserModelData[i].sessionId == userId) {
+                console.log("[FRIENDS] match at index " + i);
+                nearbyModel.remove(i);
+                return;
+            }
+        }
     }
 
-    function loadFriends(data) {
+    function loadConnection(f) {
+        connectionsModel.append (f);
+    }
+
+    function loadUsers(data) {
+        nearbyModel.clear();
+        nearbyUserModelData = [];
+
         if (data && data.nearby) {
-            data.nearby.forEach(function (friend) {
-                loadNearbyFriend(friend);
+            console.log("[FRIENDS] some nearby users");
+            data.nearby.forEach(function (user) {
+                loadNearbyUser(user);
             });
         }
-        if (data && data.online) {
-            data.online.forEach(function (friend) {
-                loadOnlineFriend(friend);
+    }
+
+    function loadConnections(data) {
+        connectionsModel.clear();
+        if (data && data.connections) {
+            //console.log("[FRIENDS] QML has received connections to show ("+data.connections.length+")");
+            data.connections.forEach(function (connection) {
+                //console.log("[FRIENDS] a connection");
+                loadConnection(connection);
             });        
         }
     }
 
     function fromScript(message) {
+        console.log("[FRIENDS] message from script " + message.method);
         switch (message.method) {
-        case "friends":
+        case "users":
+            console.log("[FRIENDS] received users:");
             var data = message.params;
-            loadFriends(data);
+            loadUsers(data);
+            break;
+        case "addUser":
+            var data = message.params;
+            loadNearbyUser(data.user, 0);
+            break;
+        case "removeUser":
+            var data = message.params;
+            console.log("[FRIENDS] remove user " + data.userId);
+            removeNearbyUserById(data.userId);
+            break;
+        case "connections":
+            var data = message.params;
+            console.log("[FRIENDS] QML has received connections to show ");
+            loadConnections(data);
+
             break;
         default:
             console.log('Unrecognized message:', JSON.stringify(message));
         }
-
     }
+
     signal sendToScript(var message);
+
+    function refreshClicked() {
+        sendToScript({method: 'refreshNearby', params: {}});
+        sendToScript({method: 'refreshConnections', params: {}});
+    }
 
     // called after onLoaded
     function init() {
-        sendToScript({method: 'loadFriends', params: {}});
+        sendToScript({method: 'refreshNearby', params: {}});
+        sendToScript({method: 'refreshConnections', params: {}});
     }
 
 }
