@@ -80,7 +80,6 @@ ColumnLayout {
     // Refresh button
     Rectangle {
         id: reloadNearbyContainer
-//        anchors.verticalCenter: parent.verticalCenter;
         anchors.right: parent.right;
         anchors.rightMargin: 15;
         height: 12
@@ -144,11 +143,9 @@ ColumnLayout {
 
     function loadNearbyUser(f, index) {
         if (typeof index !== 'undefined') {
-            console.log("[FRIENDS] inser nearby user at index " + index);
             nearbyModel.insert(index, f);
             nearbyUserModelData.splice(index, 0, f);
         } else {
-            console.log("[FRIENDS] append nearby user");
             nearbyModel.append (f);
             nearbyUserModelData.push(f);
         }
@@ -156,11 +153,11 @@ ColumnLayout {
 
     function removeNearbyUserById(userId) {
         var i=0;
-        console.log("[FRIENDS] removeNearbyUserById search " + userId + " among " + nearbyModel.count);
+        //console.log("[FRIENDS] removeNearbyUserById search " + userId + " among " + nearbyModel.count);
         for(;i<nearbyUserModelData.length;i++) {
-            console.log("[FRIENDS] i: " + i + " comparing " + nearbyUserModelData[i] + " sessionId: " + nearbyUserModelData[i].sessionId);
+            //console.log("[FRIENDS] i: " + i + " comparing " + nearbyUserModelData[i] + " sessionId: " + nearbyUserModelData[i].sessionId);
             if (nearbyUserModelData[i].sessionId == userId) {
-                console.log("[FRIENDS] match at index " + i);
+                //console.log("[FRIENDS] match at index " + i);
                 nearbyModel.remove(i);
                 return;
             }
@@ -176,7 +173,7 @@ ColumnLayout {
         nearbyUserModelData = [];
 
         if (data && data.nearby) {
-            console.log("[FRIENDS] some nearby users");
+            //console.log("[FRIENDS] some nearby users");
             data.nearby.forEach(function (user) {
                 loadNearbyUser(user);
             });
@@ -195,10 +192,9 @@ ColumnLayout {
     }
 
     function fromScript(message) {
-        console.log("[FRIENDS] message from script " + message.method);
+        //console.log("[FRIENDS] message from script " + message.method);
         switch (message.method) {
         case "users":
-            console.log("[FRIENDS] received users:");
             var data = message.params;
             loadUsers(data);
             break;
@@ -208,17 +204,14 @@ ColumnLayout {
             break;
         case "removeUser":
             var data = message.params;
-            console.log("[FRIENDS] remove user " + data.userId);
             removeNearbyUserById(data.userId);
             break;
         case "connections":
             var data = message.params;
-            console.log("[FRIENDS] QML has received connections to show ");
             loadConnections(data);
-
             break;
         default:
-            console.log('Unrecognized message:', JSON.stringify(message));
+            console.log('[FRIENDS] Unrecognized message:', JSON.stringify(message));
         }
     }
 
@@ -231,6 +224,20 @@ ColumnLayout {
 
     // called after onLoaded
     function init() {
+        var i=0;
+        var ancestor = parent;
+        var firstAncestor, secondAncestor, thirdAncestor;
+        while (ancestor) {
+            thirdAncestor = secondAncestor;
+            secondAncestor = firstAncestor;
+            firstAncestor = ancestor;
+            ancestor = ancestor.parent;
+            i++;
+        }
+        // 1st: QQuickRootItem > 2nd: Android(desktop) > 3rd: WindowRoot("tabletRoot")
+        thirdAncestor.x=secondAncestor.width - thirdAncestor.width;
+        thirdAncestor.y=0;
+        thirdAncestor.height = secondAncestor.height;
         sendToScript({method: 'refreshNearby', params: {}});
         sendToScript({method: 'refreshConnections', params: {}});
     }

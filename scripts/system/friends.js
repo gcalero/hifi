@@ -11,13 +11,18 @@
 //
 
 
-print("[friends.js]");
+//print("[friends.js]");
 
 (function() {
     var tablet = null;
     var button;
     var friendsQmlSource = "Friends.qml";
     var request = Script.require('request').request;
+
+var FRIENDS_ICONS = {
+    icon: "icons/tablet-icons/users-i.svg",
+    activeIcon: "icons/tablet-icons/users-a.svg"
+};
 
 function fromQml(message) { // messages are {method, params}, like json-rpc. See also sendToQml.
     var data;
@@ -34,21 +39,15 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
 }
 
 function avatarAdded(QUuid) {
-    print("[FRIENDS] avatar added " + QUuid + " at " + JSON.stringify(AvatarList.getAvatar(QUuid).position));
+    //print("[FRIENDS] avatar added " + QUuid + " at " + JSON.stringify(AvatarList.getAvatar(QUuid).position));
     var avatarDatum = getUserDatumFromAvatar(QUuid);
     if (!avatarDatum) return;
     sendToQml({ method: 'addUser', params: { user: avatarDatum} });
 }
 
 function avatarRemoved(QUuid) {
-    print("[FRIENDS] avatar removed " + QUuid);
+    //print("[FRIENDS] avatar removed " + QUuid);
     sendToQml({ method: 'removeUser', params: { userId: QUuid}});
-}
-
-function avatarSessionChanged(QUuid) {
-    var displayName = AvatarList.getAvatar(QUuid).sessionDisplayName;
-    print ("[FRIENDS] session " + QUuid + " displayName " + displayName);
-    //sendToQml({ method: 'palIsStale', params: [avatarID, 'avatarSessionChanged'] });
 }
 
 function sendToQml(message) {
@@ -78,15 +77,27 @@ function touchUpdate(event) {
 //    print("[friends.js] touchUpdate");
 }
 
+var onFriendsOnScreen = false;
+var shouldActivateButton = false;
+
+function onScreenChanged(type, url) {
+    // for toolbar mode: change button to active when window is first openend, false otherwise.
+    button.editProperties({isActive: shouldActivateButton});
+    shouldActivateButton = false;
+}
+
+
 function onClicked() {
     if (tablet) {
-        tablet.loadQMLSource(friendsQmlSource);
+        if (onFriendsOnScreen) {
+            shouldActivateButton = true;
+            tablet.loadQMLSource(friendsQmlSource);
+            Account.checkAndSignalForAccessToken();
+        } else {
+            tablet.gotoHomeScreen();
+        }
+        onFriendsOnScreen = !onFriendsOnScreen;
     }
-    print("[FRIENDS] username " + Account.username + " isLoggedIn " + Account.isLoggedIn());
-    if (!Account.isLoggedIn()) {
-        print("[FRIENDS] Attemping to log-in ");
-        Account.checkAndSignalForAccessToken();
-    }  
 }
 
 function getUserDatumFromAvatar(avatarId) {
@@ -95,7 +106,6 @@ function getUserDatumFromAvatar(avatarId) {
 
         if (!name) {
             AvatarManager.getAvatar(avatarId);
-            print("[FRIENDS] discarding avatar because of no name" + avatarId);
             return;
         }
 
@@ -108,7 +118,6 @@ function getUserDatumFromAvatar(avatarId) {
             distance: Vec3.distance(avatar.position, myPosition)
         };
     
-        print("[FRIENDS requestUsernameFromID" + Users.requestUsernameFromID(avatarId));
         if (avatarId) {
             //addAvatarNode(id); // No overlay for ourselves
             //avatarsOfInterest[id] = true;
@@ -121,23 +130,17 @@ function getUserDatumFromAvatar(avatarId) {
 
 function refreshNearbyUsers() {
     var nearbyFriends = [], avatars = AvatarList.getAvatarIdentifiers();
-    print("[FRIENDS] refreshNearbyUsers avatars: " + avatars.length);
     avatars.forEach(function (id) {
-        print("[FRIENDS] refreshNearbyUsers id : " + id);
         var avatarDatum = getUserDatumFromAvatar(id);
-        print("[FRIENDS] refreshNearbyUsers datum : " + avatarDatum);
         if (!avatarDatum) return;
         var distance = Settings.getValue('friends/nearDistance');
-        print("[FRIENDS] refreshNearbyUsers distance " + distance);
         if (avatarDatum.distance && avatarDatum.distance <= distance) {
-            print("[FRIENDS] push push push" + distance);
             nearbyFriends.push(avatarDatum);
         }
 
     });
 
     sendToQml({ method: 'users', params: { nearby: nearbyFriends} });
-
 }
 
 
@@ -248,15 +251,16 @@ function refreshConnections(specificUsername, domain) { // Update all the userna
     }
 }
 
-
-
 button = tablet.addButton({
-    icon: "icons/tablet-icons/users-i.svg", // FIXME - use correct icon
+    icon: FRIENDS_ICONS.icon, // FIXME - use correct icon
+    activeIcon: FRIENDS_ICONS.activeIcon,
     text: "Friends",
     sortOrder: 2
 });
 
+tablet.screenChanged.connect(onScreenChanged);
 button.clicked.connect(onClicked);
+
 //Controller.keyPressEvent.connect(keyPressEvent);
 Controller.mousePressEvent.connect(mousePressOrTouchEnd);
 Controller.touchEndEvent.connect(touchEnd);
@@ -264,12 +268,10 @@ Controller.touchEndEvent.connect(touchEnd);
 Controller.touchUpdateEvent.connect(touchUpdate);
 AvatarList.avatarAddedEvent.connect(avatarAdded);
 AvatarList.avatarRemovedEvent.connect(avatarRemoved);
-AvatarList.avatarSessionChangedEvent.connect(avatarSessionChanged);
-//AvatarList.objectNameChanged(avatarObjectNameChanged)
-//AvatarList.sessionUUIDChanged(QUuid,QUuid)
 
 
 Script.scriptEnding.connect(function () {
+    tablet.screenChanged.disconnect(onScreenChanged);
     button.clicked.disconnect(onClicked);
     if (tablet) {
         tablet.removeButton(button);
@@ -280,7 +282,6 @@ Script.scriptEnding.connect(function () {
 
     AvatarList.avatarAddedEvent.disconnect(avatarAdded);
     AvatarList.avatarRemovedEvent.disconnect(avatarRemoved);
-    AvatarList.avatarSessionChangedEvent.disconnect(avatarSessionChanged);
 });
 
 }()); // END LOCAL_SCOPE
