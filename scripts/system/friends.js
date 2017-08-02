@@ -112,12 +112,20 @@ function getUserDatumFromAvatar(avatarId) {
         var myPosition = Camera.position;
 
         var avatarDatum = {
+            profileUrl: '',
             displayName: name,
+            userName: '',
+            connection: '',
             sessionId: avatarId || '',
+            isPresent: true,
+            isReplicated: avatar.isReplicated,
             position: avatar.position,
             distance: Vec3.distance(avatar.position, myPosition)
         };
-    
+
+        // Everyone needs to see admin status. Username and fingerprint returns default constructor output if the requesting user isn't an admin.
+        Users.requestUsernameFromID(avatarId);
+
         if (avatarId) {
             //addAvatarNode(id); // No overlay for ourselves
             //avatarsOfInterest[id] = true;
@@ -129,18 +137,17 @@ function getUserDatumFromAvatar(avatarId) {
 }
 
 function refreshNearbyUsers() {
-    var nearbyFriends = [], avatars = AvatarList.getAvatarIdentifiers();
+    var data = [], avatars = AvatarList.getAvatarIdentifiers();
     avatars.forEach(function (id) {
         var avatarDatum = getUserDatumFromAvatar(id);
         if (!avatarDatum) return;
         var distance = Settings.getValue('friends/nearDistance');
         if (avatarDatum.distance && avatarDatum.distance <= distance) {
-            nearbyFriends.push(avatarDatum);
+            data.push(avatarDatum);
         }
 
     });
-
-    sendToQml({ method: 'users', params: { nearby: nearbyFriends} });
+    sendToQml({ method: 'nearbyUsers', params: data });
 }
 
 

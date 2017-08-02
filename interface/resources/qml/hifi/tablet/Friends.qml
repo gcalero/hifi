@@ -17,11 +17,13 @@ import Qt.labs.settings 1.0
 import "../../styles-uit"
 import "../../controls-uit" as HifiControlsUit
 import "../../controls" as HifiControls
+import ".."
 
 ColumnLayout {
     objectName: "ColumnLayout"
     property var nearbyUserModelData: [];
-
+    property int rowHeight: 60;
+    property int nearbyNameCardWidth: nearbyTable.width
     HifiConstants { id: hifi; }
 
     z:100
@@ -33,30 +35,7 @@ ColumnLayout {
     }
 
     ListModel {
-        id: nearbyModel
-    }
-
-    ListModel {
         id: connectionsModel
-    }
-
-    Component {
-        id: userDelegate
-        Row {
-            spacing: 1
-            objectName: sessionId
-            Text { 
-                text: displayName + "(" + distance + ")"
-                font.family: "Helvetica"
-                font.pointSize: 8
-                color: "#0f10fb"
-                MouseArea {
-                    anchors.fill: parent
-                    // onClicked: console.log("friend row clicked")
-                }
-            }
-
-        }
     }
 
     Component {
@@ -97,23 +76,74 @@ ColumnLayout {
 
 
     Text {
-        objectName: "friendshereLabel"
+        id: friendshereLabel
         text: "Friends here"
         color: "green"
         font.family: "Helvetica"
         font.pointSize: 8
     }
-    ScrollView {
-        objectName: "scrollview-1"
-       ListView {
-            id: friendsHereList
-            height: 200
-            model: nearbyModel
-            delegate: userDelegate
-            spacing: 1
-            MouseArea {
-                anchors.fill: parent
-                //onClicked: sendToScript({method: 'loadFriends', params: {}})
+
+        // This TableView refers to the Nearby Table (on the "Nearby" tab below the current user's NameCard)
+
+    HifiControlsUit.Table {
+        id: nearbyTable;
+        flickableItem.interactive: true;
+        // Anchors
+        anchors.top: friendshereLabel.bottom;
+        anchors.right: parent.right
+        anchors.left: parent.left
+
+        // Properties
+        centerHeaderText: true;
+        sortIndicatorVisible: false;
+        headerVisible: false;
+        // sortIndicatorColumn: settings.nearbySortIndicatorColumn;
+        //  sortIndicatorOrder: settings.nearbySortIndicatorOrder;
+        TableViewColumn {
+            id: displayNameHeader;
+            role: "displayName";
+            title: nearbyTable.rowCount + (nearbyTable.rowCount === 1 ? " NAME" : " NAMES");
+            width: nearbyNameCardWidth;
+            movable: false;
+            resizable: false;
+        }
+        model: ListModel {
+            id: nearbyUserModel;
+        }
+
+        // This Rectangle refers to each Row in the nearbyTable.
+        rowDelegate: Rectangle { // The only way I know to specify a row height.
+            // Size
+            height: rowHeight ;
+            color: hifi.colors.tableRowLightEven // nearbyRowColor(styleData.selected, styleData.alternate);
+        }
+
+        // This Item refers to the contents of each Cell
+        itemDelegate: Item {
+            id: itemCell;
+            // This NameCard refers to the cell that contains an avatar's
+            // DisplayName and UserName
+            // This NameCard refers to the cell that contains an avatar's
+            // DisplayName and UserName
+            SimpleNameCard {
+                objectName: model.sessionId
+                id: nameCard;
+                // Properties
+                profileUrl: model.profileUrl || "";
+                displayName: model.displayName;
+                userName: displayName
+                connectionStatus: model ? model.connection : "";
+                visible: true
+                uuid: model ? model.sessionId : "";
+                selected: true;
+                //isReplicated: model.isReplicated;
+                //isAdmin: model && model.admin;
+                isPresent: model && model.isPresent;
+                // Size
+                width: parent.width;
+                height: parent.height;
+                // Anchors
+                anchors.left: parent.left;
             }
         }
     }
@@ -141,24 +171,14 @@ ColumnLayout {
 
     }
 
-    function loadNearbyUser(f, index) {
-        if (typeof index !== 'undefined') {
-            nearbyModel.insert(index, f);
-            nearbyUserModelData.splice(index, 0, f);
-        } else {
-            nearbyModel.append (f);
-            nearbyUserModelData.push(f);
-        }
-    }
-
     function removeNearbyUserById(userId) {
         var i=0;
-        //console.log("[FRIENDS] removeNearbyUserById search " + userId + " among " + nearbyModel.count);
+        //console.log("[FRIENDS] removeNearbyUserById search " + userId + " among " + nearbyUserModel.count);
         for(;i<nearbyUserModelData.length;i++) {
             //console.log("[FRIENDS] i: " + i + " comparing " + nearbyUserModelData[i] + " sessionId: " + nearbyUserModelData[i].sessionId);
             if (nearbyUserModelData[i].sessionId == userId) {
                 //console.log("[FRIENDS] match at index " + i);
-                nearbyModel.remove(i);
+                nearbyUserModel.remove(i);
                 return;
             }
         }
@@ -168,16 +188,36 @@ ColumnLayout {
         connectionsModel.append (f);
     }
 
-    function loadUsers(data) {
-        nearbyModel.clear();
-        nearbyUserModelData = [];
+    function loadNearbyUsers(data) {
+        nearbyUserModelData = data;
+        // nearbyUserModelData.sort(function (a, b) ...
 
-        if (data && data.nearby) {
-            //console.log("[FRIENDS] some nearby users");
-            data.nearby.forEach(function (user) {
-                loadNearbyUser(user);
-            });
-        }
+        nearbyUserModel.clear();
+        var userIndex = 0;
+        nearbyUserModelData.forEach(function (datum) {
+            function init(property) {
+                if (datum[property] === undefined) {
+                    // These properties must have values of type 'string'.
+                    if (property === 'userName' || property === 'profileUrl' || property === 'placeName' || property === 'connection') {
+                        datum[property] = "";
+                    // All other properties must have values of type 'bool'.
+                    } else {
+                        datum[property] = false;
+                    }
+                }
+            }
+            ['userName', 'profileUrl', 'placeName', 'connection'].forEach(init);
+            datum.userIndex = userIndex++;
+            nearbyUserModel.append(datum);
+            /*if (selectedIDs.indexOf(datum.sessionId) != -1) {
+                 newSelectedIndexes.push(datum.userIndex);
+            }*/
+        });
+
+        /*if (newSelectedIndexes.length > 0) {
+            nearbyTable.selection.select(newSelectedIndexes);
+            nearbyTable.positionViewAtRow(newSelectedIndexes[0], ListView.Beginning);
+        }*/
     }
 
     function loadConnections(data) {
@@ -194,14 +234,15 @@ ColumnLayout {
     function fromScript(message) {
         //console.log("[FRIENDS] message from script " + message.method);
         switch (message.method) {
-        case "users":
+        case "nearbyUsers":
             var data = message.params;
-            loadUsers(data);
+            console.log("[FRIENDS] message from script nearbyUsers " + data.length);
+            loadNearbyUsers(data);
             break;
-        case "addUser":
+        /*case "addUser":
             var data = message.params;
             loadNearbyUser(data.user, 0);
-            break;
+            break;*/
         case "removeUser":
             var data = message.params;
             removeNearbyUserById(data.userId);
