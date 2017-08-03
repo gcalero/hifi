@@ -16,7 +16,7 @@ print("[godView.js] outside scope");
 
 (function() { // BEGIN LOCAL_SCOPE
 
-var logEnabled = false;
+var logEnabled = true;
 function printd(str) {
     if (logEnabled)
         print("[godView.js] " + str);
@@ -70,32 +70,55 @@ function keyPressEvent(event) {
     }
 }
 
-// App.isAndroid()
+function actionOnObjectFromEvent(event) {
+    var rayIntersection = findRayIntersection(Camera.computePickRay(event.x, event.y));
+    if (rayIntersection && rayIntersection.intersects && rayIntersection.overlayID) {
+        printd("found overlayID touched " + rayIntersection.overlayID);
+        if (entitiesByOverlayID[rayIntersection.overlayID]) {
+            var entity = Entities.getEntityProperties(entitiesByOverlayID[rayIntersection.overlayID], ["sourceUrl"]); 
+            App.openUrl(entity.sourceUrl);
+            return true;
+        }
+    }
+    if (rayIntersection && rayIntersection.intersects  && rayIntersection.entityID && rayIntersection.properties) {
+        printd("found " + rayIntersection.entityID + " of type " + rayIntersection.properties.type) ;
+        if (rayIntersection.properties.type == "Web") {
+            printd("found web element to " + rayIntersection.properties.sourceUrl);
+            App.openUrl(rayIntersection.properties.sourceUrl);
+            return true;
+        }
+    }
+    return false;
+}
+
+function moveToFromEvent(event) {
+    printd("-- mousePressOrTouchEnd in godView");
+    printd("-- event.x, event.y:", event.x, ",", event.y);
+    var pickRay = Camera.computePickRay(event.x, event.y);
+
+    printd("-- pr.o:", pickRay.origin.x, ",", pickRay.origin.y, ",", pickRay.origin.z);
+    printd("-- pr.d:", pickRay.direction.x, ",", pickRay.direction.y, ",", pickRay.direction.z);
+    printd("-- c.p:", Camera.position.x, ",", Camera.position.y, ",", Camera.position.z);
+
+    var pointingAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction,GOD_VIEW_HEIGHT));
+
+    printd("-- pointing at:", pointingAt.x, ",", pointingAt.y, ",", pointingAt.z);
+
+    var moveToPosition = { x: pointingAt.x, y: MyAvatar.position.y, z: pointingAt.z };
+
+    printd("-- moveToPosition:", moveToPosition.x, ",", moveToPosition.y, ",", moveToPosition.z);
+
+    moveTo(moveToPosition);
+    return true;
+}
 
 function mousePressOrTouchEnd(event) {
     if (!currentTouchIsValid) {
         return;
     }
     if (godView) {
-        // TODO remove this return; and enable the feature to move again
-        //return;
-        printd("-- mousePressOrTouchEnd in godView");
-        printd("-- event.x, event.y:", event.x, ",", event.y);
-        var pickRay = Camera.computePickRay(event.x, event.y);
-
-        printd("-- pr.o:", pickRay.origin.x, ",", pickRay.origin.y, ",", pickRay.origin.z);
-        printd("-- pr.d:", pickRay.direction.x, ",", pickRay.direction.y, ",", pickRay.direction.z);
-        printd("-- c.p:", Camera.position.x, ",", Camera.position.y, ",", Camera.position.z);
-
-        var pointingAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction,GOD_VIEW_HEIGHT));
-
-        printd("-- pointing at:", pointingAt.x, ",", pointingAt.y, ",", pointingAt.z);
-
-        var moveToPosition = { x: pointingAt.x, y: MyAvatar.position.y, z: pointingAt.z };
-
-        printd("-- moveToPosition:", moveToPosition.x, ",", moveToPosition.y, ",", moveToPosition.z);
-
-        moveTo(moveToPosition);
+        if (actionOnObjectFromEvent(event)) return;
+        if (moveToFromEvent(event)) return;
     }
 }
 
@@ -105,6 +128,7 @@ function toggleGodViewMode() {
         endGodView();
     } else {
         startGodView();
+        //entitiesAnalysis();
     }
 }
 
@@ -185,6 +209,10 @@ if (!Math.sign) {
   };
 }
 
+/********************************************************************************************************
+ * Line and Plane intersection methods
+ ********************************************************************************************************/
+
 /**
 * findLinePlaneIntersection
 * Given points p {x: y: z:} and q that define a line, and the plane
@@ -231,6 +259,28 @@ function findLinePlaneIntersectionCoords(px, py, pz, qx, qy, qz, a, b, c, d) {
 function findLineToHeightIntersectionCoords(px, py, pz, qx, qy, qz, planeY) {
     return findLinePlaneIntersectionCoords(px, py, pz, qx, qy, qz, 0, 1, 0, -planeY);
 }
+
+function findRayIntersection(pickRay) {
+    // Check 3D overlays and entities. Argument is an object with origin and direction.
+    /* TMP
+      bool intersects;
+    OverlayID overlayID;
+    float distance;
+    BoxFace face;
+    glm::vec3 surfaceNormal;
+    glm::vec3 intersection;
+    QString extraInfo;
+    */
+    var result = Overlays.findRayIntersection(pickRay);
+    if (!result.intersects) {
+        result = Entities.findRayIntersection(pickRay, true);
+    }
+    return result;
+}
+
+/********************************************************************************************************
+ * 
+ ********************************************************************************************************/
 
 function touchBegin(event) {
   if (tablet.getItemAtPoint({ x: event.x, y: event.y }) ) {
@@ -324,6 +374,10 @@ function touchUpdate(event) {
     }
 }
 
+/********************************************************************************************************
+ * Avatar cache structure for showing avatars markers
+ ********************************************************************************************************/
+
 // by QUuid
 var avatarsData = {};
 var avatarsIcons = []; // a parallel list of icons (overlays) to easily run through
@@ -336,14 +390,14 @@ var ICON_AVATAR_DEFAULT_DIMENSIONS = {
     z: 0.10
 };
 
-var targetModelDimensionsVal = { x: 0, y: 0.00001, z: 0};
-function targetModelDimensions() {
+var avatarIconModelDimensionsVal = { x: 0, y: 0.00001, z: 0};
+function avatarIconModelDimensions() {
     // given the current height, give a size
     var xz = -0.002831 * GOD_VIEW_HEIGHT + 0.1;
-    targetModelDimensionsVal.x = xz;
-    targetModelDimensionsVal.z = xz;
+    avatarIconModelDimensionsVal.x = xz;
+    avatarIconModelDimensionsVal.z = xz;
     // reuse object
-    return targetModelDimensionsVal;
+    return avatarIconModelDimensionsVal;
 }
 
 function currentOverlayForAvatar(QUuid) {
@@ -374,8 +428,15 @@ function saveAvatarData(QUuid) {
 
 function removeAvatarData(QUuid) {
     if (QUuid == null) return;
+
+    var itsOverlay =  currentOverlayForAvatar(QUuid);
+    if (itsOverlay != null) {
+        Overlays.deleteOverlay(itsOverlay);
+    }
+    var idx = avatarsIcons.indexOf(itsOverlay);
+    avatarsIcons.splice(idx, 1);
+
     delete avatarsData[QUuid];
-    // icon overlay not taken care here
 }
 
 function saveAllOthersAvatarsData() {
@@ -388,9 +449,43 @@ function saveAllOthersAvatarsData() {
     }
 }
 
+/********************************************************************************************************
+ * Avatar Icon/Markers rendering
+ ********************************************************************************************************/
+
+var myAvatarIcon = Overlays.addOverlay("model", {
+    url: ICON_MY_AVATAR_MODEL_URL,
+    dimensions: ICON_AVATAR_DEFAULT_DIMENSIONS,
+    visible: false
+});
+
+function renderMyAvatarIcon() {
+    var iconPos = findLineToHeightIntersectionCoords(   MyAvatar.position.x,
+                                                        MyAvatar.position.y + GOD_VIEW_ICONS_APPARENT_DISTANCE_TO_AVATAR_BASE,
+                                                        MyAvatar.position.z,
+                                                        Camera.position.x, Camera.position.y, Camera.position.z,
+                                                        Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
+    if (!iconPos) { printd("avatarmy icon pos null"); return;}
+    var iconDimensions = avatarIconModelDimensions();
+    //printd("avatarmy icon pos " + JSON.stringify(iconPos));
+    Overlays.editOverlay(myAvatarIcon, {
+            visible: true,
+            dimensions: iconDimensions,
+            position: iconPos
+    });
+}
+
+function hideAllAvatarIcons() {
+    var len = avatarsIcons.length;
+    for (var i = 0; i < len; i++) {
+        Overlays.editOverlay(avatarsIcons[i], {visible: false});
+    }
+    Overlays.editOverlay(myAvatarIcon, {visible: false})
+}
+
 function renderAllOthersAvatarIcons() {
     var avatarPos;
-    var iconDimensions = targetModelDimensions();
+    var iconDimensions = avatarIconModelDimensions();
     for (var QUuid in avatarsData) {
         //printd("avatar icon avatar possible " + QUuid);
         if (avatarsData.hasOwnProperty(QUuid)) {
@@ -403,7 +498,7 @@ function renderAllOthersAvatarIcons() {
                                                                         Camera.position.x, Camera.position.y, Camera.position.z,
                                                                         Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
                     if (!iconPos) { print ("avatar icon pos bad for " + QUuid); continue; }
-                    printd("avatar icon pos " + QUuid + " pos " + JSON.stringify(iconPos));
+                    //printd("avatar icon pos " + QUuid + " pos " + JSON.stringify(iconPos));
                     Overlays.editOverlay(avatarsData[QUuid].icon, {
                         visible: true,
                         dimensions: iconDimensions,
@@ -414,6 +509,118 @@ function renderAllOthersAvatarIcons() {
         }
     }
 }
+
+/********************************************************************************************************
+ * Entities (to remark) cache structure for showing entities markers
+ ********************************************************************************************************/
+
+var entitiesData = {}; // by entityID
+var entitiesByOverlayID = {}; // by overlayID
+var entitiesIcons = []; // a parallel list of icons (overlays) to easily run through
+
+var ICON_ENTITY_WEB_MODEL_URL = Script.resolvePath("assets/models/teleport-destination.fbx"); // FIXME - use correct model&texture
+var ICON_ENTITY_IMG_MODEL_URL = Script.resolvePath("assets/models/teleport-cancel.fbx"); // FIXME - use correct model&texture
+var ICON_ENTITY_DEFAULT_DIMENSIONS = {
+    x: 0.10,
+    y: 0.00001,
+    z: 0.10
+};
+
+var entityIconModelDimensionsVal = { x: 0, y: 0.00001, z: 0};
+function entityIconModelDimensions() {
+    // given the current height, give a size
+    var xz = -0.002831 * GOD_VIEW_HEIGHT + 0.1;
+    entityIconModelDimensionsVal.x = xz;
+    entityIconModelDimensionsVal.z = xz;
+    // reuse object
+    return entityIconModelDimensionsVal;
+}
+
+function currentOverlayForEntity(QUuid) {
+    if (entitiesData[QUuid] != undefined) {
+        return entitiesData[QUuid].icon;
+    } else {
+        return null;
+    }
+}
+
+function saveEntityData(QUuid) {
+    if (QUuid == null) return;
+    var entity = Entities.getEntityProperties(QUuid, ["position"]);
+    printd("entity added save entity " + QUuid);
+    if (entitiesData[QUuid] != undefined) {
+        entitiesData[QUuid].position = entity.position;
+    } else {
+        var entityIcon = Overlays.addOverlay("model", {
+            url: ICON_ENTITY_WEB_MODEL_URL,
+            dimensions: ICON_ENTITY_DEFAULT_DIMENSIONS,
+            ignoreRayIntersection: false,
+            visible: false
+        });
+        entitiesIcons.push(entityIcon);
+        entitiesData[QUuid] = { position: entity.position, icon: entityIcon};
+        entitiesByOverlayID[entityIcon] = QUuid;
+        printd("entity added save entity DONE " + JSON.stringify(entitiesData[QUuid]));
+    }
+}
+
+function removeEntityData(QUuid) {
+    if (QUuid == null) return;
+
+    var itsOverlay =  currentOverlayForEntity(QUuid);
+    if (itsOverlay != null) {
+        Overlays.deleteOverlay(itsOverlay);
+        delete entitiesByOverlayID[itsOverlay];
+    }
+    var idx = entitiesIcons.indexOf(itsOverlay);
+    entitiesIcons.splice(idx, 1);
+
+    delete entitiesData[QUuid];
+}
+
+/********************************************************************************************************
+ * Entities to remark Icon/Markers rendering
+ ********************************************************************************************************/
+
+function hideAllEntitiesIcons() {
+    var len = entitiesIcons.length;
+    for (var i = 0; i < len; i++) {
+        Overlays.editOverlay(entitiesIcons[i], {visible: false});
+    }
+}
+
+function renderAllEntitiesIcons() {
+    var entityPos;
+    var entityProps;
+    var iconDimensions = entityIconModelDimensions();
+    for (var QUuid in entitiesData) {
+        //printd("entity icon entity possible " + QUuid);
+        if (entitiesData.hasOwnProperty(QUuid)) {
+            entityProps = Entities.getEntityProperties(QUuid, ["position","visible"]);
+            if (entityProps != null) {
+                entityPos = entityProps.position;
+                //printd("entity icon for entity " + QUuid);
+                if (entitiesData[QUuid].icon != undefined) {
+                    //printd("entity icon " + entitiesData[QUuid].icon + " for entity " + QUuid);
+                    var iconPos = findLineToHeightIntersectionCoords(   entityPos.x, entityPos.y + GOD_VIEW_ICONS_APPARENT_DISTANCE_TO_AVATAR_BASE, entityPos.z,
+                                                                        Camera.position.x, Camera.position.y, Camera.position.z,
+                                                                        Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
+                    if (!iconPos) { print ("entity icon pos bad for " + QUuid); continue; }
+                    //printd("entity icon pos " + QUuid + " pos " + JSON.stringify(iconPos));
+                    Overlays.editOverlay(entitiesData[QUuid].icon, {
+                        visible: entityProps.visible,
+                        dimensions: iconDimensions,
+                        position: iconPos
+                    });
+                }
+            }
+        }
+    }
+}
+
+/********************************************************************************************************
+ * 
+ ********************************************************************************************************/
 
 function startGodView() {
     printd("avatar added list " + JSON.stringify(AvatarList.getAvatarIdentifiers()));
@@ -443,41 +650,6 @@ function onClicked() {
     toggleGodViewMode();
 }
 
-var MY_AVATAR_CIRCLE_COLOR = { red: 255, green: 0, blue: 0 };
-var MY_AVATAR_CIRCLE_ALPHA = 1;//0.5;
-var MY_AVATAR_CIRCLE_ROTATION = Quat.fromPitchYawRollDegrees(0, 90, 0);
-
-var myAvatarIcon = Overlays.addOverlay("model", {
-    url: ICON_MY_AVATAR_MODEL_URL,
-    dimensions: ICON_AVATAR_DEFAULT_DIMENSIONS,
-    visible: false
-});
-
-
-function renderMyAvatarIcon() {
-    var iconPos = findLineToHeightIntersectionCoords(   MyAvatar.position.x,
-                                                        MyAvatar.position.y + GOD_VIEW_ICONS_APPARENT_DISTANCE_TO_AVATAR_BASE,
-                                                        MyAvatar.position.z,
-                                                        Camera.position.x, Camera.position.y, Camera.position.z,
-                                                        Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
-    if (!iconPos) { printd("avatarmy icon pos null"); return;}
-    var iconDimensions = targetModelDimensions();
-    printd("avatarmy icon pos " + JSON.stringify(iconPos));
-    Overlays.editOverlay(myAvatarIcon, {
-            visible: true,
-            dimensions: iconDimensions,
-            position: iconPos
-    });
-}
-
-function hideAllAvatarIcons() {
-    var len = avatarsIcons.length;
-    for (var i = 0; i < len; i++) {
-        Overlays.editOverlay(avatarsIcons[i], {visible: false});
-    }
-    Overlays.editOverlay(myAvatarIcon, {visible: false})
-}
-
 function updateGodView() {
     // Update avatar icons
     if (godView) {
@@ -487,6 +659,7 @@ function updateGodView() {
         } else if (!draggingCamera) {
             renderMyAvatarIcon();
             renderAllOthersAvatarIcons();
+            renderAllEntitiesIcons();
         }
     }
 }
@@ -498,13 +671,32 @@ function avatarAdded(QUuid) {
 
 function avatarRemoved(QUuid) {
     printd("avatar removed " + QUuid);
-    var itsOverlay =  currentOverlayForAvatar(QUuid);
-    if (itsOverlay != null) {
-        Overlays.deleteOverlay(itsOverlay);
-    }
-    var idx = avatarsIcons.indexOf(itsOverlay);
-    avatarsIcons.splice(idx, 1);
     removeAvatarData(QUuid);
+}
+
+function valueIfDefined(value) {
+    return value !== undefined ? value : "";
+}
+
+function entitiesAnalysis() {
+    var ids = Entities.findEntitiesInFrustum(Camera.frustum);
+    var entities = [];
+    for (var i = 0; i < ids.length; i++) {
+        var id = ids[i];
+        var properties = Entities.getEntityProperties(id);
+            entities.push({
+                id: id,
+                name: properties.name,
+                type: properties.type,
+                url: properties.type == "Model" ? properties.modelURL : "",
+                sourceUrl: properties.sourceUrl,
+                locked: properties.locked,
+                visible: properties.visible,
+                drawCalls: valueIfDefined(properties.renderInfo.drawCalls),
+                hasScript: properties.script !== ""
+            });
+    }
+    printd("ALL ENTITIES: " + JSON.stringify(entities));
 }
 
 button = tablet.addButton({
@@ -529,6 +721,25 @@ AvatarList.avatarRemovedEvent.connect(avatarRemoved);
 
 LODManager.LODDecreased.connect(function() {printd("LOD DECREASED --");});
 LODManager.LODIncreased.connect(function() {printd("LOD INCREASED ++");});
+
+Entities.addingEntity.connect(function(entityID){
+    print ("Entity added " + entityID);
+    var props = Entities.getEntityProperties(entityID, ["type"]);
+    print ("Entity added " + entityID + " PROPS " + JSON.stringify(props));
+    if (props && props.type == "Web") {
+        print ("Entity Web added " + entityID);
+        saveEntityData(entityID);
+    }
+});
+Entities.deletingEntity.connect(function(entityID){
+    print ("Entity removed " + entityID);
+    var props = Entities.getEntityProperties(entityID, ["type"]);
+    if (props && props.type == "Web") {
+        print ("Entity Web removed " + entityID);
+        removeEntityData(entityID);
+    }
+});
+
 
 Script.scriptEnding.connect(function () {
     if (godView) {
