@@ -122,8 +122,8 @@ Item {
         id: displayNameContainer
         visible: true
         // Size
-        width: 400 //  parent.width - anchors.leftMargin - avatarImage.width - anchors.leftMargin;
-        height: 50 // displayNameTextPixelSize + 4
+        width: parent.width - anchors.leftMargin - avatarImage.width - anchors.leftMargin;
+        height: displayNameTextPixelSize + 4
         // Anchors
         anchors.top: avatarImage.top;
         anchors.left: avatarImage.right
@@ -136,7 +136,7 @@ Item {
             text: thisNameCard.displayName
             elide: Text.ElideRight
             // Size
-            width: 200 // parent.width
+            width: parent.width
             // Anchors
             anchors.top: parent.top
             anchors.left: parent.left
@@ -177,25 +177,28 @@ Item {
     FiraSansRegular {
         id: userNameText
         // Properties
-        text: "not logged in " //thisNameCard.userName === "Unknown user" ? "not logged in" : thisNameCard.userName;
+        text: thisNameCard.userName === "Unknown user" ? "not logged in" : thisNameCard.userName;
         elide: Text.ElideRight
-        visible: thisNameCard.userName !== "";
+        visible: true
         // Size
         width: parent.width
         height: usernameTextPixelSize + 4
         // Anchors
         anchors.top: displayNameContainer.bottom
-        anchors.verticalCenter: avatarImage.verticalCenter
-        anchors.left: avatarImage.right;
+        anchors.left: displayNameContainer.left;
+        /*anchors.verticalCenter: avatarImage.verticalCenter
+        
         anchors.leftMargin: avatarImage.visible ? 5 : 0;
         anchors.rightMargin: 5;
+        */
+
         // Text Size
         size: displayNameTextPixelSize
         // Text Positioning
         verticalAlignment: Text.AlignVCenter;
         // Style
         color: hifi.colors.blueAccent;
-        MouseArea {
+        /*MouseArea {
             anchors.fill: parent
             enabled: thisNameCard.userName !== "" && isPresent;
             hoverEnabled: enabled
@@ -211,7 +214,7 @@ Item {
                 displayNameText.color = hifi.colors.darkGray;
                 userNameText.color = hifi.colors.blueAccent;
             }
-        }
+        }*/
     }
 
     // Function body by Howard Stearns 2017-01-08

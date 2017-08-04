@@ -21,49 +21,44 @@ import ".."
 
 ColumnLayout {
     objectName: "ColumnLayout"
-    property var nearbyUserModelData: [];
+    property var nearbyFriendModelData: []; // This simple list is essentially a mirror of the nearbyFrienModel listModel without all the extra complexities.
+    property var onlineFriendModelData: []; // This simple list is essentially a mirror of the onlineFriendModel listModel without all the extra 
     property int rowHeight: 60;
+    property int locationColumnWidth: 170;
     property int nearbyNameCardWidth: nearbyTable.width
+    property int connectionsNameCardWidth: connectionsTable.width;
+
     HifiConstants { id: hifi; }
 
     z:100
     spacing: 1
+    Layout.minimumWidth: 400
+    Layout.fillWidth: true
     Settings {
         id: settings
         category: 'friends'
         property int nearDistance: 30
     }
-
-    ListModel {
-        id: connectionsModel
-    }
-
-    Component {
-        id: connectionDelegate
-        Row {
-            spacing: 1
-            Text { 
-                text: userName + "(" + connection + ")"
-                font.family: "Helvetica"
-                font.pointSize: 8
-                color: "#0f10fb"
-                MouseArea {
-                    anchors.fill: parent
-                    // onClicked: console.log("friend row clicked")
-                }
-            }
-
-        }
-    }
-
     // Refresh button
     Rectangle {
+        color: "#000000"
         id: reloadNearbyContainer
-        anchors.right: parent.right;
-        anchors.rightMargin: 15;
-        height: 12
-        width: height;
+        //anchors.right: parent.right;
+        //anchors.left: parent.left
+        anchors.rightMargin: 5;
+        height: 40
+        width: 250;
+        Text {
+            id: friendshereLabel
+            text: "Friends here"
+            color: "#aeaeae"
+            font.family: "Helvetica"
+            font.pointSize: 6
+            width: 400;
+        }
         HifiControlsUit.GlyphButton {
+            anchors.right: parent.right;
+            anchors.rightMargin: 15
             id: reloadNearby;
             width: reloadNearby.height;
             glyph: hifi.glyphs.reload;
@@ -73,184 +68,269 @@ ColumnLayout {
         }
     }
 
+    Rectangle {
+        color: "#000000"
+        anchors.top: reloadNearbyContainer.bottom
+        anchors.right: parent.right
+        anchors.left: parent.left
+        height: 200
+        width: 400;
+        // This TableView refers to the Nearby Table (on the "Nearby" tab below the current user's NameCard)
+        HifiControlsUit.Table {
+            id: nearbyTable;
+            flickableItem.interactive: true;
+            height: 900
+            width: 400;
+            // Anchors
+            anchors.fill: parent
+            // Properties
+            sortIndicatorVisible: false;
+            headerVisible: false;
+
+            TableViewColumn {
+                id: displayNameHeader;
+                role: "displayName";
+                title: nearbyTable.rowCount + (nearbyTable.rowCount === 1 ? " NAME" : " NAMES");
+                width: nearbyNameCardWidth;
+                movable: false;
+                resizable: false;
+            }
+            model: ListModel {
+                id: nearbyFriendModel;
+            }
+
+            // This Rectangle refers to each Row in the nearbyTable.
+            rowDelegate: Rectangle { // The only way I know to specify a row height.
+                // Size
+                height: rowHeight ;
+                color: hifi.colors.tableRowLightEven
+            }
+
+            // This Item refers to the contents of each Cell
+            itemDelegate: Item {
+                id: itemCell;
+                // This NameCard refers to the cell that contains an avatar's
+                // DisplayName and UserName
+                SimpleNameCard {
+                    objectName: (model && model.sessionId) || "";
+                    id: nearByNameCard;
+                    // Properties
+                    visible: true
+                    profileUrl: (model && model.profileUrl) || "";
+                    displayName: "";
+                    userName: model ? model.userName : "";
+                    placeName: "Placename here"; // model ? model.placeName : ""
+                    connectionStatus : model ? model.connection : "";
+                    selected: styleData.selected;
+                    // Size
+                    width: connectionsNameCardWidth;
+                    height: parent.height;
+                    // Anchors
+                    anchors.left: parent.left;
+                }
+
+            }
+        }
+    }
 
 
     Text {
-        id: friendshereLabel
-        text: "Friends here"
-        color: "green"
+        id: "connectionsLabel"
+        text: "Friends online"
+        color: "#aeaeae"
         font.family: "Helvetica"
-        font.pointSize: 8
+        font.pointSize: 6
+        width: 400;
     }
 
-        // This TableView refers to the Nearby Table (on the "Nearby" tab below the current user's NameCard)
-
-    HifiControlsUit.Table {
-        id: nearbyTable;
-        flickableItem.interactive: true;
-        // Anchors
-        anchors.top: friendshereLabel.bottom;
+    Rectangle {
+        color: "#000000"
         anchors.right: parent.right
         anchors.left: parent.left
-
+        height: 200
+        width: 400;
+            // This TableView refers to the Connections Table (on the "Connections" tab below the current user's NameCard)
+    HifiControlsUit.Table {
+        id: connectionsTable;
+        flickableItem.interactive: true;
+        width: 400;
+        // Anchors
+        anchors.fill : parent
         // Properties
-        centerHeaderText: true;
         sortIndicatorVisible: false;
         headerVisible: false;
-        // sortIndicatorColumn: settings.nearbySortIndicatorColumn;
-        //  sortIndicatorOrder: settings.nearbySortIndicatorOrder;
+
         TableViewColumn {
-            id: displayNameHeader;
-            role: "displayName";
-            title: nearbyTable.rowCount + (nearbyTable.rowCount === 1 ? " NAME" : " NAMES");
-            width: nearbyNameCardWidth;
+            id: onlineFriendNameHeader;
+            role: "userName";
+            title: connectionsTable.rowCount + (connectionsTable.rowCount === 1 ? " NAME" : " NAMES");
+            width: connectionsNameCardWidth;
             movable: false;
             resizable: false;
         }
-        model: ListModel {
-            id: nearbyUserModel;
+        TableViewColumn {
+            role: "placeName";
+            title: "LOCATION";
+            width: locationColumnWidth;
+            movable: false;
+            resizable: false;
+        }
+        TableViewColumn {
+            role: "connection";
+            title: "FRIEND";
+            //width: actionButtonWidth;
+            movable: false;
+            resizable: false;
         }
 
-        // This Rectangle refers to each Row in the nearbyTable.
-        rowDelegate: Rectangle { // The only way I know to specify a row height.
+        model: ListModel {
+            id: onlineFriendModel;
+        }
+
+        // This Rectangle refers to each Row in the connectionsTable.
+        rowDelegate: Rectangle {
             // Size
-            height: rowHeight ;
-            color: hifi.colors.tableRowLightEven // nearbyRowColor(styleData.selected, styleData.alternate);
+            height: rowHeight + (styleData.selected ? 15 : 0);
+            color: hifi.colors.tableRowLightEven
         }
 
         // This Item refers to the contents of each Cell
         itemDelegate: Item {
-            id: itemCell;
-            // This NameCard refers to the cell that contains an avatar's
-            // DisplayName and UserName
-            // This NameCard refers to the cell that contains an avatar's
-            // DisplayName and UserName
+            id: connectionsItemCell;
+
+            // This NameCard refers to the cell that contains a connection's UserName
             SimpleNameCard {
-                objectName: model.sessionId
-                id: nameCard;
+                objectName: (model && model.sessionId) || "";
+                id: connectionsNameCard;
                 // Properties
-                profileUrl: model.profileUrl || "";
-                displayName: model.displayName;
-                userName: displayName
-                connectionStatus: model ? model.connection : "";
                 visible: true
-                uuid: model ? model.sessionId : "";
-                selected: true;
-                //isReplicated: model.isReplicated;
-                //isAdmin: model && model.admin;
-                isPresent: model && model.isPresent;
+                profileUrl: (model && model.profileUrl) || "";
+                displayName: "";
+                userName: model ? model.userName : "";
+                placeName: "Placename here"; // model ? model.placeName : ""
+                connectionStatus : model ? model.connection : "";
+                selected: styleData.selected;
                 // Size
-                width: parent.width;
+                width: connectionsNameCardWidth;
                 height: parent.height;
                 // Anchors
                 anchors.left: parent.left;
             }
-        }
-    }
 
-    Text {
-        objectName: "connectionsLabel"
-        text: "Connections online"
-        color: "green"
-        font.family: "Helvetica"
-        font.pointSize: 8
-    }
-    ScrollView {
-        objectName: "scrollview-2"
-        id: connectionsOnline
-        ListView {
-            height: 200
-            model: connectionsModel
-            delegate: connectionDelegate
-            spacing: 1
-            MouseArea {
-                anchors.fill: parent
-                propagateComposedEvents: false
-            }
-        }
-
-    }
-
-    function removeNearbyUserById(userId) {
-        var i=0;
-        //console.log("[FRIENDS] removeNearbyUserById search " + userId + " among " + nearbyUserModel.count);
-        for(;i<nearbyUserModelData.length;i++) {
-            //console.log("[FRIENDS] i: " + i + " comparing " + nearbyUserModelData[i] + " sessionId: " + nearbyUserModelData[i].sessionId);
-            if (nearbyUserModelData[i].sessionId == userId) {
-                //console.log("[FRIENDS] match at index " + i);
-                nearbyUserModel.remove(i);
-                return;
-            }
-        }
-    }
-
-    function loadConnection(f) {
-        connectionsModel.append (f);
-    }
-
-    function loadNearbyUsers(data) {
-        nearbyUserModelData = data;
-        // nearbyUserModelData.sort(function (a, b) ...
-
-        nearbyUserModel.clear();
-        var userIndex = 0;
-        nearbyUserModelData.forEach(function (datum) {
-            function init(property) {
-                if (datum[property] === undefined) {
-                    // These properties must have values of type 'string'.
-                    if (property === 'userName' || property === 'profileUrl' || property === 'placeName' || property === 'connection') {
-                        datum[property] = "";
-                    // All other properties must have values of type 'bool'.
-                    } else {
-                        datum[property] = false;
+            // LOCATION data
+            FiraSansRegular {
+                id: connectionsLocationData
+                // Properties
+                visible: styleData.role === "placeName";
+                text: (model && model.placeName) || "";
+                elide: Text.ElideRight;
+                // Size
+                width: parent.width;
+                // you would think that this would work:
+                // anchors.verticalCenter: connectionsNameCard.avImage.verticalCenter
+                // but no!  you cannot anchor to a non-sibling or parent.  So I will
+                // align with the friends checkbox, where I did the manual alignment
+                //anchors.verticalCenter: friendsCheckBox.verticalCenter
+                // Text Size
+                size: 16;
+                // Text Positioning
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
+                // Style
+                color: hifi.colors.blueAccent;
+                font.underline: true;
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: enabled
+                    enabled: connectionsNameCard.selected && pal.activeTab == "connectionsTab"
+                    onClicked: {
+                        AddressManager.goToUser(model.userName);
+                        UserActivityLogger.palAction("go_to_user", model.userName);
                     }
+                    onEntered: connectionsLocationData.color = hifi.colors.blueHighlight;
+                    onExited: connectionsLocationData.color = hifi.colors.blueAccent;
                 }
             }
-            ['userName', 'profileUrl', 'placeName', 'connection'].forEach(init);
+
+            // "Friends" checkbox
+            /*HifiControlsUit.CheckBox {
+                id: friendsCheckBox;
+                visible: true
+                // you would think that this would work:
+                // anchors.verticalCenter: connectionsNameCard.avImage.verticalCenter
+                // but no!  you cannot anchor to a non-sibling or parent.  So:
+                x: parent.width/2 - boxSize/2;
+                y: connectionsNameCard.avImage.y + connectionsNameCard.avImage.height/2 - boxSize/2;
+                checked: model && (model.connection === "friend");
+                boxSize: 24;
+                enabled: false
+                onClicked: {
+                    var newValue = model.connection !== "friend";
+                    onlineFriendModel.setProperty(model.userIndex, styleData.role, (newValue ? "friend" : "connection"));
+                    onlineFriendModelData[model.userIndex][styleData.role] = newValue; // Defensive programming
+                    //pal.sendToScript({method: newValue ? 'addFriend' : 'removeFriend', params: model.userName});
+
+                    UserActivityLogger["palAction"](newValue ? styleData.role : "un-" + styleData.role, model.sessionId);
+                }
+            }*/
+        }
+    }
+    }
+
+    function loadNearbyFriends() {
+        //nearbyFriendModelData.sort(function (a, b) { ...        
+        //connectionsTable.selection.clear();
+        nearbyFriendModel.clear();
+        var userIndex = 0;
+        //var newSelectedIndexes = [];
+        nearbyFriendModelData.forEach(function (datum) {
             datum.userIndex = userIndex++;
-            nearbyUserModel.append(datum);
+            nearbyFriendModel.append(datum);
             /*if (selectedIDs.indexOf(datum.sessionId) != -1) {
                  newSelectedIndexes.push(datum.userIndex);
             }*/
         });
-
         /*if (newSelectedIndexes.length > 0) {
-            nearbyTable.selection.select(newSelectedIndexes);
-            nearbyTable.positionViewAtRow(newSelectedIndexes[0], ListView.Beginning);
+            connectionsTable.selection.select(newSelectedIndexes);
+            connectionsTable.positionViewAtRow(newSelectedIndexes[0], ListView.Beginning);
         }*/
     }
 
-    function loadConnections(data) {
-        connectionsModel.clear();
-        if (data && data.connections) {
-            //console.log("[FRIENDS] QML has received connections to show ("+data.connections.length+")");
-            data.connections.forEach(function (connection) {
-                //console.log("[FRIENDS] a connection");
-                loadConnection(connection);
-            });        
-        }
+    function loadOnlineFriends() {
+        //onlineFriendModelData.sort(function (a, b) { ...        
+        //connectionsTable.selection.clear();
+        onlineFriendModel.clear();
+        var userIndex = 0;
+        //var newSelectedIndexes = [];
+        onlineFriendModelData.forEach(function (datum) {
+            datum.userIndex = userIndex++;
+            onlineFriendModel.append(datum);
+            /*if (selectedIDs.indexOf(datum.sessionId) != -1) {
+                 newSelectedIndexes.push(datum.userIndex);
+            }*/
+        });
+        /*if (newSelectedIndexes.length > 0) {
+            connectionsTable.selection.select(newSelectedIndexes);
+            connectionsTable.positionViewAtRow(newSelectedIndexes[0], ListView.Beginning);
+        }*/
     }
 
     function fromScript(message) {
         //console.log("[FRIENDS] message from script " + message.method);
         switch (message.method) {
-        case "nearbyUsers":
+        case "nearbyFriends":
             var data = message.params;
-            console.log("[FRIENDS] message from script nearbyUsers " + data.length);
-            loadNearbyUsers(data);
+            //console.log('Got nearbyFriends data: ', JSON.stringify(data));
+            nearbyFriendModelData = data;
+            loadNearbyFriends();
             break;
-        /*case "addUser":
+        case "onlineFriends":
             var data = message.params;
-            loadNearbyUser(data.user, 0);
-            break;*/
-        case "removeUser":
-            var data = message.params;
-            removeNearbyUserById(data.userId);
+            //console.log('Got onlineFriends data: ', JSON.stringify(data));
+            onlineFriendModelData = data;
+            loadOnlineFriends();
             break;
-        case "connections":
-            var data = message.params;
-            loadConnections(data);
-            break;
+
         default:
             console.log('[FRIENDS] Unrecognized message:', JSON.stringify(message));
         }
@@ -259,8 +339,8 @@ ColumnLayout {
     signal sendToScript(var message);
 
     function refreshClicked() {
-        sendToScript({method: 'refreshNearby', params: {}});
-        sendToScript({method: 'refreshConnections', params: {}});
+        sendToScript({method: 'refreshNearbyFriends', params: {}});
+        sendToScript({method: 'refreshOnlineFriends', params: {}});
     }
 
     // called after onLoaded
@@ -276,11 +356,12 @@ ColumnLayout {
             i++;
         }
         // 1st: QQuickRootItem > 2nd: Android(desktop) > 3rd: WindowRoot("tabletRoot")
+        //thirdAncestor.width=400;
         thirdAncestor.x=secondAncestor.width - thirdAncestor.width;
         thirdAncestor.y=0;
         thirdAncestor.height = secondAncestor.height;
-        sendToScript({method: 'refreshNearby', params: {}});
-        sendToScript({method: 'refreshConnections', params: {}});
+        sendToScript({method: 'refreshNearbyFriends', params: {}});
+        sendToScript({method: 'refreshOnlineFriends', params: {}});
     }
 
 }

@@ -27,11 +27,15 @@ var FRIENDS_ICONS = {
 function fromQml(message) { // messages are {method, params}, like json-rpc. See also sendToQml.
     var data;
     switch (message.method) {
-    case 'refreshNearby':
-        refreshNearbyUsers();
+    case 'refreshNearbyFriends':
+        var myPosition = Camera.position; // or MyAvatar.position ? or Camera.position & (1, 0, 1)
+        var myDomainId = Window.location.domainId;
+        var filter = isNearFriendFunction(myPosition, myDomainId);
+        refreshConnections(filter, 'nearbyFriends');
         break;
-    case 'refreshConnections':
-        refreshConnections(false);
+    case 'refreshOnlineFriends':
+        var filter = function(c) { return isFriend(c) && isOnline(c); };
+        refreshConnections(filter, 'onlineFriends');
         break;
     default:
         print('[friends.js] Unrecognized message from Friends.qml:', JSON.stringify(message));
@@ -40,14 +44,14 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
 
 function avatarAdded(QUuid) {
     //print("[FRIENDS] avatar added " + QUuid + " at " + JSON.stringify(AvatarList.getAvatar(QUuid).position));
-    var avatarDatum = getUserDatumFromAvatar(QUuid);
-    if (!avatarDatum) return;
-    sendToQml({ method: 'addUser', params: { user: avatarDatum} });
+    //var avatarDatum = getUserDatumFromAvatar(QUuid);
+    //if (!avatarDatum) return;
+    //sendToQml({ method: 'addUser', params: { user: avatarDatum} });
 }
 
 function avatarRemoved(QUuid) {
     //print("[FRIENDS] avatar removed " + QUuid);
-    sendToQml({ method: 'removeUser', params: { userId: QUuid}});
+    //sendToQml({ method: 'removeUser', params: { userId: QUuid}});
 }
 
 function sendToQml(message) {
@@ -100,6 +104,7 @@ function onClicked() {
     }
 }
 
+/*
 function getUserDatumFromAvatar(avatarId) {
         var avatar = AvatarList.getAvatar(avatarId);
         var name = avatar.sessionDisplayName;
@@ -135,8 +140,7 @@ function getUserDatumFromAvatar(avatarId) {
         }
         return avatarDatum;
 }
-
-function refreshNearbyUsers() {
+function refreshNearbyFriends() {
     var data = [], avatars = AvatarList.getAvatarIdentifiers();
     avatars.forEach(function (id) {
         var avatarDatum = getUserDatumFromAvatar(id);
@@ -147,8 +151,12 @@ function refreshNearbyUsers() {
         }
 
     });
-    sendToQml({ method: 'nearbyUsers', params: data });
+    print("[FRIENDS] refreshNearbyFriends data " + data);
+    sendToQml({ method: 'nearbyFriends', params: data });
 }
+*/
+
+
 
 
 //
@@ -184,78 +192,82 @@ function getProfilePicture(username, callback) { // callback(url) if successfull
     });
 }
 
-function getAvailableConnections(domain, callback) { // callback([{usename, location}...]) if successfull. (Logs otherwise)
+function getAvailableConnections(callback) { // callback([{usename, location}...]) if successfull. (Logs otherwise)
     url = METAVERSE_BASE + '/api/v1/users?'
-    if (domain) {
-        url += 'status=' + domain.slice(1, -1); // without curly braces
-    } else {
-        url += 'filter=connections'; // regardless of whether online
-    }
-    print("[FRIENDS] connections request " + url)
+    url += 'filter=connections'; // regardless of whether online
     requestJSON(url, function (connectionsData) {
         callback(connectionsData.users);
     });
 }
 
-function getInfoAboutUser(specificUsername, callback) {
-    url = METAVERSE_BASE + '/api/v1/users?filter=connections'
-    requestJSON(url, function (connectionsData) {
-        for (user in connectionsData.users) {
-            if (connectionsData.users[user].username === specificUsername) {
-                callback(connectionsData.users[user]);
-                return;
-            }
-        }
-        callback(false);
-    });
+function isFriend (c) { 
+    return c.connection === "friend";
+};
+
+function isOnline (c) {
+    return c.online;
 }
 
-function refreshConnections(specificUsername, domain) { // Update all the usernames that I am entitled to see, using my login but not dependent on canKick.
-    function frob(user) { // get into the right format
-        var formattedSessionId = user.location.node_id || '';
+// Window.location.domainId returns a domain like {4840a904-5a71-41c0-b7ca-945d1674be2b}
+// while other APIs return the id without the curly brackets
+function normalizeDomainId(domainId) {
+    if (domainId.substring( 0, domainId.length) !== "{" || 
+        domainId.substring( domainId.length - 1, domainId.length) !== "}") {
+        return "{" + domainId + "}";
+    }
+    return domainId;
+}
+
+function isNearFriendFunction(myPosition, myDomainId) {
+    return function (c) {
+        if (!isFriend(c) || !(c && c.location && c.location.root && c.location.root.domain)) {
+            return false;
+        }
+        if (myDomainId === normalizeDomainId(c.location.root.domain.id)) {
+            var path = c.location.path;
+            path = path.replace(/\//g, ",");
+            var match = path.split(",");
+            var x=match[1], y=match[2], z=match[3];
+            var cPosition =  { x: x, y: y, z: z };
+            var distance = Vec3.distance(cPosition, myPosition);
+            return distance <= Settings.getValue('friends/nearDistance');
+        }
+        return false;
+    }
+}
+
+function formatFriendConnection(conn) { // get into the right format
+        var formattedSessionId = conn.location.node_id || '';
         if (formattedSessionId !== '' && formattedSessionId.indexOf("{") != 0) {
             formattedSessionId = "{" + formattedSessionId + "}";
         }
-/*        for(var k in user) {
-            print("[FRIENDS] user key:" +  k + user[k]);
+/*        for(var k in conn) {
+            print("[FRIENDS] user key:" +  k + conn[k]);
         }
 
-        for (var k in user.location) {
-            print("[FRIENDS] user location key:" +  k + user.location[k]);
+        for (var k in conn.location) {
+            print("[FRIENDS] user location key:" +  k + conn.location[k]);
         }
-
         for (var k in user.images) {
             print("[FRIENDS] user images key:" +  k + user.images[k]);
         }*/
-        print("[FRIENDS] frob sessionId:" + formattedSessionId + "userName: " + user.username + " connection: " + user.connection + " profileUrl: " + user.images.thubnail + " placeName: " + ((user.location.root || user.location.domain || {}).name || ''));
+//        print("[FRIENDS] frob sessionId:" + formattedSessionId + "userName: " + conn.username + " connection: " + conn.connection + " profileUrl: " + conn.images.thubnail + " placeName: " + ((conn.location.root || conn.location.domain || {}).name || ''));
         return {
             sessionId: formattedSessionId,
-            userName: user.username,
-            connection: user.connection,
-            profileUrl: user.images.thumbnail,
-            placeName: (user.location.root || user.location.domain || {}).name || ''
+            userName: conn.username,
+            domain: conn.location.domain,
+            connection: conn.connection,
+            profileUrl: conn.images.thumbnail,
+            placeName: (conn.location.root || conn.location.domain || {}).name || ''
         };
     }
-    if (specificUsername) {
-        getInfoAboutUser(specificUsername, function (user) {
-            if (user) {
-                updateUser(frob(user));
-            } else {
-                print('Error: Unable to find information about ' + specificUsername + ' in connectionsData!');
-            }
-        });
-    } else {
-        getAvailableConnections(domain, function (users) {
-            if (domain) {
-                users.forEach(function (user) {
-                    updateUser(frob(user));
-                });
-            } else {
-                print("[FRIENDS] connections available: " + users);
-                sendToQml({ method: 'connections', params: { connections: users.map(frob) }});
-            }
-        });
-    }
+
+function refreshConnections(filterF, sendToQmlMethod) { // Update all the usernames that I am entitled to see, using my login but not dependent on canKick.
+    getAvailableConnections(function (conns) {
+        var filtered = conns.filter(filterF);
+        sendToQml({ method: sendToQmlMethod, params: filtered.map(formatFriendConnection)});
+    });
+    
 }
 
 button = tablet.addButton({
