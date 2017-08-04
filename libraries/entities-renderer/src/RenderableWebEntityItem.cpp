@@ -266,10 +266,16 @@ void RenderableWebEntityItem::loadSourceURL() {
             _webSurface->setMaxFps(DEFAULT_MAX_FPS);
         }
 
+#ifndef ANDROID
         _webSurface->load("WebView.qml", [&](QQmlContext* context, QObject* obj) {
             context->setContextProperty("eventBridgeJavaScriptToInject", QVariant(_javaScriptToInject));
         });
 
+#else
+    _webSurface->load("WebViewAndroid.qml", [&](QQmlContext* context, QObject* obj) {
+            context->setContextProperty("eventBridgeJavaScriptToInject", QVariant(_javaScriptToInject));
+    });
+#endif
         _webSurface->getRootItem()->setProperty("url", _sourceUrl);
         _webSurface->getRootContext()->setContextProperty("desktop", QVariant());
 

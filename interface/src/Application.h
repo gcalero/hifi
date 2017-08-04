@@ -355,6 +355,7 @@ public slots:
     static void packageModel();
 
     void openUrl(const QUrl& url) const;
+    Q_INVOKABLE void openUrl(const QString url) const;
 
     void resetSensors(bool andReload = false);
     void setActiveFaceTracker() const;

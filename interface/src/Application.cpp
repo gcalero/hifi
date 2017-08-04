@@ -6313,6 +6313,10 @@ void Application::packageModel() {
     ModelPackager::package();
 }
 
+void Application::openUrl(const QString url) const {
+    openUrl(QUrl(url));
+}
+
 void Application::openUrl(const QUrl& url) const {
     if (!url.isEmpty()) {
         if (url.scheme() == HIFI_URL_SCHEME) {
