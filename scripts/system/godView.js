@@ -143,15 +143,21 @@ var touchEndCount = 0;
 function touchEnd(event) {
     lastDragAt = null;
     lastDeltaDrag = null;
+    touchStartingCoordinates = null; // maybe in special cases it should be setup later?
     startedDraggingCamera = false;
     if (draggingCamera) {
+        printd("touchEnd fail because draggingCamera");
         draggingCamera = false;
+        //return;
+    }
+    if (movingCamera) {
+        movingCamera = false;
         return;
     }
-    if (event.isPinching) return;
-    if (event.isPinchOpening) return;
-    if (event.isMoved) return;
-    if (!currentTouchIsValid) return;
+    if (event.isPinching) { printd("touchEnd fail because isPinching");return;}
+    if (event.isPinchOpening) { printd("touchEnd fail because isPinchingOpening");return;}
+    if (event.isMoved) { printd("touchEnd fail because isMoved");return;}
+    if (!currentTouchIsValid)  { printd("touchEnd fail because !currentTouchIsValid");return;}
 
     printd("-- touchEndEvent ... touchEndCount:" + touchEndCount);
     var fakeDoubleTapEnd = Date.now();
@@ -282,17 +288,24 @@ function findRayIntersection(pickRay) {
  * 
  ********************************************************************************************************/
 
-function touchBegin(event) {
-  if (tablet.getItemAtPoint({ x: event.x, y: event.y }) ) {
-    currentTouchIsValid = false;
-  } else {
-    currentTouchIsValid = true;
+var touchStartingCoordinates = null;
 
-  }
+function touchBegin(event) {
+    var coords = { x: event.x, y: event.y };
+    if (tablet.getItemAtPoint(coords) ) {
+        currentTouchIsValid = false;
+        touchStartingCoordinates = null;
+    } else {
+        currentTouchIsValid = true;
+        touchStartingCoordinates = coords;
+    }
 }
 
-var startedDraggingCamera = false;
-var draggingCamera = false;
+var startedDraggingCamera = false; // first time
+var draggingCamera = false; // is trying
+var movingCamera = false; // definitive
+
+var MIN_DRAG_DISTANCE_TO_CONSIDER = 100; // distance by axis, not real distance
 
 function touchUpdate(event) {
     if (!currentTouchIsValid) {
@@ -342,6 +355,8 @@ function touchUpdate(event) {
                 printd("touchUpdate HERE - " + " lastDragAt " + JSON.stringify(lastDragAt));
                 printd("touchUpdate HERE - " + " dragAt " + JSON.stringify(dragAt));
 
+
+
                 var deltaDrag = {x: (lastDragAt.x - dragAt.x), y: 0, z: (lastDragAt.z-dragAt.z)};
 
                 lastDragAt = dragAt;
@@ -350,25 +365,42 @@ function touchUpdate(event) {
                     return;
                 }
 
-                if (Math.sign(deltaDrag.x) == Math.sign(lastDeltaDrag.x) && Math.sign(deltaDrag.z) == Math.sign(lastDeltaDrag.z)) {
-                    // Process movement if direction of the movement is the same than the previous frame
-
-                    // process delta
-                    var moveCameraTo = Vec3.sum(Camera.position, deltaDrag);
-                    printd("touchUpdate HERE - " + " x diff " + (lastDragAt.x - dragAt.x));
-                    printd("touchUpdate HERE - " + " moveCameraFrom " + JSON.stringify(Camera.position));
-                    printd("touchUpdate HERE - " + " moveCameraTo " + JSON.stringify(moveCameraTo));
-                    // move camera
-                    Camera.position = moveCameraTo;
-                    if (!draggingCamera) {
-                        startedDraggingCamera = true;
-                        draggingCamera = true;
-                    }
+                if (!draggingCamera) {
+                    startedDraggingCamera = true;
+                    draggingCamera = true;
                 } else {
-                    // Do not move camera if it's changing direction in this case, wait until the next direction confirmation..
+                    if (!movingCamera) {
+                        if (Math.abs(touchStartingCoordinates.x-event.x) > MIN_DRAG_DISTANCE_TO_CONSIDER
+                            || Math.abs(touchStartingCoordinates.y-event.y) > MIN_DRAG_DISTANCE_TO_CONSIDER) {
+                            movingCamera = true;
+                        }
+                    }
+                    if (movingCamera) {
+
+                        if (Math.sign(deltaDrag.x) == Math.sign(lastDeltaDrag.x) && Math.sign(deltaDrag.z) == Math.sign(lastDeltaDrag.z)) {
+                            // Process movement if direction of the movement is the same than the previous frame
+
+                            // process delta
+                            var moveCameraTo = Vec3.sum(Camera.position, deltaDrag);
+                            printd("touchUpdate HERE - " + " x diff " + (lastDragAt.x - dragAt.x));
+                            printd("touchUpdate HERE - " + " moveCameraFrom " + JSON.stringify(Camera.position));
+                            printd("touchUpdate HERE - " + " moveCameraTo " + JSON.stringify(moveCameraTo));
+                            // move camera
+                            Camera.position = moveCameraTo;
+                            /*if (!draggingCamera) {
+                                startedDraggingCamera = true;
+                                draggingCamera = true;
+                            }*/
+                        } else {
+                            // Do not move camera if it's changing direction in this case, wait until the next direction confirmation..
+                        }
+                        lastDeltaDrag = deltaDrag;
+                        // save last
+
+                    }
                 }
-                lastDeltaDrag = deltaDrag;
-                // save last
+
+
             }
         }
     }
