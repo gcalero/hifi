@@ -16,7 +16,7 @@ print("[godView.js] outside scope");
 
 (function() { // BEGIN LOCAL_SCOPE
 
-var logEnabled = true;
+var logEnabled = false;
 function printd(str) {
     if (logEnabled)
         print("[godView.js] " + str);
@@ -25,13 +25,14 @@ function printd(str) {
 printd("local scope");
 
 var godView = false;
+var godViewHeight = 10; // camera position meters above the avatar
 
 var GOD_CAMERA_OFFSET = -1; // 1 meter below the avatar
-var GOD_VIEW_HEIGHT = 10; // meters above the avatar (30 original)
 var ABOVE_GROUND_DROP = 2;
 var MOVE_BY = 1;
 
 // Swipe/Drag vars
+var PINCH_INCREMENT_FIRST = 0.4; // 0.1 meters zoom in - out
 var PINCH_INCREMENT = 0.4; // 0.1 meters zoom in - out
 var GOD_VIEW_HEIGHT_MAX_PLUS_AVATAR = 40;
 var GOD_VIEW_HEIGHT_MIN_PLUS_AVATAR = 2;
@@ -44,7 +45,7 @@ function moveTo(position) {
     if (godView) {
         MyAvatar.position = position;
         //Camera.position = Vec3.sum(MyAvatar.position, {x:0, y: GOD_CAMERA_OFFSET, z: 0});
-        Camera.position = Vec3.sum(MyAvatar.position, {x:0, y: GOD_VIEW_HEIGHT, z: 0});
+        Camera.position = Vec3.sum(MyAvatar.position, {x:0, y: godViewHeight, z: 0});
     } else {
         MyAvatar.position = position;
     }
@@ -100,7 +101,7 @@ function moveToFromEvent(event) {
     printd("-- pr.d:", pickRay.direction.x, ",", pickRay.direction.y, ",", pickRay.direction.z);
     printd("-- c.p:", Camera.position.x, ",", Camera.position.y, ",", Camera.position.z);
 
-    var pointingAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction,GOD_VIEW_HEIGHT));
+    var pointingAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction,godViewHeight));
 
     printd("-- pointing at:", pointingAt.x, ",", pointingAt.y, ",", pointingAt.z);
 
@@ -145,6 +146,7 @@ function touchEnd(event) {
     lastDeltaDrag = null;
     touchStartingCoordinates = null; // maybe in special cases it should be setup later?
     startedDraggingCamera = false;
+    prevTouchPinchRadius = null;
     if (draggingCamera) {
         printd("touchEnd fail because draggingCamera");
         draggingCamera = false;
@@ -307,102 +309,113 @@ var movingCamera = false; // definitive
 
 var MIN_DRAG_DISTANCE_TO_CONSIDER = 100; // distance by axis, not real distance
 
+var prevTouchPinchRadius = null;
+
+function pinchUpdate(event) {
+    printd("touchUpdate HERE - " + "isPinching");
+    if (!event.isMoved) return;
+    if (event.radius <= 0) return;
+
+    // pinch management
+    var avatarY = MyAvatar.position.y;
+    var pinchIncrement;
+    if (!!prevTouchPinchRadius) {
+        // no prev value
+        pinchIncrement = PINCH_INCREMENT * Math.abs(event.radius - prevTouchPinchRadius) * 0.1;
+    } else {
+        pinchIncrement = PINCH_INCREMENT_FIRST;
+    }
+
+    if (event.isPinching) {
+        if (godViewHeight + pinchIncrement > GOD_VIEW_HEIGHT_MAX_PLUS_AVATAR + avatarY) {
+            godViewHeight = GOD_VIEW_HEIGHT_MAX_PLUS_AVATAR + avatarY;
+        } else {
+            godViewHeight += pinchIncrement;
+        }
+    } else if (event.isPinchOpening) {
+        if (godViewHeight - pinchIncrement < GOD_VIEW_HEIGHT_MIN_PLUS_AVATAR + avatarY) {
+            godViewHeight = GOD_VIEW_HEIGHT_MIN_PLUS_AVATAR + avatarY;
+        } else {
+            godViewHeight -= pinchIncrement;
+        }
+    }
+    var deltaHeight = avatarY + godViewHeight - Camera.position.y;
+    //printd("pinch test: pinchIncrement: " + pinchIncrement + " deltaHeight: " + deltaHeight );
+    //printd("pinch test:        radius prevRadius: " + prevTouchPinchRadius + " currRadius: " + event.radius);
+    Camera.position = Vec3.sum(Camera.position, {x:0, y: deltaHeight, z: 0});
+    if (!draggingCamera) {
+        startedDraggingCamera = true;
+        draggingCamera = true;
+    }
+
+    prevTouchPinchRadius = event.radius;
+}
+
+function dragScrollUpdate(event) {
+    if (!event.isMoved) return;
+
+    // drag management
+    printd("touchUpdate HERE - " + "isMoved --------------------");
+    //event.x
+    var pickRay = Camera.computePickRay(event.x, event.y);
+    var dragAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction, godViewHeight));
+
+    printd("touchUpdate HERE - " + " pickRay.direction " + JSON.stringify(pickRay.direction));
+
+    if (lastDragAt === undefined || lastDragAt === null) {
+        lastDragAt = dragAt;
+        return;
+    }
+
+    printd("touchUpdate HERE - " + " event " + event.x + " x " + event.y);
+    printd("touchUpdate HERE - " + " lastDragAt " + JSON.stringify(lastDragAt));
+    printd("touchUpdate HERE - " + " dragAt " + JSON.stringify(dragAt));
+
+    var deltaDrag = {x: (lastDragAt.x - dragAt.x), y: 0, z: (lastDragAt.z-dragAt.z)};
+
+    lastDragAt = dragAt;
+    if (lastDeltaDrag === undefined || lastDeltaDrag === null) {
+        lastDeltaDrag = deltaDrag;
+        return;
+    }
+
+    if (!draggingCamera) {
+        startedDraggingCamera = true;
+        draggingCamera = true;
+    } else {
+        if (!movingCamera) {
+            if (Math.abs(touchStartingCoordinates.x-event.x) > MIN_DRAG_DISTANCE_TO_CONSIDER
+                || Math.abs(touchStartingCoordinates.y-event.y) > MIN_DRAG_DISTANCE_TO_CONSIDER) {
+                movingCamera = true;
+            }
+        }
+        if (movingCamera) {
+            if (Math.sign(deltaDrag.x) == Math.sign(lastDeltaDrag.x) && Math.sign(deltaDrag.z) == Math.sign(lastDeltaDrag.z)) {
+                // Process movement if direction of the movement is the same than the previous frame
+                // process delta
+                var moveCameraTo = Vec3.sum(Camera.position, deltaDrag);
+                printd("touchUpdate HERE - " + " x diff " + (lastDragAt.x - dragAt.x));
+                printd("touchUpdate HERE - " + " moveCameraFrom " + JSON.stringify(Camera.position));
+                printd("touchUpdate HERE - " + " moveCameraTo " + JSON.stringify(moveCameraTo));
+                // move camera
+                Camera.position = moveCameraTo;
+            } else {
+                // Do not move camera if it's changing direction in this case, wait until the next direction confirmation..
+            }
+            lastDeltaDrag = deltaDrag; // save last
+        }
+    }
+}
+
 function touchUpdate(event) {
     if (!currentTouchIsValid) {
         // avoid moving and zooming when tap is over UI entities
         return;
     }
     if (event.isPinching || event.isPinchOpening) {
-        printd("touchUpdate HERE - " + "isPinching");
-        if (event.isMoved) {
-            // pinch management
-            var avatarY = MyAvatar.position.y;
-            if (event.isPinching) {
-                if (GOD_VIEW_HEIGHT + PINCH_INCREMENT > GOD_VIEW_HEIGHT_MAX_PLUS_AVATAR + avatarY) {
-                    GOD_VIEW_HEIGHT = GOD_VIEW_HEIGHT_MAX_PLUS_AVATAR + avatarY;
-                } else {
-                    GOD_VIEW_HEIGHT = GOD_VIEW_HEIGHT + PINCH_INCREMENT;
-                }
-            } else if (event.isPinchOpening) {
-                if (GOD_VIEW_HEIGHT - PINCH_INCREMENT < GOD_VIEW_HEIGHT_MIN_PLUS_AVATAR + avatarY) {
-                    GOD_VIEW_HEIGHT = GOD_VIEW_HEIGHT_MIN_PLUS_AVATAR + avatarY;
-                } else {
-                    GOD_VIEW_HEIGHT = GOD_VIEW_HEIGHT - PINCH_INCREMENT;
-                }
-            }
-            var deltaHeight = avatarY + GOD_VIEW_HEIGHT - Camera.position.y;
-            Camera.position = Vec3.sum(Camera.position, {x:0, y: deltaHeight, z: 0});
-            if (!draggingCamera) {
-                startedDraggingCamera = true;
-                draggingCamera = true;
-            }
-        }
+        pinchUpdate(event);
     } else {
-        if (event.isMoved) {
-            // drag management
-            printd("touchUpdate HERE - " + "isMoved --------------------");
-            //event.x
-            var pickRay = Camera.computePickRay(event.x, event.y);
-            var dragAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction, GOD_VIEW_HEIGHT));
-
-            printd("touchUpdate HERE - " + " pickRay.direction " + JSON.stringify(pickRay.direction));
-
-            if (lastDragAt === undefined || lastDragAt === null) {
-                lastDragAt = dragAt;
-                // TODO CLEANUP WHEN RELEASING
-            } else {
-                printd("touchUpdate HERE - " + " event " + event.x + " x " + event.y);
-                printd("touchUpdate HERE - " + " lastDragAt " + JSON.stringify(lastDragAt));
-                printd("touchUpdate HERE - " + " dragAt " + JSON.stringify(dragAt));
-
-
-
-                var deltaDrag = {x: (lastDragAt.x - dragAt.x), y: 0, z: (lastDragAt.z-dragAt.z)};
-
-                lastDragAt = dragAt;
-                if (lastDeltaDrag === undefined || lastDeltaDrag === null) {
-                    lastDeltaDrag = deltaDrag;
-                    return;
-                }
-
-                if (!draggingCamera) {
-                    startedDraggingCamera = true;
-                    draggingCamera = true;
-                } else {
-                    if (!movingCamera) {
-                        if (Math.abs(touchStartingCoordinates.x-event.x) > MIN_DRAG_DISTANCE_TO_CONSIDER
-                            || Math.abs(touchStartingCoordinates.y-event.y) > MIN_DRAG_DISTANCE_TO_CONSIDER) {
-                            movingCamera = true;
-                        }
-                    }
-                    if (movingCamera) {
-
-                        if (Math.sign(deltaDrag.x) == Math.sign(lastDeltaDrag.x) && Math.sign(deltaDrag.z) == Math.sign(lastDeltaDrag.z)) {
-                            // Process movement if direction of the movement is the same than the previous frame
-
-                            // process delta
-                            var moveCameraTo = Vec3.sum(Camera.position, deltaDrag);
-                            printd("touchUpdate HERE - " + " x diff " + (lastDragAt.x - dragAt.x));
-                            printd("touchUpdate HERE - " + " moveCameraFrom " + JSON.stringify(Camera.position));
-                            printd("touchUpdate HERE - " + " moveCameraTo " + JSON.stringify(moveCameraTo));
-                            // move camera
-                            Camera.position = moveCameraTo;
-                            /*if (!draggingCamera) {
-                                startedDraggingCamera = true;
-                                draggingCamera = true;
-                            }*/
-                        } else {
-                            // Do not move camera if it's changing direction in this case, wait until the next direction confirmation..
-                        }
-                        lastDeltaDrag = deltaDrag;
-                        // save last
-
-                    }
-                }
-
-
-            }
-        }
+        dragScrollUpdate(event);
     }
 }
 
@@ -425,7 +438,7 @@ var ICON_AVATAR_DEFAULT_DIMENSIONS = {
 var avatarIconModelDimensionsVal = { x: 0, y: 0.00001, z: 0};
 function avatarIconModelDimensions() {
     // given the current height, give a size
-    var xz = -0.002831 * GOD_VIEW_HEIGHT + 0.1;
+    var xz = -0.002831 * godViewHeight + 0.1;
     avatarIconModelDimensionsVal.x = xz;
     avatarIconModelDimensionsVal.z = xz;
     // reuse object
@@ -561,7 +574,7 @@ var ICON_ENTITY_DEFAULT_DIMENSIONS = {
 var entityIconModelDimensionsVal = { x: 0, y: 0.00001, z: 0};
 function entityIconModelDimensions() {
     // given the current height, give a size
-    var xz = -0.002831 * GOD_VIEW_HEIGHT + 0.1;
+    var xz = -0.002831 * godViewHeight + 0.1;
     entityIconModelDimensionsVal.x = xz;
     entityIconModelDimensionsVal.z = xz;
     // reuse object
@@ -661,10 +674,10 @@ function startGodView() {
     printd("-- startGodView " + JSON.stringify(avatarsData));
     // Do not move the avatar when going to GodView, only the camera.
     //Camera.mode = "first person";
-    //MyAvatar.position = Vec3.sum(MyAvatar.position, {x:0, y: GOD_VIEW_HEIGHT, z: 0});
+    //MyAvatar.position = Vec3.sum(MyAvatar.position, {x:0, y: godViewHeight, z: 0});
     Camera.mode = "independent";
 
-    Camera.position = Vec3.sum(MyAvatar.position, {x:0, y: GOD_VIEW_HEIGHT, z: 0});
+    Camera.position = Vec3.sum(MyAvatar.position, {x:0, y: godViewHeight, z: 0});
     Camera.orientation = Quat.fromPitchYawRollDegrees(-90,0,0);
     godView = true;
 }
