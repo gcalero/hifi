@@ -28,6 +28,7 @@ bool AccountScriptingInterface::isLoggedIn() {
 
 bool AccountScriptingInterface::checkAndSignalForAccessToken() {
     auto accountManager = DependencyManager::get<AccountManager>();
+    accountManager->requestAccessToken("Testee", "letstesthifi");
     return accountManager->checkAndSignalForAccessToken();
 }
 
