@@ -44,15 +44,11 @@ var lastDeltaDrag;
 function moveTo(position) {
     if (godView) {
         MyAvatar.position = position;
-        //Camera.position = Vec3.sum(MyAvatar.position, {x:0, y: GOD_CAMERA_OFFSET, z: 0});
         Camera.position = Vec3.sum(MyAvatar.position, {x:0, y: godViewHeight, z: 0});
-    } else {
-        MyAvatar.position = position;
     }
 }
 
 function keyPressEvent(event) {
-    //print(event.text);
     if (godView) {
         switch(event.text) {
             case "UP":
@@ -93,21 +89,21 @@ function actionOnObjectFromEvent(event) {
 }
 
 function moveToFromEvent(event) {
-    printd("-- mousePressOrTouchEnd in godView");
-    printd("-- event.x, event.y:", event.x, ",", event.y);
+    //printd("-- mousePressOrTouchEnd in godView");
+    //printd("-- event.x, event.y:", event.x, ",", event.y);
     var pickRay = Camera.computePickRay(event.x, event.y);
 
-    printd("-- pr.o:", pickRay.origin.x, ",", pickRay.origin.y, ",", pickRay.origin.z);
-    printd("-- pr.d:", pickRay.direction.x, ",", pickRay.direction.y, ",", pickRay.direction.z);
-    printd("-- c.p:", Camera.position.x, ",", Camera.position.y, ",", Camera.position.z);
+    //printd("-- pr.o:", pickRay.origin.x, ",", pickRay.origin.y, ",", pickRay.origin.z);
+    //printd("-- pr.d:", pickRay.direction.x, ",", pickRay.direction.y, ",", pickRay.direction.z);
+    //printd("-- c.p:", Camera.position.x, ",", Camera.position.y, ",", Camera.position.z);
 
     var pointingAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction,godViewHeight));
 
-    printd("-- pointing at:", pointingAt.x, ",", pointingAt.y, ",", pointingAt.z);
+    //printd("-- pointing at:", pointingAt.x, ",", pointingAt.y, ",", pointingAt.z);
 
     var moveToPosition = { x: pointingAt.x, y: MyAvatar.position.y, z: pointingAt.z };
 
-    printd("-- moveToPosition:", moveToPosition.x, ",", moveToPosition.y, ",", moveToPosition.z);
+    //printd("-- moveToPosition:", moveToPosition.x, ",", moveToPosition.y, ",", moveToPosition.z);
 
     moveTo(moveToPosition);
     return true;
@@ -127,6 +123,7 @@ function toggleGodViewMode() {
     printd("-- toggleGodViewMode");
     if (godView) {
         endGodView();
+        disconnectGodModeEvents();
     } else {
         startGodView();
         //entitiesAnalysis();
@@ -137,30 +134,15 @@ function fakeDoubleTap() {
     toggleGodViewMode();
 }
 
-var currentTouchIsValid = false;
+var currentTouchIsValid = false; // Currently used to know if touch hasn't started on a UI overlay
+
 var DOUBLE_TAP_TIME = 200;
 var fakeDoubleTapStart = Date.now();
 var touchEndCount = 0;
-function touchEnd(event) {
-    lastDragAt = null;
-    lastDeltaDrag = null;
-    touchStartingCoordinates = null; // maybe in special cases it should be setup later?
-    startedDraggingCamera = false;
-    prevTouchPinchRadius = null;
-    if (draggingCamera) {
-        printd("touchEnd fail because draggingCamera");
-        draggingCamera = false;
-        //return;
-    }
-    if (movingCamera) {
-        movingCamera = false;
-        return;
-    }
-    if (event.isPinching) { printd("touchEnd fail because isPinching");return;}
-    if (event.isPinchOpening) { printd("touchEnd fail because isPinchingOpening");return;}
-    if (event.isMoved) { printd("touchEnd fail because isMoved");return;}
-    if (!currentTouchIsValid)  { printd("touchEnd fail because !currentTouchIsValid");return;}
 
+/* Counts touchEnds and if there were 2 in the DOUBLE_TAP_TIME lapse, it triggers a fakeDoubleTap and returns true.
+   Otherwise, returns false (no double tap yet) */
+function analyzeDoubleTap() {
     printd("-- touchEndEvent ... touchEndCount:" + touchEndCount);
     var fakeDoubleTapEnd = Date.now();
     printd("-- fakeDoubleTapEnd:" + fakeDoubleTapEnd);
@@ -189,14 +171,44 @@ function touchEnd(event) {
 
             touchEndCount = 0;
             fakeDoubleTap();
-            return; // don't do the normal touch end processing
+            return true; // don't do the normal touch end processing
         } else {
             printd("-- too slow.... not a double tap elapsed:" + elapsed);
         }
 
         touchEndCount = 0;
     }
-    mousePressOrTouchEnd(event);
+    return false;
+}
+
+function touchEnd(event) {
+    // Clean up touch variables
+    lastDragAt = null;
+    lastDeltaDrag = null;
+    touchStartingCoordinates = null; // maybe in special cases it should be setup later?
+    startedDraggingCamera = false;
+    prevTouchPinchRadius = null;
+    draggingCamera = false;
+
+    if (movingCamera) {
+        // if camera was indeed moving, we should not further process, it was just dragging
+        movingCamera = false;
+        return;
+    }
+
+    // if pinching or moving is still detected, cancel
+    if (event.isPinching) { printd("touchEnd fail because isPinching");return;}
+    if (event.isPinchOpening) { printd("touchEnd fail because isPinchingOpening");return;}
+    if (event.isMoved) { printd("touchEnd fail because isMoved");return;}
+
+    // if touch is invalid, cancel
+    if (!currentTouchIsValid)  { printd("touchEnd fail because !currentTouchIsValid");return;}
+
+    if (analyzeDoubleTap()) return; // double tap detected, finish
+
+    if (godView) {
+        mousePressOrTouchEnd(event);
+    }
 }
 
 /**
@@ -312,7 +324,7 @@ var MIN_DRAG_DISTANCE_TO_CONSIDER = 100; // distance by axis, not real distance
 var prevTouchPinchRadius = null;
 
 function pinchUpdate(event) {
-    printd("touchUpdate HERE - " + "isPinching");
+    //printd("touchUpdate HERE - " + "isPinching");
     if (!event.isMoved) return;
     if (event.radius <= 0) return;
 
@@ -360,7 +372,7 @@ function dragScrollUpdate(event) {
     var pickRay = Camera.computePickRay(event.x, event.y);
     var dragAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction, godViewHeight));
 
-    printd("touchUpdate HERE - " + " pickRay.direction " + JSON.stringify(pickRay.direction));
+    //printd("touchUpdate HERE - " + " pickRay.direction " + JSON.stringify(pickRay.direction));
 
     if (lastDragAt === undefined || lastDragAt === null) {
         lastDragAt = dragAt;
@@ -368,8 +380,8 @@ function dragScrollUpdate(event) {
     }
 
     printd("touchUpdate HERE - " + " event " + event.x + " x " + event.y);
-    printd("touchUpdate HERE - " + " lastDragAt " + JSON.stringify(lastDragAt));
-    printd("touchUpdate HERE - " + " dragAt " + JSON.stringify(dragAt));
+    //printd("touchUpdate HERE - " + " lastDragAt " + JSON.stringify(lastDragAt));
+    //printd("touchUpdate HERE - " + " dragAt " + JSON.stringify(dragAt));
 
     var deltaDrag = {x: (lastDragAt.x - dragAt.x), y: 0, z: (lastDragAt.z-dragAt.z)};
 
@@ -395,8 +407,8 @@ function dragScrollUpdate(event) {
                 // process delta
                 var moveCameraTo = Vec3.sum(Camera.position, deltaDrag);
                 printd("touchUpdate HERE - " + " x diff " + (lastDragAt.x - dragAt.x));
-                printd("touchUpdate HERE - " + " moveCameraFrom " + JSON.stringify(Camera.position));
-                printd("touchUpdate HERE - " + " moveCameraTo " + JSON.stringify(moveCameraTo));
+                //printd("touchUpdate HERE - " + " moveCameraFrom " + JSON.stringify(Camera.position));
+                //printd("touchUpdate HERE - " + " moveCameraTo " + JSON.stringify(moveCameraTo));
                 // move camera
                 Camera.position = moveCameraTo;
             } else {
@@ -467,7 +479,7 @@ function saveAvatarData(QUuid) {
         });
         avatarsIcons.push(avatarIcon);
         avatarsData[QUuid] = { position: avat.position, icon: avatarIcon};
-        printd("avatar added save avatar DONE " + JSON.stringify(avatarsData[QUuid]));
+        //printd("avatar added save avatar DONE " + JSON.stringify(avatarsData[QUuid]));
     }
 }
 
@@ -492,6 +504,17 @@ function saveAllOthersAvatarsData() {
             saveAvatarData(avatarIds[i]);
         }
     }
+}
+
+
+function avatarAdded(QUuid) {
+    printd("avatar added " + QUuid);// + " at " + JSON.stringify(AvatarList.getAvatar(QUuid).position));
+    saveAvatarData(QUuid);
+}
+
+function avatarRemoved(QUuid) {
+    printd("avatar removed " + QUuid);
+    removeAvatarData(QUuid);
 }
 
 /********************************************************************************************************
@@ -555,6 +578,25 @@ function renderAllOthersAvatarIcons() {
     }
 }
 
+function entityAdded(entityID) {
+    printd ("Entity added " + entityID);
+    var props = Entities.getEntityProperties(entityID, ["type"]);
+    print ("Entity added " + entityID + " PROPS " + JSON.stringify(props));
+    if (props && props.type == "Web") {
+        print ("Entity Web added " + entityID);
+        saveEntityData(entityID);
+    }
+}
+
+function entityRemoved(entityID) {
+    printd ("Entity removed " + entityID);
+    var props = Entities.getEntityProperties(entityID, ["type"]);
+    if (props && props.type == "Web") {
+        print ("Entity Web removed " + entityID);
+        removeEntityData(entityID);
+    }
+}
+
 /********************************************************************************************************
  * Entities (to remark) cache structure for showing entities markers
  ********************************************************************************************************/
@@ -605,7 +647,7 @@ function saveEntityData(QUuid) {
         entitiesIcons.push(entityIcon);
         entitiesData[QUuid] = { position: entity.position, icon: entityIcon};
         entitiesByOverlayID[entityIcon] = QUuid;
-        printd("entity added save entity DONE " + JSON.stringify(entitiesData[QUuid]));
+        //printd("entity added save entity DONE " + JSON.stringify(entitiesData[QUuid]));
     }
 }
 
@@ -668,10 +710,10 @@ function renderAllEntitiesIcons() {
  ********************************************************************************************************/
 
 function startGodView() {
-    printd("avatar added list " + JSON.stringify(AvatarList.getAvatarIdentifiers()));
+    //printd("avatar added list " + JSON.stringify(AvatarList.getAvatarIdentifiers()));
     printd("avatar added my avatar is  " + MyAvatar.sessionUUID);
     saveAllOthersAvatarsData();
-    printd("-- startGodView " + JSON.stringify(avatarsData));
+    //printd("-- startGodView " + JSON.stringify(avatarsData));
     // Do not move the avatar when going to GodView, only the camera.
     //Camera.mode = "first person";
     //MyAvatar.position = Vec3.sum(MyAvatar.position, {x:0, y: godViewHeight, z: 0});
@@ -680,6 +722,8 @@ function startGodView() {
     Camera.position = Vec3.sum(MyAvatar.position, {x:0, y: godViewHeight, z: 0});
     Camera.orientation = Quat.fromPitchYawRollDegrees(-90,0,0);
     godView = true;
+
+    connectGodModeEvents();
 }
 
 function endGodView() {
@@ -697,26 +741,14 @@ function onClicked() {
 
 function updateGodView() {
     // Update avatar icons
-    if (godView) {
-        if (startedDraggingCamera) {
-            hideAllAvatarIcons();
-            startedDraggingCamera = false;
-        } else if (!draggingCamera) {
-            renderMyAvatarIcon();
-            renderAllOthersAvatarIcons();
-            renderAllEntitiesIcons();
-        }
+    if (startedDraggingCamera) {
+        hideAllAvatarIcons();
+        startedDraggingCamera = false;
+    } else if (!draggingCamera) {
+        renderMyAvatarIcon();
+        renderAllOthersAvatarIcons();
+        renderAllEntitiesIcons();
     }
-}
-
-function avatarAdded(QUuid) {
-    printd("avatar added " + QUuid + " at " + JSON.stringify(AvatarList.getAvatar(QUuid).position));
-    saveAvatarData(QUuid);
-}
-
-function avatarRemoved(QUuid) {
-    printd("avatar removed " + QUuid);
-    removeAvatarData(QUuid);
 }
 
 function valueIfDefined(value) {
@@ -741,7 +773,7 @@ function entitiesAnalysis() {
                 hasScript: properties.script !== ""
             });
     }
-    printd("ALL ENTITIES: " + JSON.stringify(entities));
+    //printd("ALL ENTITIES: " + JSON.stringify(entities));
 }
 
 button = tablet.addButton({
@@ -750,53 +782,54 @@ button = tablet.addButton({
     sortOrder: 2
 });
 
-button.clicked.connect(onClicked);
-Controller.keyPressEvent.connect(keyPressEvent);
-Controller.mousePressEvent.connect(mousePressOrTouchEnd);
-Controller.touchEndEvent.connect(touchEnd);
+function connectGodModeEvents() {
+    Script.update.connect(updateGodView); // 60Hz loop
+    Controller.keyPressEvent.connect(keyPressEvent);
+    Controller.mousePressEvent.connect(mousePressOrTouchEnd); // single click/touch
+    Controller.touchUpdateEvent.connect(touchUpdate);
+}
 
-Controller.touchUpdateEvent.connect(touchUpdate);
+function disconnectGodModeEvents() {
+    Script.update.disconnect(updateGodView);
+    Controller.keyPressEvent.disconnect(keyPressEvent);
+    Controller.mousePressEvent.disconnect(mousePressOrTouchEnd);
+    Controller.touchUpdateEvent.disconnect(touchUpdate);
+}
+
+button.clicked.connect(onClicked); // god view button
+
 Controller.touchBeginEvent.connect(touchBegin);
-
-Script.update.connect(updateGodView);
-printd("avatar icon - connected update?.. maybe");
+Controller.touchEndEvent.connect(touchEnd);
 
 AvatarList.avatarAddedEvent.connect(avatarAdded);
 AvatarList.avatarRemovedEvent.connect(avatarRemoved);
 
-LODManager.LODDecreased.connect(function() {printd("LOD DECREASED --");});
-LODManager.LODIncreased.connect(function() {printd("LOD INCREASED ++");});
+//LODManager.LODDecreased.connect(function() {printd("LOD DECREASED --");});
+//LODManager.LODIncreased.connect(function() {printd("LOD INCREASED ++");});
 
-Entities.addingEntity.connect(function(entityID){
-    print ("Entity added " + entityID);
-    var props = Entities.getEntityProperties(entityID, ["type"]);
-    print ("Entity added " + entityID + " PROPS " + JSON.stringify(props));
-    if (props && props.type == "Web") {
-        print ("Entity Web added " + entityID);
-        saveEntityData(entityID);
-    }
-});
-Entities.deletingEntity.connect(function(entityID){
-    print ("Entity removed " + entityID);
-    var props = Entities.getEntityProperties(entityID, ["type"]);
-    if (props && props.type == "Web") {
-        print ("Entity Web removed " + entityID);
-        removeEntityData(entityID);
-    }
-});
-
+Entities.addingEntity.connect(entityAdded);
+Entities.deletingEntity.connect(entityRemoved);
 
 Script.scriptEnding.connect(function () {
     if (godView) {
         endGodView();
+        disconnectGodModeEvents();
     }
     button.clicked.disconnect(onClicked);
     if (tablet) {
         tablet.removeButton(button);
     }
-    Controller.keyPressEvent.disconnect(keyPressEvent);
-    Controller.mousePressEvent.disconnect(mousePressOrTouchEnd);
+    Controller.touchBeginEvent.disconnect(touchBegin);
     Controller.touchEndEvent.disconnect(touchEnd);
+
+    AvatarList.avatarAddedEvent.disconnect(avatarAdded);
+    AvatarList.avatarRemovedEvent.disconnect(avatarRemoved);
+
+    //LODManager.LODDecreased.disconnect(function() {printd("LOD DECREASED --");});
+    //LODManager.LODIncreased.disconnect(function() {printd("LOD INCREASED ++");});
+
+    Entities.addingEntity.disconnect(entityAdded);
+    Entities.deletingEntity.disconnect(entityRemoved);
 });
 
 }()); // END LOCAL_SCOPE
