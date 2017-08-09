@@ -2203,7 +2203,7 @@ void Application::paintGL() {
         // Using the latter will cause the camera to wobble with idle animations,
         // or with changes from the face tracker
         if (_myCamera.getMode() == CAMERA_MODE_FIRST_PERSON) {
-            if (isHMDMode()) {
+            if (isHMDMode() || isAndroid()) {
                 mat4 camMat = myAvatar->getSensorToWorldMatrix() * myAvatar->getHMDSensorMatrix();
                 _myCamera.setPosition(extractTranslation(camMat));
                 _myCamera.setOrientation(glm::quat_cast(camMat));
@@ -3836,7 +3836,7 @@ void Application::loadSettings() {
         if (firstRun.get()) {
             auto displayPlugins = pluginManager->getDisplayPlugins();
             for (auto& plugin : displayPlugins) {
-                if (plugin->isHmd()) {
+                if (plugin->isHmd() && !isAndroid()) {
                     if (auto action = menu->getActionForOption(plugin->getName())) {
                         action->setChecked(true);
                         action->trigger();
@@ -4012,13 +4012,13 @@ void Application::updateMyAvatarLookAtPosition() {
     bool isLookingAtSomeone = false;
     bool isHMD = qApp->isHMDMode();
     glm::vec3 lookAtSpot;
-    if (eyeTracker->isTracking() && (isHMD || eyeTracker->isSimulating())) {
+    if (eyeTracker->isTracking() && (isHMD || isAndroid() || eyeTracker->isSimulating())) {
         //  Look at the point that the user is looking at.
         glm::vec3 lookAtPosition = eyeTracker->getLookAtPosition();
         if (_myCamera.getMode() == CAMERA_MODE_MIRROR) {
             lookAtPosition.x = -lookAtPosition.x;
         }
-        if (isHMD) {
+        if (isHMD || isAndroid()) {
             glm::mat4 headPose = getActiveDisplayPlugin()->getHeadPose();
             glm::quat hmdRotation = glm::quat_cast(headPose);
             lookAtSpot = _myCamera.getPosition() + myAvatar->getOrientation() * (hmdRotation * lookAtPosition);
@@ -6789,7 +6789,7 @@ mat4 Application::getEyeOffset(int eye) const {
 }
 
 mat4 Application::getHMDSensorPose() const {
-    if (isHMDMode()) {
+    if (isHMDMode() || isAndroid()) {
         return getActiveDisplayPlugin()->getHeadPose();
     }
     return mat4();
@@ -6948,10 +6948,14 @@ void Application::updateThreadPoolCount() const {
 }
 
 QScriptValue Application::isAndroid(QScriptContext* context, QScriptEngine* engine) {
+  return QScriptValue(engine, isAndroid());
+}
+
+bool Application::isAndroid() {
 #ifdef ANDROID
-    return QScriptValue(engine, true);
+    return true;
 #else
-    return QScriptValue(engine, false);
+    return false;
 #endif
 }
 

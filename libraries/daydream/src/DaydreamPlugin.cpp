@@ -4,6 +4,7 @@
 
 #include "daydream/DaydreamDisplayPlugin.h"
 #include "daydream/DaydreamControllerManager.h"
+#include "Android2DDisplayPlugin.h"
 
 #if defined(ANDROID)
 gvr_context* __gvr_context;
@@ -19,13 +20,14 @@ DaydreamLibInstance::DaydreamLibInstance(){
         // hack in these two different versions of loadDisplayPlugins() because the Built In
         // plugins are exposed as a DisplayPluginList
         DisplayPlugin* DISPLAY_PLUGIN_POOL[] = {
+            new Android2DDisplayPlugin(),
             new DaydreamDisplayPlugin(),
             nullptr
         };
         // Temporarily stop using DaydreamDisplayPlugin for the Top-Down view implementation ("God View")
-        //PluginManager::getInstance()->loadDisplayPlugins(DISPLAY_PLUGIN_POOL);
-        DisplayPluginList builtInDisplayPlugins = getDisplayPlugins();
-        PluginManager::getInstance()->loadDisplayPlugins(builtInDisplayPlugins);
+        PluginManager::getInstance()->loadDisplayPlugins(DISPLAY_PLUGIN_POOL);
+        //DisplayPluginList builtInDisplayPlugins = getDisplayPlugins();
+        //PluginManager::getInstance()->loadDisplayPlugins(builtInDisplayPlugins);
 
         InputPlugin* INPUT_PLUGIN_POOL[] = {
             new DaydreamControllerManager(),

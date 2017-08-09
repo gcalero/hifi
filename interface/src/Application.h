@@ -303,6 +303,7 @@ public:
     Q_INVOKABLE void sendHoverLeaveEntity(QUuid id, PointerEvent event);
 
     static Q_INVOKABLE QScriptValue isAndroid(QScriptContext* context, QScriptEngine* engine);
+    static bool isAndroid();
 
     OverlayID getTabletScreenID() const;
     OverlayID getTabletHomeButtonID() const;
