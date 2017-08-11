@@ -1,6 +1,7 @@
 #include "vr/gvr/capi/include/gvr.h"
 #include "vr/gvr/capi/include/gvr_types.h"
 #include "vr/gvr/capi/include/gvr_controller.h"
+#include <QtAndroidExtras/QAndroidJniObject>
 
 #if defined(ANDROID)
 #ifndef hifi_daydream_plugin_h
@@ -22,7 +23,12 @@ class LibExecutor {
 static LibExecutor libExecutor;
 
 extern gvr_context* __gvr_context;
+extern bool __vr_exit_requested;
 extern std::unique_ptr<gvr::GvrApi> __gvr_api;
+
+extern void notifyEnterVr();
+bool _exitVrRequested();
+void _resetExitVrRequested();
 
 class GvrState {
 

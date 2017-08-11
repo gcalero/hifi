@@ -23,19 +23,30 @@ import com.google.vr.cardboard.DisplaySynchronizer;
 import com.google.vr.cardboard.DisplayUtils;
 import com.google.vr.ndk.base.GvrApi;
 import android.graphics.Point;
+import android.content.res.Configuration;
+import android.content.pm.ActivityInfo;
 
 public class InterfaceActivity extends QtActivity {
     
     public static native void handleHifiURL(String hifiURLString);
-    private native long nativeOnCreate(AssetManager assetManager, long gvrContextPtr);
+    private native long nativeOnCreate(InterfaceActivity instance, AssetManager assetManager, long gvrContextPtr);
     private native void saveRealScreenSize(int width, int height);
+    private native long nativeOnExitVr();
 
     private AssetManager assetManager;
+
+    private static boolean inVrMode;
 
     // Opaque native pointer to the Application C++ object.
     // This object is owned by the InterfaceActivity instance and passed to the native methods.
     //private long nativeGvrApi;
     
+    public void enterVr() {
+        //Log.d("[VR]", "Entering Vr mode (java)");
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        inVrMode = true;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,10 +69,27 @@ public class InterfaceActivity extends QtActivity {
         assetManager = getResources().getAssets();
 
         //nativeGvrApi =
-            nativeOnCreate(assetManager, gvrApi.getNativeGvrContext());
+            nativeOnCreate(this, assetManager, gvrApi.getNativeGvrContext());
 
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getRealSize(size);
         saveRealScreenSize(size.x, size.y);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Checks the orientation of the screen
+        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+//            Log.d("[VR]", "Portrait, forcing landscape");
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            if (inVrMode) {
+                inVrMode = false;
+//                Log.d("[VR]", "Starting VR exit");
+                nativeOnExitVr();                
+            } else {
+                Log.w("[VR]", "Portrait detected but not in VR mode. Should not happen");
+            }
+        }
     }
 }

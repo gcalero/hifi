@@ -17,7 +17,7 @@
 
 var headset; // The preferred headset. Default to the first one found in the following list.
 var displayMenuName = "Display";
-var desktopMenuItemName = "Desktop";
+var desktopMenuItemName = App.isAndroid()?"Android": "Desktop";
 ['OpenVR (Vive)', 'Oculus Rift', 'Daydream'].forEach(function (name) {
     if (!headset && Menu.menuItemExists(displayMenuName, name)) {
         headset = name;
@@ -34,6 +34,15 @@ function updateControllerDisplay() {
     } else if (controllerDisplay) {
         HMD.requestHideHandControllers();
         controllerDisplay = false;
+    }
+}
+
+function update() {
+    if (HMD.isVrExitRequested()) {
+        Menu.setIsOptionChecked(desktopMenuItemName, true);
+        var isDesktop = Menu.isOptionChecked(desktopMenuItemName);
+        onHmdChanged(!isDesktop);
+        HMD.resetVrExitRequested();
     }
 }
 
@@ -79,6 +88,10 @@ if (headset) {
     button.clicked.connect(onClicked);
     HMD.displayModeChanged.connect(onHmdChanged);
     Camera.modeUpdated.connect(updateControllerDisplay);
+
+    if (App.isAndroid) { // android only
+        Script.update.connect(update);
+    }
 
     Script.scriptEnding.connect(function () {
         button.clicked.disconnect(onClicked);

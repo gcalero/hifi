@@ -45,6 +45,8 @@ public:
     Q_INVOKABLE bool isHMDAvailable(const QString& name = "");
     Q_INVOKABLE bool isHandControllerAvailable(const QString& name = "");
     Q_INVOKABLE bool isSubdeviceContainingNameAvailable(const QString& name);
+    Q_INVOKABLE bool isVrExitRequested();
+    Q_INVOKABLE void resetVrExitRequested();
 
     Q_INVOKABLE void requestShowHandControllers();
     Q_INVOKABLE void requestHideHandControllers();

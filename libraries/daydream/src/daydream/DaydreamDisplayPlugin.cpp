@@ -54,6 +54,18 @@ void DaydreamDisplayPlugin::compositeLayers() {
     }
 
     {
+        PROFILE_RANGE_EX(render, "compositeOverlay", 0xff0077ff, (uint64_t)presentCount())
+        compositeOverlay(compBatch);
+    }
+
+    /*auto compositorHelper = DependencyManager::get<CompositorHelper>();
+    if (compositorHelper->getReticleVisible()) {
+        PROFILE_RANGE_EX(render, "compositePointer", 0xff0077ff, (uint64_t)presentCount())
+        compositePointer(compBatch);
+    }
+    */
+
+    {
         PROFILE_RANGE_EX(render, "composite1ExecuteBatch", 0xff0077ff, (uint64_t)presentCount())
         _gpuContext->executeBatch(compBatch);
     }
@@ -63,16 +75,6 @@ void DaydreamDisplayPlugin::compositeLayers() {
     extraBatch.setViewportTransform(ivec4(uvec2(), getRecommendedRenderSize()));
     extraBatch.setStateScissorRect(ivec4(uvec2(), getRecommendedRenderSize()));
 
-    {
-        PROFILE_RANGE_EX(render, "compositeOverlay", 0xff0077ff, (uint64_t)presentCount())
-        compositeOverlay(extraBatch);
-    }
-    /*auto compositorHelper = DependencyManager::get<CompositorHelper>();
-    if (compositorHelper->getReticleVisible()) {
-        PROFILE_RANGE_EX(render, "compositePointer", 0xff0077ff, (uint64_t)presentCount())
-        compositePointer(compBatch);
-    }
-    */
 
     {
         PROFILE_RANGE_EX(render, "compositeExtra", 0xff0077ff, (uint64_t)presentCount())
@@ -235,7 +237,7 @@ void DaydreamDisplayPlugin::customizeContext() {
 
 bool DaydreamDisplayPlugin::internalActivate() {
     _container->setFullscreen(nullptr, true);
-    qDebug() << "DaydreamDisplayPlugin::internalActivate " << __gvr_context;
+    notifyEnterVr();
     GvrState::init(__gvr_context);
     GvrState *gvrState = GvrState::getInstance();
 

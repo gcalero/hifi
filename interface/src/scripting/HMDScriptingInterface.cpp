@@ -21,6 +21,9 @@
 #include <QUuid>
 
 #include "Application.h"
+#ifdef ANDROID
+#include <DaydreamPlugin.h>
+#endif
 
 HMDScriptingInterface::HMDScriptingInterface() {
     connect(qApp, &Application::activeDisplayPluginChanged, [this]{
@@ -58,6 +61,13 @@ bool HMDScriptingInterface::isHandControllerAvailable(const QString& name) {
     return PluginUtils::isHandControllerAvailable(name);
 }
 
+bool HMDScriptingInterface::isVrExitRequested() {
+    return _exitVrRequested();
+}
+
+void HMDScriptingInterface::resetVrExitRequested() {
+    _resetExitVrRequested();
+}
 
 bool HMDScriptingInterface::isSubdeviceContainingNameAvailable(const QString& name) {
     return PluginUtils::isSubdeviceContainingNameAvailable(name);

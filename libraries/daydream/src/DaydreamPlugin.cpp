@@ -5,9 +5,12 @@
 #include "daydream/DaydreamDisplayPlugin.h"
 #include "daydream/DaydreamControllerManager.h"
 #include "Android2DDisplayPlugin.h"
+#include <QtAndroidExtras/QAndroidJniObject>
 
 #if defined(ANDROID)
 gvr_context* __gvr_context;
+bool __vr_exit_requested;
+QAndroidJniObject __activity;
 
 DaydreamLibInstance::DaydreamLibInstance(){
     static std::once_flag once;
@@ -42,11 +45,29 @@ DaydreamLibInstance::DaydreamLibInstance(){
 
 extern "C" {
 
-JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnCreate(JNIEnv* env, jobject obj, jobject asset_mgr, jlong gvr_context_ptr) {
+JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnCreate(JNIEnv* env, jobject obj, jobject instance, jobject asset_mgr, jlong gvr_context_ptr) {
     //qDebug() << "nativeOnCreate" << gvr_context_ptr << " On thread " << QThread::currentThreadId();
     __gvr_context = reinterpret_cast<gvr_context*>(gvr_context_ptr);
+    __activity = QAndroidJniObject(instance);
 }
 
+JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnExitVr(JNIEnv* env, jobject obj) {
+    __vr_exit_requested = true;
+}
+
+
+}
+
+bool _exitVrRequested() {
+    return __vr_exit_requested;
+}
+
+void _resetExitVrRequested() {
+    __vr_exit_requested = false;
+}
+
+void notifyEnterVr() {
+    __activity.callMethod<void>("enterVr", "()V");
 }
 
  GvrState* GvrState::instance = nullptr;
