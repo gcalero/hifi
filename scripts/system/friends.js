@@ -287,8 +287,7 @@ function refreshConnections(filterParams) { // Update all the usernames that I a
     var avatars = AvatarList.getAvatarIdentifiers();
         for (var i=0; i < filterParams.length; i++) {
             var x = filterParams[i];
-            //var filtered = conns.filter(x.filter);
-            filtered = conns;
+            var filtered = conns.filter(x.filter);
             sendToQml({ method: x.sendToQmlMethod, params: filtered.map(formatFriendConnection)});            
         }
     });
