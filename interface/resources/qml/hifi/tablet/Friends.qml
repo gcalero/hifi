@@ -114,6 +114,7 @@ ColumnLayout {
                 SimpleNameCard {
                     objectName: (model && model.sessionId) || "";
                     id: nearByNameCard;
+                    uuid: (model && model.sessionId) || "";
                     // Properties
                     visible: true
                     profileUrl: (model && model.profileUrl) || "";
@@ -202,6 +203,7 @@ ColumnLayout {
             SimpleNameCard {
                 objectName: (model && model.sessionId) || "";
                 id: connectionsNameCard;
+                uuid: (model && model.sessionId) || "";
                 // Properties
                 visible: true
                 profileUrl: (model && model.profileUrl) || "";
@@ -242,7 +244,7 @@ ColumnLayout {
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: enabled
-                    enabled: connectionsNameCard.selected && pal.activeTab == "connectionsTab"
+                    enabled: true // connectionsNameCard.selected && pal.activeTab == "connectionsTab"
                     onClicked: {
                         AddressManager.goToUser(model.userName);
                         UserActivityLogger.palAction("go_to_user", model.userName);
@@ -339,8 +341,7 @@ ColumnLayout {
     signal sendToScript(var message);
 
     function refreshClicked() {
-        sendToScript({method: 'refreshNearbyFriends', params: {}});
-        sendToScript({method: 'refreshOnlineFriends', params: {}});
+        sendToScript({method: 'refreshAll', params: {}});
     }
 
     // called after onLoaded
@@ -360,8 +361,7 @@ ColumnLayout {
         thirdAncestor.x=secondAncestor.width - thirdAncestor.width;
         thirdAncestor.y=0;
         thirdAncestor.height = secondAncestor.height;
-        sendToScript({method: 'refreshNearbyFriends', params: {}});
-        sendToScript({method: 'refreshOnlineFriends', params: {}});
+        sendToScript({method: 'refreshAll', params: {}});
     }
 
 }

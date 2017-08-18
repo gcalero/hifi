@@ -27,15 +27,17 @@ var FRIENDS_ICONS = {
 function fromQml(message) { // messages are {method, params}, like json-rpc. See also sendToQml.
     var data;
     switch (message.method) {
-    case 'refreshNearbyFriends':
-        var myPosition = Camera.position; // or MyAvatar.position ? or Camera.position & (1, 0, 1)
-        var myDomainId = Window.location.domainId;
-        var filter = isNearFriendFunction(myPosition, myDomainId);
-        refreshConnections(filter, 'nearbyFriends');
+    case 'refreshAll': 
+        // nearby & online friends
+        var nearbyFilter = isNearFriendFunction(Camera.position, Window.location.domainId);
+        var onlineFilter = function(c) { return isFriend(c) && isOnline(c); };
+        refreshConnections([
+                            {filter: nearbyFilter, sendToQmlMethod: 'nearbyFriends'},
+                            {filter: onlineFilter, sendToQmlMethod: 'onlineFriends'}
+                           ]);
         break;
-    case 'refreshOnlineFriends':
-        var filter = function(c) { return isFriend(c) && isOnline(c); };
-        refreshConnections(filter, 'onlineFriends');
+    case 'locateFriend':
+        locateFriend(message.params.username);
         break;
     default:
         print('[friends.js] Unrecognized message from Friends.qml:', JSON.stringify(message));
@@ -90,13 +92,16 @@ function onScreenChanged(type, url) {
     shouldActivateButton = false;
 }
 
-
+var i=0;
 function onClicked() {
     if (tablet) {
         if (onFriendsOnScreen) {
             shouldActivateButton = true;
             tablet.loadQMLSource(friendsQmlSource);
-            Account.checkAndSignalForAccessToken();
+            // temporary fix to avoid reconnection
+            if (i++ == 0) {
+                Account.checkAndSignalForAccessToken();                
+            }
         } else {
             tablet.gotoHomeScreen();
         }
@@ -140,20 +145,6 @@ function getUserDatumFromAvatar(avatarId) {
         }
         return avatarDatum;
 }
-function refreshNearbyFriends() {
-    var data = [], avatars = AvatarList.getAvatarIdentifiers();
-    avatars.forEach(function (id) {
-        var avatarDatum = getUserDatumFromAvatar(id);
-        if (!avatarDatum) return;
-        var distance = Settings.getValue('friends/nearDistance');
-        if (avatarDatum.distance && avatarDatum.distance <= distance) {
-            data.push(avatarDatum);
-        }
-
-    });
-    print("[FRIENDS] refreshNearbyFriends data " + data);
-    sendToQml({ method: 'nearbyFriends', params: data });
-}
 */
 
 
@@ -192,6 +183,15 @@ function getProfilePicture(username, callback) { // callback(url) if successfull
     });
 }
 
+function locateFriend(username) {
+    var url = METAVERSE_BASE + '/api/v1/users/'+username+'/location';
+    requestJSON(url, function(data) {
+        var path = data.location && data.location.path ? data.location.path : "";
+        var location = parseLocationFromPath(path);
+        Camera.position = Vec3.sum(location, {x:0, y:10, z:0});
+    });
+}
+
 function getAvailableConnections(callback) { // callback([{usename, location}...]) if successfull. (Logs otherwise)
     url = METAVERSE_BASE + '/api/v1/users?'
     url += 'filter=connections'; // regardless of whether online
@@ -200,7 +200,7 @@ function getAvailableConnections(callback) { // callback([{usename, location}...
     });
 }
 
-function isFriend (c) { 
+function isFriend (c) {
     return c.connection === "friend";
 };
 
@@ -218,6 +218,23 @@ function normalizeDomainId(domainId) {
     return domainId;
 }
 
+function parseLocationFromPath(path) {
+    if (!path) return;
+    var path = path.replace(/\//g, ",");
+    var match = path.split(",");
+    var x=parseFloat(match[1]), y=parseFloat(match[2]), z=parseFloat(match[3]);
+    //print("[FRIENDS] parseLocationFromPath x " + JSON.stringify({ x: x, y: y, z: z }));
+    return { x: x, y: y, z: z };
+}
+
+function parseOrientationFromPath(path) {
+    if (!path) return;
+    var path = path.replace(/\//g, ",");
+    var match = path.split(",");
+    var x=parseFloat(match[4]), y=parseFloat(match[5]), z=parseFloat(match[6]), w=parseFloat(match[7]);
+    return { x: x, y: y, z: z, w: w };
+}
+
 function isNearFriendFunction(myPosition, myDomainId) {
     return function (c) {
         if (!isFriend(c) || !(c && c.location && c.location.root && c.location.root.domain)) {
@@ -225,10 +242,7 @@ function isNearFriendFunction(myPosition, myDomainId) {
         }
         if (myDomainId === normalizeDomainId(c.location.root.domain.id)) {
             var path = c.location.path;
-            path = path.replace(/\//g, ",");
-            var match = path.split(",");
-            var x=match[1], y=match[2], z=match[3];
-            var cPosition =  { x: x, y: y, z: z };
+            var cPosition = parseLocationFromPath(path);
             var distance = Vec3.distance(cPosition, myPosition);
             return distance <= Settings.getValue('friends/nearDistance');
         }
@@ -241,20 +255,26 @@ function formatFriendConnection(conn) { // get into the right format
         if (formattedSessionId !== '' && formattedSessionId.indexOf("{") != 0) {
             formattedSessionId = "{" + formattedSessionId + "}";
         }
-/*        for(var k in conn) {
-            print("[FRIENDS] user key:" +  k + conn[k]);
-        }
-
+        /*for(var k in conn) {
+            print("[FRIENDS] user key:" +  k + JSON.stringify(conn[k]));
+        }*/
+        
+        var path = conn.location? conn.location.path : "";
+        var location = parseLocationFromPath(path);
+        var orientation = parseOrientationFromPath(path);
+/*
         for (var k in conn.location) {
             print("[FRIENDS] user location key:" +  k + conn.location[k]);
         }
-        for (var k in user.images) {
+        /*for (var k in user.images) {
             print("[FRIENDS] user images key:" +  k + user.images[k]);
         }*/
 //        print("[FRIENDS] frob sessionId:" + formattedSessionId + "userName: " + conn.username + " connection: " + conn.connection + " profileUrl: " + conn.images.thubnail + " placeName: " + ((conn.location.root || conn.location.domain || {}).name || ''));
         return {
             sessionId: formattedSessionId,
             userName: conn.username,
+            location: JSON.stringify(location),
+            orientation: JSON.stringify(orientation),
             domain: conn.location.domain,
             connection: conn.connection,
             profileUrl: conn.images.thumbnail,
@@ -262,12 +282,16 @@ function formatFriendConnection(conn) { // get into the right format
         };
     }
 
-function refreshConnections(filterF, sendToQmlMethod) { // Update all the usernames that I am entitled to see, using my login but not dependent on canKick.
+function refreshConnections(filterParams) { // Update all the usernames that I am entitled to see, using my login but not dependent on canKick.
     getAvailableConnections(function (conns) {
-        var filtered = conns.filter(filterF);
-        sendToQml({ method: sendToQmlMethod, params: filtered.map(formatFriendConnection)});
+    var avatars = AvatarList.getAvatarIdentifiers();
+        for (var i=0; i < filterParams.length; i++) {
+            var x = filterParams[i];
+            //var filtered = conns.filter(x.filter);
+            filtered = conns;
+            sendToQml({ method: x.sendToQmlMethod, params: filtered.map(formatFriendConnection)});            
+        }
     });
-    
 }
 
 button = tablet.addButton({

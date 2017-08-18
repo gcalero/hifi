@@ -95,8 +95,7 @@ Item {
             enabled: true
             hoverEnabled: enabled
             onClicked: {
-                userInfoViewer.url = defaultBaseUrl + "/users/" + userName;
-                userInfoViewer.visible = true;
+                locate(thisNameCard.userName);
             }
             onEntered: infoHoverImage.visible = true;
             onExited: infoHoverImage.visible = false;
@@ -151,9 +150,7 @@ Item {
                 enabled: isPresent;
                 hoverEnabled: enabled
                 onClicked: {
-                    goToUserInDomain(thisNameCard.uuid);
-                    // UserActivityLogger.palAction("go_to_user_in_domain", thisNameCard.uuid);
-                    // AddressManager.goToUser(thisNameCard.userName);
+                    AddressManager.goToUser(thisNameCard.userName);
                     // UserActivityLogger.palAction("go_to_user", thisNameCard.userName);
                 }
                 onEntered: {
@@ -198,23 +195,26 @@ Item {
         verticalAlignment: Text.AlignVCenter;
         // Style
         color: hifi.colors.blueAccent;
-        /*MouseArea {
+        MouseArea {
             anchors.fill: parent
             enabled: thisNameCard.userName !== "" && isPresent;
             hoverEnabled: enabled
             onClicked: {
-                goToUserInDomain(thisNameCard.uuid);
-                //UserActivityLogger.palAction("go_to_user_in_domain", thisNameCard.uuid);
+                AddressManager.goToUser(thisNameCard.userName);
             }
             onEntered: {
-                displayNameText.color = hifi.colors.blueHighlight;
-                userNameText.color = hifi.colors.blueHighlight;
+                //displayNameText.color = hifi.colors.blueHighlight;
+                //userNameText.color = hifi.colors.blueHighlight;
             }
             onExited: {
-                displayNameText.color = hifi.colors.darkGray;
-                userNameText.color = hifi.colors.blueAccent;
+                //displayNameText.color = hifi.colors.darkGray;
+                //userNameText.color = hifi.colors.blueAccent;
             }
-        }*/
+        }
+    }
+
+    function locate(username) {
+        sendToScript({method: 'locateFriend', params: { username: username }});
     }
 
     // Function body by Howard Stearns 2017-01-08

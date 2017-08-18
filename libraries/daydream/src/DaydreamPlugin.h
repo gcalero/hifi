@@ -26,7 +26,7 @@ extern gvr_context* __gvr_context;
 extern bool __vr_exit_requested;
 extern std::unique_ptr<gvr::GvrApi> __gvr_api;
 
-extern void notifyEnterVr();
+void notifyEnterVr();
 bool _exitVrRequested();
 void _resetExitVrRequested();
 
