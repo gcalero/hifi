@@ -186,6 +186,10 @@
 #include <EntityScriptClient.h>
 #include <ModelScriptingInterface.h>
 
+#ifdef ANDROID
+#include <DaydreamPlugin.h>
+#endif
+
 // On Windows PC, NVidia Optimus laptop, we want to enable NVIDIA GPU
 // FIXME seems to be broken.
 #if defined(Q_OS_WIN)
@@ -6314,7 +6318,7 @@ void Application::packageModel() {
 }
 
 void Application::openUrl(const QString url) const {
-    openUrl(QUrl(url));
+    openUrl(QUrl::fromUserInput(url));
 }
 
 void Application::openUrl(const QUrl& url) const {
@@ -6322,8 +6326,12 @@ void Application::openUrl(const QUrl& url) const {
         if (url.scheme() == HIFI_URL_SCHEME) {
             DependencyManager::get<AddressManager>()->handleLookupString(url.toString());
         } else {
+#ifdef ANDROID
+            openUrlInAndroidWebView(url.toEncoded());
+#else
             // address manager did not handle - ask QDesktopServices to handle
             QDesktopServices::openUrl(url);
+#endif
         }
     }
 }

@@ -92,4 +92,11 @@ public class InterfaceActivity extends QtActivity {
             }
         }
     }
+
+    public void openUrlInAndroidWebView(String urlString) {
+        Log.d("openUrl", "Received in open " + urlString);
+        Intent openUrlIntent = new Intent(this, WebViewActivity.class);
+        openUrlIntent.putExtra(WebViewActivity.WEB_VIEW_ACTIVITY_EXTRA_URL, urlString);
+        startActivity(openUrlIntent);
+    }
 }

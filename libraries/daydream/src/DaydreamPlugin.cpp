@@ -70,6 +70,10 @@ void notifyEnterVr() {
     __activity.callMethod<void>("enterVr", "()V");
 }
 
+void openUrlInAndroidWebView(QString urlString) {
+    __activity.callMethod<void>("openUrlInAndroidWebView", "(Ljava/lang/String;)V", QAndroidJniObject::fromString(urlString).object<jstring>());
+}
+
  GvrState* GvrState::instance = nullptr;
 
  GvrState::GvrState(gvr_context *ctx) :

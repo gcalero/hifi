@@ -29,6 +29,7 @@ extern std::unique_ptr<gvr::GvrApi> __gvr_api;
 void notifyEnterVr();
 bool _exitVrRequested();
 void _resetExitVrRequested();
+void openUrlInAndroidWebView(QString urlString);
 
 class GvrState {
 
