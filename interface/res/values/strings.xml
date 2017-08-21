@@ -1,0 +1,7 @@
+<resources>
+	<string name="AppDisplayName">Interface</string>
+    <string name="web_view_action_open_in_browser">Open in browser</string>
+    <string name="web_view_action_share">Share link</string>
+    <string name="web_view_action_share_subject">Shared a link</string>
+    <string name="web_view_action_share_chooser">Share link</string>
+</resources>

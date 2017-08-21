@@ -11,6 +11,9 @@
         style="@android:style/Widget.Material.ActionBar"
         android:titleTextAppearance="@style/ActionBarTitleStyle"
         android:subtitleTextAppearance="@style/ActionBarSubtitleStyle"
+        android:navigationIcon="@drawable/ic_close_black_24dp"
+        android:contentInsetStart="0dp"
+        android:contentInsetStartWithNavigation="0dp"
         android:title="">
     </Toolbar>
 

@@ -1541,7 +1541,8 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
     //DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/1494,-4.2,-1511.1"); // furniture
     //DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/3000.00,1.03495,3000.00"); // boxes and architecture (stress test?)
     //DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/1979,0.43495,-955"); // office
-    DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/0.0,0.0,0.0"); // apt working
+    //DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/0.0,0.0,0.0"); // apt working
+    DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/200.0,1.0,200.0"); // es web
     //DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/192,-5000,-198"); // apt
     //DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/-500,0,-600"); // no material apt
 
