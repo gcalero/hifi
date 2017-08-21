@@ -10,6 +10,7 @@
 #if defined(ANDROID)
 gvr_context* __gvr_context;
 bool __vr_exit_requested;
+bool __activityPaused;
 QAndroidJniObject __activity;
 
 DaydreamLibInstance::DaydreamLibInstance(){
@@ -50,6 +51,18 @@ JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnCrea
     __gvr_context = reinterpret_cast<gvr_context*>(gvr_context_ptr);
     __activity = QAndroidJniObject(instance);
 }
+
+JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnPause(JNIEnv* env, jobject obj) {
+    // qDebug() << "nativeOnPause";
+    __activityPaused = true;
+}
+
+JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnResume(JNIEnv* env, jobject obj) {
+    // qDebug() << "nativeOnResume";
+    __activityPaused = false;
+}
+
+
 
 JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnExitVr(JNIEnv* env, jobject obj) {
     __vr_exit_requested = true;

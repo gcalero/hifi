@@ -23,8 +23,12 @@ public:
     bool isHmd() const override final { return false; }
     bool isStereo() const { return false; }
     virtual float getTargetFrameRate() const override { return  _framerateTarget ? (float) _framerateTarget : TARGET_FRAMERATE_Basic2DWindowOpenGL; }
+    virtual bool isDisplayVisible() const { return false; }
 
     virtual bool internalActivate() override;
+
+    virtual void updateFrameData();
+
     bool beginFrameRender(uint32_t frameIndex) override;
 
     glm::uvec2 getRecommendedUiSize() const override {

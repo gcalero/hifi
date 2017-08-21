@@ -24,6 +24,7 @@ static LibExecutor libExecutor;
 
 extern gvr_context* __gvr_context;
 extern bool __vr_exit_requested;
+extern bool __activityPaused;
 extern std::unique_ptr<gvr::GvrApi> __gvr_api;
 
 void notifyEnterVr();

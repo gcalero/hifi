@@ -45,6 +45,14 @@ bool Android2DDisplayPlugin::beginFrameRender(uint32_t frameIndex) {
     return Parent::beginFrameRender(frameIndex);
 }
 
+void Android2DDisplayPlugin::updateFrameData() {
+    if (!__activityPaused) {
+        Parent::updateFrameData();
+    } else {
+        _currentFrame = NULL;
+    }
+}
+
 glm::mat4 Android2DDisplayPlugin::getHeadPose() const {
     return _currentRenderFrameInfo.renderPose;
 }

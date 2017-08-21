@@ -30,13 +30,15 @@ public class InterfaceActivity extends QtActivity {
     
     public static native void handleHifiURL(String hifiURLString);
     private native long nativeOnCreate(InterfaceActivity instance, AssetManager assetManager, long gvrContextPtr);
+    private native void nativeOnPause();
+    private native void nativeOnResume();
     private native void saveRealScreenSize(int width, int height);
     private native long nativeOnExitVr();
 
     private AssetManager assetManager;
 
     private static boolean inVrMode;
-
+    private GvrApi gvrApi;
     // Opaque native pointer to the Application C++ object.
     // This object is owned by the InterfaceActivity instance and passed to the native methods.
     //private long nativeGvrApi;
@@ -63,7 +65,7 @@ public class InterfaceActivity extends QtActivity {
         }
         
         DisplaySynchronizer displaySynchronizer = new DisplaySynchronizer(this, DisplayUtils.getDefaultDisplay(this));
-        GvrApi gvrApi = new GvrApi(this, displaySynchronizer);
+        gvrApi = new GvrApi(this, displaySynchronizer);
         Log.d("GVR", "gvrApi.toString(): " + gvrApi.toString());
 
         assetManager = getResources().getAssets();
@@ -74,6 +76,20 @@ public class InterfaceActivity extends QtActivity {
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getRealSize(size);
         saveRealScreenSize(size.x, size.y);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        nativeOnPause();
+        gvrApi.pauseTracking();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        nativeOnResume();
+        gvrApi.resumeTracking();
     }
 
     @Override
