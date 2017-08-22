@@ -27,7 +27,7 @@ public:
 
     virtual bool internalActivate() override;
 
-    virtual void updateFrameData();
+    virtual void updateFrameData() override;
 
     bool beginFrameRender(uint32_t frameIndex) override;
 

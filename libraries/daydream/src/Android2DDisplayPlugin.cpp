@@ -7,9 +7,12 @@
 //
 #include "Android2DDisplayPlugin.h"
 #include "daydream/DaydreamHelpers.h"
+#include <ui-plugins/PluginContainer.h>
+
 const QString Android2DDisplayPlugin::NAME("Android");
 
 bool Android2DDisplayPlugin::internalActivate() {
+    _container->setFullscreen(nullptr, true);
     _framerateActions.clear();
     qDebug()<<"Android2DDisplayPlugin::internalActivate";
     return Parent::internalActivate();
