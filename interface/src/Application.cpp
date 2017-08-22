@@ -5543,8 +5543,10 @@ void Application::registerScriptEngineWithApplicationServices(ScriptEngine* scri
     // register `location` on the global object.
     scriptEngine->registerGetterSetter("location", LocationScriptingInterface::locationGetter,
                                        LocationScriptingInterface::locationSetter);
-
+#ifndef ANDROID
+    // Removed from android build since it is causing errors loading other qml components (and it is not used...)
     scriptEngine->registerFunction("OverlayWebWindow", QmlWebWindowClass::constructor);
+#endif
     scriptEngine->registerFunction("OverlayWindow", QmlWindowClass::constructor);
 
     scriptEngine->registerGlobalObject("Menu", MenuScriptingInterface::getInstance());

@@ -9,21 +9,23 @@
 //  Distributed under the Apache License, Version 2.0.
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
+var tablet = null;
+var friendsQmlSource = "Friends.qml";
+var request = Script.require('request').request;
+var METAVERSE_BASE = location.metaverseServerUrl;
 
+var logEnabled = false;
+function printd(str) {
+    if (logEnabled)
+        print("[friends.js] " + str);
+}
 
-//print("[friends.js]");
+function init() {
+    tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
+    tablet.fromQml.connect(fromQml);
+}
 
-(function() {
-    var tablet = null;
-    var button;
-    var friendsQmlSource = "Friends.qml";
-    var request = Script.require('request').request;
-
-var FRIENDS_ICONS = {
-    icon: "icons/tablet-icons/users-i.svg",
-    activeIcon: "icons/tablet-icons/users-a.svg"
-};
-
+var first=true; // temporary
 function fromQml(message) { // messages are {method, params}, like json-rpc. See also sendToQml.
     var data;
     switch (message.method) {
@@ -43,118 +45,9 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
         print('[friends.js] Unrecognized message from Friends.qml:', JSON.stringify(message));
     }
 }
-
-function avatarAdded(QUuid) {
-    //print("[FRIENDS] avatar added " + QUuid + " at " + JSON.stringify(AvatarList.getAvatar(QUuid).position));
-    //var avatarDatum = getUserDatumFromAvatar(QUuid);
-    //if (!avatarDatum) return;
-    //sendToQml({ method: 'addUser', params: { user: avatarDatum} });
-}
-
-function avatarRemoved(QUuid) {
-    //print("[FRIENDS] avatar removed " + QUuid);
-    //sendToQml({ method: 'removeUser', params: { userId: QUuid}});
-}
-
 function sendToQml(message) {
     tablet.sendToQml(message);
 }
-
-function startup() {
-    tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
-    tablet.fromQml.connect(fromQml);
-}
-
-startup();
-
-//
-// Mouse events
-//
-
-function mousePressOrTouchEnd(event) {
-//    print("[friends.js] mousePressOrTouchEnd");
-}
-
-function touchEnd(event) {
-//    print("[friends.js] touchEnd");
-}
-
-function touchUpdate(event) {
-//    print("[friends.js] touchUpdate");
-}
-
-var onFriendsOnScreen = false;
-var shouldActivateButton = false;
-
-function onScreenChanged(type, url) {
-    // for toolbar mode: change button to active when window is first openend, false otherwise.
-    button.editProperties({isActive: shouldActivateButton});
-    shouldActivateButton = false;
-}
-
-var i=0;
-function onClicked() {
-    if (tablet) {
-        if (onFriendsOnScreen) {
-            shouldActivateButton = true;
-            tablet.loadQMLSource(friendsQmlSource);
-            // temporary fix to avoid reconnection
-            if (i++ == 0) {
-                Account.checkAndSignalForAccessToken();                
-            }
-        } else {
-            tablet.gotoHomeScreen();
-        }
-        onFriendsOnScreen = !onFriendsOnScreen;
-    }
-}
-
-/*
-function getUserDatumFromAvatar(avatarId) {
-        var avatar = AvatarList.getAvatar(avatarId);
-        var name = avatar.sessionDisplayName;
-
-        if (!name) {
-            AvatarManager.getAvatar(avatarId);
-            return;
-        }
-
-        var myPosition = Camera.position;
-
-        var avatarDatum = {
-            profileUrl: '',
-            displayName: name,
-            userName: '',
-            connection: '',
-            sessionId: avatarId || '',
-            isPresent: true,
-            isReplicated: avatar.isReplicated,
-            position: avatar.position,
-            distance: Vec3.distance(avatar.position, myPosition)
-        };
-
-        // Everyone needs to see admin status. Username and fingerprint returns default constructor output if the requesting user isn't an admin.
-        Users.requestUsernameFromID(avatarId);
-
-        if (avatarId) {
-            //addAvatarNode(id); // No overlay for ourselves
-            //avatarsOfInterest[id] = true;
-        } else {
-            // Return our username from the Account API
-            avatarDatum.userName = Account.username;
-        }
-        return avatarDatum;
-}
-*/
-
-
-
-
-//
-// User management services
-//
-// These are prototype versions that will be changed when the back end changes.
-var METAVERSE_BASE = location.metaverseServerUrl;
 
 function requestJSON(url, callback) { // callback(data) if successfull. Logs otherwise.
     request({
@@ -223,7 +116,7 @@ function parseLocationFromPath(path) {
     var path = path.replace(/\//g, ",");
     var match = path.split(",");
     var x=parseFloat(match[1]), y=parseFloat(match[2]), z=parseFloat(match[3]);
-    //print("[FRIENDS] parseLocationFromPath x " + JSON.stringify({ x: x, y: y, z: z }));
+    //printd("[FRIENDS] parseLocationFromPath x " + JSON.stringify({ x: x, y: y, z: z }));
     return { x: x, y: y, z: z };
 }
 
@@ -255,21 +148,10 @@ function formatFriendConnection(conn) { // get into the right format
         if (formattedSessionId !== '' && formattedSessionId.indexOf("{") != 0) {
             formattedSessionId = "{" + formattedSessionId + "}";
         }
-        /*for(var k in conn) {
-            print("[FRIENDS] user key:" +  k + JSON.stringify(conn[k]));
-        }*/
         
         var path = conn.location? conn.location.path : "";
         var location = parseLocationFromPath(path);
         var orientation = parseOrientationFromPath(path);
-/*
-        for (var k in conn.location) {
-            print("[FRIENDS] user location key:" +  k + conn.location[k]);
-        }
-        /*for (var k in user.images) {
-            print("[FRIENDS] user images key:" +  k + user.images[k]);
-        }*/
-//        print("[FRIENDS] frob sessionId:" + formattedSessionId + "userName: " + conn.username + " connection: " + conn.connection + " profileUrl: " + conn.images.thubnail + " placeName: " + ((conn.location.root || conn.location.domain || {}).name || ''));
         return {
             sessionId: formattedSessionId,
             userName: conn.username,
@@ -287,43 +169,35 @@ function refreshConnections(filterParams) { // Update all the usernames that I a
     var avatars = AvatarList.getAvatarIdentifiers();
         for (var i=0; i < filterParams.length; i++) {
             var x = filterParams[i];
-            var filtered = conns.filter(x.filter);
+            //var filtered = conns.filter(x.filter);
+            filtered = conns;
             sendToQml({ method: x.sendToQmlMethod, params: filtered.map(formatFriendConnection)});            
         }
     });
 }
 
-button = tablet.addButton({
-    icon: FRIENDS_ICONS.icon, // FIXME - use correct icon
-    activeIcon: FRIENDS_ICONS.activeIcon,
-    text: "Friends",
-    sortOrder: 2
-});
+//print("[friends.js]");
+module.exports = {
+    init: function() {
+        init();
+    },
+    show: function() {
+        printd("[FRIENDS] show");
+        tablet.loadQMLSource(friendsQmlSource);
+        // temporary fix to avoid reconnection
+        if (first) {
+            Account.checkAndSignalForAccessToken();
+            first=false;
+        }
 
-tablet.screenChanged.connect(onScreenChanged);
-button.clicked.connect(onClicked);
-
-//Controller.keyPressEvent.connect(keyPressEvent);
-Controller.mousePressEvent.connect(mousePressOrTouchEnd);
-Controller.touchEndEvent.connect(touchEnd);
-
-Controller.touchUpdateEvent.connect(touchUpdate);
-AvatarList.avatarAddedEvent.connect(avatarAdded);
-AvatarList.avatarRemovedEvent.connect(avatarRemoved);
-
-
-Script.scriptEnding.connect(function () {
-    tablet.screenChanged.disconnect(onScreenChanged);
-    button.clicked.disconnect(onClicked);
-    if (tablet) {
-        tablet.removeButton(button);
+    },
+    hide: function() {
+        printd("[FRIENDS] hide");
+        tablet.gotoHomeScreen();
+    },
+    destroy: function() {
+        tablet.fromQml.disconnect(fromQml);   
     }
-//    Controller.keyPressEvent.disconnect(keyPressEvent);
-    Controller.mousePressEvent.disconnect(mousePressOrTouchEnd);
-    Controller.touchEndEvent.disconnect(mousePressOrTouchEnd);
+};
 
-    AvatarList.avatarAddedEvent.disconnect(avatarAdded);
-    AvatarList.avatarRemovedEvent.disconnect(avatarRemoved);
-});
-
-}()); // END LOCAL_SCOPE
+init();

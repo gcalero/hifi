@@ -15,7 +15,7 @@
 print("[godView.js] outside scope");
 
 (function() { // BEGIN LOCAL_SCOPE
-
+var friends = Script.require('./friends.js');
 var logEnabled = false;
 function printd(str) {
     if (logEnabled)
@@ -724,12 +724,16 @@ function startGodView() {
     godView = true;
 
     connectGodModeEvents();
+    friends.init();
+    friends.show();
 }
 
 function endGodView() {
     printd("-- endGodView");
     Camera.mode = "first person";
     godView = false;
+    friends.hide();
+    friends.destroy();
 }
 
 var button;
@@ -831,5 +835,7 @@ Script.scriptEnding.connect(function () {
     Entities.addingEntity.disconnect(entityAdded);
     Entities.deletingEntity.disconnect(entityRemoved);
 });
+
+startGodView();
 
 }()); // END LOCAL_SCOPE

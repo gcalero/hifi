@@ -73,7 +73,7 @@ if (!App.isAndroid()) {
         "system/help.js",
         "system/bubble.js",
         "system/godView.js",
-        "system/friends.js",
+        //"system/friends.js",
         "developer/debugging/debugAndroidMouse.js"
     ]);
 }
