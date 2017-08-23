@@ -382,7 +382,11 @@ void OpenGLDisplayPlugin::customizeContext() {
 
         {
             auto vs = gpu::StandardShaderLib::getDrawUnitQuadTexcoordVS();
+#ifndef ANDROID
             auto ps = gpu::Shader::createPixel(std::string(SRGB_TO_LINEAR_FRAG));
+#else 
+            auto ps = gpu::StandardShaderLib::getDrawTexturePS();
+#endif            
             gpu::ShaderPointer program = gpu::Shader::createProgram(vs, ps);
             gpu::Shader::makeProgram(*program);
             gpu::StatePointer state = gpu::StatePointer(new gpu::State());
