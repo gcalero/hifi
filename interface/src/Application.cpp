@@ -128,6 +128,7 @@
 #include <recording/Recorder.h>
 #include <shared/StringHelpers.h>
 #include <QmlWebWindowClass.h>
+#include <QmlMenuBarClass.h>
 #include <Preferences.h>
 #include <display-plugins/CompositorHelper.h>
 
@@ -5547,6 +5548,8 @@ void Application::registerScriptEngineWithApplicationServices(ScriptEngine* scri
     // Removed from android build since it is causing errors loading other qml components (and it is not used...)
     scriptEngine->registerFunction("OverlayWebWindow", QmlWebWindowClass::constructor);
 #endif
+    scriptEngine->registerFunction("MenuBar", QmlMenuBarClass::constructor);
+
     scriptEngine->registerFunction("OverlayWindow", QmlWindowClass::constructor);
 
     scriptEngine->registerGlobalObject("Menu", MenuScriptingInterface::getInstance());
