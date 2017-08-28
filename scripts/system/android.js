@@ -65,6 +65,54 @@ function touchEnd(event) {
 	        width: Window.innerWidth/3,
 	        height: 100
 	    });
+
+	    var avatarBtn = bottombar.addButton({
+            icon: "icons/android/avatar.svg",
+            text: "Avatar",
+        });
+        avatarBtn.clicked.connect(function() {
+        	printd("Avatar button clicked");
+        }); // god view button
+	    
+        var gotoBtn = bottombar.addButton({
+            icon: "icons/android/goto.svg",
+            text: "Go To",
+        });
+        gotoBtn.clicked.connect(function() {
+			printd("Goto clicked");
+        });
+        var bubbleBtn = bottombar.addButton({
+            icon: "icons/android/bubble.svg",
+            text: "Bubble",
+        });
+        bubbleBtn.clicked.connect(function() {
+			printd("Bubble clicked");
+        });
+
+        var chatBtn = bottombar.addButton({
+            icon: "icons/android/chat.svg",
+            text: "Chat",
+        });
+        chatBtn.clicked.connect(function() {
+			printd("Chat clicked");
+        });
+
+        var peopleBtn = bottombar.addButton({
+            icon: "icons/android/people.svg",
+            text: "People",
+        });
+        peopleBtn.clicked.connect(function() {
+			printd("People clicked");
+        });
+
+        var settingsBtn = bottombar.addButton({
+            icon: "icons/android/settings.svg",
+            text: "Settings",
+        });
+        settingsBtn.clicked.connect(function() {
+			printd("Settings clicked");
+        });
+
 	    //friendsWindow.setURL(FRIENDS_WINDOW_URL);
 	    bottombar.setVisible(true);
 	    bottombar.raise();

@@ -16,8 +16,23 @@ class QmlMenuBarClass : public QmlWindowClass {
 public: 
 	static QScriptValue constructor(QScriptContext* context, QScriptEngine* engine);
 
+	/**jsdoc
+     * Creates a new button, adds it to this and returns it.
+     * @function TabletProxy#addButton
+     * @param properties {Object} button properties UI_TABLET_HACK: enumerate these when we figure out what they should be!
+     * @returns {TabletButtonProxy}
+     */
+    Q_INVOKABLE QObject* addButton(const QVariant& properties);
+
+public slots:
+    void clickedSlot() { emit clicked(); }
+
+signals:
+
+    void clicked();
+
 protected:
     QString qmlSource() const override { return "hifi/android/bottombar.qml"; }
-
 };
+
 #endif

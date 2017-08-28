@@ -8,6 +8,8 @@ Item {
     property string icon: "icons/tablet-icons/edit-i.svg"
     property string text: "EDIT"
 
+    signal clicked()
+
     width: 100
     height: 100
     Image {
@@ -30,5 +32,40 @@ Item {
         anchors.bottomMargin: 10
         anchors.horizontalCenter: parent.horizontalCenter
         horizontalAlignment: Text.AlignHCenter
+    }
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        enabled: true
+        onClicked: {
+            console.log("Bottom bar button clicked!!");
+            /*if (tabletButton.inDebugMode) {
+                if (tabletButton.isActive) {
+                    tabletButton.isActive = false;
+                } else {
+                    tabletButton.isActive = true;
+                }
+            }*/
+            button.clicked();
+            /*if (tabletRoot) {
+                tabletRoot.playButtonClickSound();
+            }*/
+        }
+        /*onEntered: {
+            tabletButton.isEntered = true;
+            if (tabletButton.isActive) {
+                tabletButton.state = "hover active state";
+            } else {
+                tabletButton.state = "hover state";
+            }
+        }
+        onExited: {
+            tabletButton.isEntered = false;
+            if (tabletButton.isActive) {
+                tabletButton.state = "active state";
+            } else {
+                tabletButton.state = "base state";
+            }
+        }*/
     }
 }
