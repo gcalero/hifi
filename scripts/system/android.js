@@ -35,6 +35,8 @@ function init() {
 	Controller.touchBeginEvent.connect(touchBegin);
 	Controller.touchEndEvent.connect(touchEnd);
 	Controller.touchUpdateEvent.connect(touchUpdate);
+
+    setupModesBar();
 }
 
 function shutdown() {
@@ -142,6 +144,12 @@ function touchUpdate(event) {
 		swipingUp = false;
 		touchInProgress = true; // or invalidateSwipingUp=true;
 	}
+}
+
+function setupModesBar() {
+    var modesBar = new MenuBar({
+        menuId: "hifi/android/modesbar"
+    });
 }
 
 Script.scriptEnding.connect(function () {

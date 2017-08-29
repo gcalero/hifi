@@ -25,6 +25,11 @@ public:
      */
     Q_INVOKABLE QObject* addButton(const QVariant& properties);
 
+    /*
+     * TODO - not yet implemented
+     */
+    Q_INVOKABLE void removeButton(QObject* tabletButtonProxy);
+
 protected:
     QString qmlSource() const override { return menuId + ".qml"; }
 

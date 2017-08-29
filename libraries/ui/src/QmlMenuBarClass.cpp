@@ -73,3 +73,6 @@ QObject* QmlMenuBarClass::addButton(const QVariant& properties) {
     
     return qmlButton;
 }
+
+void QmlMenuBarClass::removeButton(QObject* tabletButtonProxy) {
+}
