@@ -14,25 +14,25 @@
 class QmlMenuBarClass : public QmlWindowClass {
 	Q_OBJECT
 public: 
+	QmlMenuBarClass(QString id);
 	static QScriptValue constructor(QScriptContext* context, QScriptEngine* engine);
 
 	/**jsdoc
      * Creates a new button, adds it to this and returns it.
-     * @function TabletProxy#addButton
-     * @param properties {Object} button properties UI_TABLET_HACK: enumerate these when we figure out what they should be!
+     * @function QmlMenuBarClass#addButton
+     * @param properties {Object} button properties 
      * @returns {TabletButtonProxy}
      */
     Q_INVOKABLE QObject* addButton(const QVariant& properties);
 
-public slots:
-    void clickedSlot() { emit clicked(); }
-
-signals:
-
-    void clicked();
-
 protected:
-    QString qmlSource() const override { return "hifi/android/bottombar.qml"; }
+    QString qmlSource() const override { return menuId + ".qml"; }
+
+    static std::mutex _mutex;
+    static std::map<QString, QScriptValue> _menues;
+private:
+	QString menuId;
+
 };
 
 #endif

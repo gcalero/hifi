@@ -24,6 +24,8 @@ Item {
 
     Component.onCompleted: {
         // put on bottom
+        width = Window.innerWidth/3;
+        height = 100;
         y=Window.innerHeight / 3 - height;
     }
     

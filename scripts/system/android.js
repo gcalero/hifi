@@ -62,8 +62,7 @@ function touchEnd(event) {
 		//var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
 		//tablet.loadQMLSource("../android/bottombar.qml");
         var bottombar = new MenuBar({
-	        width: Window.innerWidth/3,
-	        height: 100
+	        menuId: "hifi/android/bottombar"	        
 	    });
 
 	    var avatarBtn = bottombar.addButton({
