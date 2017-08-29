@@ -66,47 +66,56 @@ function touchEnd(event) {
 	    });
 
 	    var avatarBtn = bottombar.addButton({
-            icon: "icons/android/avatar.svg",
-            text: "Avatar",
+            icon: "icons/android/avatar-i.svg",
+            activeIcon: "icons/android/avatar-a.svg",
+            text: "AVATAR",
         });
         avatarBtn.clicked.connect(function() {
         	printd("Avatar button clicked");
         }); // god view button
 	    
         var gotoBtn = bottombar.addButton({
-            icon: "icons/android/goto.svg",
-            text: "Go To",
+            icon: "icons/android/goto-i.svg",
+            activeIcon: "icons/android/goto-a.svg",
+            text: "GO TO",
         });
         gotoBtn.clicked.connect(function() {
 			printd("Goto clicked");
+            DialogsManager.toggleAddressBar();
         });
         var bubbleBtn = bottombar.addButton({
-            icon: "icons/android/bubble.svg",
-            text: "Bubble",
+            icon: "icons/android/bubble-i.svg",
+            activeIcon: "icons/android/bubble-a.svg",
+            text: "BUBBLE",
         });
         bubbleBtn.clicked.connect(function() {
 			printd("Bubble clicked");
+            Users.toggleIgnoreRadius();
+            bubbleBtn.editProperties({isActive: Users.getIgnoreRadiusEnabled()});
         });
 
         var chatBtn = bottombar.addButton({
-            icon: "icons/android/chat.svg",
-            text: "Chat",
+            icon: "icons/android/chat-i.svg",
+            activeIcon: "icons/android/chat-a.svg",
+            text: "CHAT",
         });
         chatBtn.clicked.connect(function() {
 			printd("Chat clicked");
         });
 
         var peopleBtn = bottombar.addButton({
-            icon: "icons/android/people.svg",
-            text: "People",
+            icon: "icons/android/people-i.svg",
+            activeIcon: "icons/android/people-a.svg",
+            text: "PEOPLE",
         });
         peopleBtn.clicked.connect(function() {
 			printd("People clicked");
         });
 
         var settingsBtn = bottombar.addButton({
-            icon: "icons/android/settings.svg",
-            text: "Settings",
+            icon: "icons/android/settings-i.svg",
+            activeIcon: "icons/android/settings-a.svg",
+            text: "SETTINGS",
         });
         settingsBtn.clicked.connect(function() {
 			printd("Settings clicked");

@@ -44,7 +44,7 @@ Item {
 
     Rectangle {
         id: buttonBg
-        color: "#000000"
+        color: "#9A9A9A"
         opacity: 0.1
         anchors.right: parent.right
         anchors.rightMargin: 0
@@ -116,6 +116,12 @@ Item {
             name: "hover state"
 
             PropertyChanges {
+                target: buttonBg
+                color: "#cfcfcf"
+                opacity: 1
+            }
+
+            PropertyChanges {
                 target: text
                 color: "#ffffff"
                 text: button.hoverText
@@ -151,7 +157,7 @@ Item {
 
             PropertyChanges {
                 target: buttonBg
-                color: "#1fc6a6"
+                color: "#ff0000"
                 opacity: 1
             }
 
