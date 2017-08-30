@@ -24,6 +24,9 @@ var touchInProgress=false;
 // vars for swipe up
 var swipingUp=false, swUplastTouchY=0;
 
+var friends = Script.require('./friends.js');
+var isShowingFriends=false;
+
 function printd(str) {
     if (logEnabled)
         print("[android.js] " + str);
@@ -61,7 +64,7 @@ function touchEnd(event) {
     if (swipingUp) {
 		//var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
 		//tablet.loadQMLSource("../android/bottombar.qml");
-        var bottombar = new MenuBar({
+        var bottombar = new QmlFragment({
 	        menuId: "hifi/android/bottombar"	        
 	    });
 
@@ -110,6 +113,12 @@ function touchEnd(event) {
         });
         peopleBtn.clicked.connect(function() {
 			printd("People clicked");
+            if (!isShowingFriends) {
+                showFriends();
+            } else {
+                hideFriends();
+            }
+            peopleBtn.editProperties({isActive: isShowingFriends});
         });
 
         var settingsBtn = bottombar.addButton({
@@ -144,12 +153,25 @@ function touchUpdate(event) {
 	}
 }
 
+function showFriends() {
+    friends.init();
+    friends.show();
+    isShowingFriends=true;
+    printd("[FRIENDS] showing");
+}
+
+function hideFriends() {
+    friends.hide();
+    friends.destroy();
+    isShowingFriends = false;
+    printd("[FRIENDS] hiding");
+}
+
 Script.scriptEnding.connect(function () {
 	shutdown();
 });
-printd("Screen: " + Window.innerWidth + "," + Window.innerHeight);
+
 init();
-printd("End of local scope");
 
 }()); // END LOCAL_SCOPE
 

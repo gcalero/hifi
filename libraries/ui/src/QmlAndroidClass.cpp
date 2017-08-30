@@ -6,21 +6,21 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
-#include "QmlMenuBarClass.h"
+#include "QmlAndroidClass.h"
 #include <QtScript/QScriptContext>
 #include <QtScript/QScriptEngine>
 #include "OffscreenUi.h"
 
 #include <QtCore/QThread>
 
-std::mutex QmlMenuBarClass::_mutex;
-std::map<QString, QScriptValue> QmlMenuBarClass::_menues;
+std::mutex QmlAndroidClass::_mutex;
+std::map<QString, QScriptValue> QmlAndroidClass::_menues;
 
-QmlMenuBarClass::QmlMenuBarClass(QString id) : 
-	menuId(id) {
+QmlAndroidClass::QmlAndroidClass(QString id) : 
+	qmlId(id) {
 }
 // Method called by Qt scripts to create a new bottom menu bar in Android
-QScriptValue QmlMenuBarClass::constructor(QScriptContext* context, QScriptEngine* engine) {
+QScriptValue QmlAndroidClass::constructor(QScriptContext* context, QScriptEngine* engine) {
 
     std::lock_guard<std::mutex> guard(_mutex);
 	auto menuId = context->argument(0).toVariant().toMap().value("menuId");
@@ -28,30 +28,30 @@ QScriptValue QmlMenuBarClass::constructor(QScriptContext* context, QScriptEngine
 	    // look up tabletId in the map.
 	    auto iter = _menues.find(menuId.toString());
 	    if (iter != _menues.end()) {
-	    	//qDebug() << "[MENU] QmlMenuBarClass menu already exists";
+	    	//qDebug() << "[QML-ANDROID] QmlAndroidClass menu already exists";
 	        return iter->second;
 	    }
 	} else {
-		qWarning() << "QmlMenuBarClass could not build instance";
+		qWarning() << "QmlAndroidClass could not build instance";
 		return NULL;
 	}
 
     auto properties = parseArguments(context);
-    QmlMenuBarClass* retVal { nullptr };
+    QmlAndroidClass* retVal { nullptr };
     auto offscreenUi = DependencyManager::get<OffscreenUi>();
     offscreenUi->executeOnUiThread([&] {
-        retVal = new QmlMenuBarClass(menuId.toString());
+        retVal = new QmlAndroidClass(menuId.toString());
         retVal->initQml(properties);
     }, true);
     Q_ASSERT(retVal);
     connect(engine, &QScriptEngine::destroyed, retVal, &QmlWindowClass::deleteLater);
     QScriptValue scriptObject = engine->newQObject(retVal);
     _menues[menuId.toString()] = scriptObject;
-    //qDebug() << "[MENU] QmlMenuBarClass new menu object for key " << menuId.toString();
+    //qDebug() << "[MENU] QmlAndroidClass new menu object for key " << menuId.toString();
     return scriptObject;
 }
 
-QObject* QmlMenuBarClass::addButton(const QVariant& properties) {
+QObject* QmlAndroidClass::addButton(const QVariant& properties) {
     QVariant resultVar;
     Qt::ConnectionType connectionType = Qt::AutoConnection;
     
@@ -61,13 +61,13 @@ QObject* QmlMenuBarClass::addButton(const QVariant& properties) {
     bool hasResult = QMetaObject::invokeMethod(_qmlWindow, "addButton", connectionType,
                                                Q_RETURN_ARG(QVariant, resultVar), Q_ARG(QVariant, properties));
     if (!hasResult) {
-        qWarning() << "QmlMenuBarClass addButton has no result";
+        qWarning() << "QmlAndroidClass addButton has no result";
         return NULL;
     }
 
     QObject* qmlButton = qvariant_cast<QObject *>(resultVar);
     if (!qmlButton) {
-        qWarning() << "QmlMenuBarClass addButton result not a QObject";
+        qWarning() << "QmlAndroidClass addButton result not a QObject";
         return NULL;
     }
     

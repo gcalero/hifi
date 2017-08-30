@@ -100,6 +100,9 @@ if (headset) {
         }
         HMD.displayModeChanged.disconnect(onHmdChanged);
         Camera.modeUpdated.disconnect(updateControllerDisplay);
+        if (App.isAndroid) { // android only
+            Script.update.disconnect(update);
+        }
     });
 }
 

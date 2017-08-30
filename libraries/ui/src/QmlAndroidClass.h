@@ -6,32 +6,32 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
-#ifndef hifi_ui_QmlMenuBarClass_h
-#define hifi_ui_QmlMenuBarClass_h
+#ifndef hifi_ui_QmlAndroidClass_h
+#define hifi_ui_QmlAndroidClass_h
 
 #include "QmlWindowClass.h"
 
-class QmlMenuBarClass : public QmlWindowClass {
+class QmlAndroidClass : public QmlWindowClass {
 	Q_OBJECT
 public: 
-	QmlMenuBarClass(QString id);
+	QmlAndroidClass(QString id);
 	static QScriptValue constructor(QScriptContext* context, QScriptEngine* engine);
 
 	/**jsdoc
      * Creates a new button, adds it to this and returns it.
-     * @function QmlMenuBarClass#addButton
+     * @function QmlAndroidClass#addButton
      * @param properties {Object} button properties 
      * @returns {TabletButtonProxy}
      */
     Q_INVOKABLE QObject* addButton(const QVariant& properties);
 
 protected:
-    QString qmlSource() const override { return menuId + ".qml"; }
+    QString qmlSource() const override { return qmlId + ".qml"; }
 
     static std::mutex _mutex;
     static std::map<QString, QScriptValue> _menues;
 private:
-	QString menuId;
+	QString qmlId;
 
 };
 
