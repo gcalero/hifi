@@ -21,6 +21,9 @@ TableView {
     readonly property bool isLightColorScheme: colorScheme == hifi.colorSchemes.light
     property bool expandSelectedRow: false
     property bool centerHeaderText: false
+    property string customBackgroundColor: ""
+    property string customBorderColor: ""
+    property int customRadius : -1
 
     model: ListModel { }
 
@@ -89,8 +92,8 @@ TableView {
     Rectangle {
         color: "#00000000"
         anchors { fill: parent; margins: -2 }
-        radius: hifi.dimensions.borderRadius
-        border.color: isLightColorScheme ? hifi.colors.lightGrayText : hifi.colors.baseGrayHighlight
+        radius: customRadius > -1 ? customRadius : hifi.dimensions.borderRadius
+        border.color: customBorderColor!=""?customBorderColor : isLightColorScheme ? hifi.colors.lightGrayText : hifi.colors.baseGrayHighlight
         border.width: 2
     }
     anchors.margins: 2  // Shrink TableView to lie within border.
@@ -102,7 +105,7 @@ TableView {
 
     style: TableViewStyle {
         // Needed in order for rows to keep displaying rows after end of table entries.
-        backgroundColor: tableView.isLightColorScheme ? hifi.colors.tableBackgroundLight : hifi.colors.tableBackgroundDark
+        backgroundColor: customBackgroundColor != "" ? customBackgroundColor : tableView.isLightColorScheme ? hifi.colors.tableBackgroundLight : hifi.colors.tableBackgroundDark
         alternateBackgroundColor: tableView.isLightColorScheme ? hifi.colors.tableRowLightOdd : hifi.colors.tableRowDarkOdd
 
         padding.top: headerVisible ? hifi.dimensions.tableHeaderHeight: 0

@@ -31,9 +31,7 @@ Item {
     
     function addButton(properties) {
         var component = Qt.createComponent("button.qml");
-        console.log("load button");
         if (component.status == Component.Ready) {
-            console.log("load button 2");
             var button = component.createObject(flowMain);
             // copy all properites to button
             var keys = Object.keys(properties).forEach(function (key) {

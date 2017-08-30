@@ -22,11 +22,8 @@ import "toolbars"
 Item {
     id: thisNameCard
     // Size
-    width: 200
+    width: parent.width
     height: 60
-    anchors.left: parent.left
-    anchors.leftMargin: 5
-    anchors.top: parent.top
 
     // Properties
     property string profileUrl: "";
@@ -35,7 +32,7 @@ Item {
     property string uuid: ""
     property string displayName: ""
     property string userName: ""
-    property real displayNameTextPixelSize: 18
+    property real displayNameTextPixelSize: 25
     property int usernameTextPixelSize: 14
 /*    property real audioLevel: 0.0
     property real avgAudioLevel: 0.0
@@ -51,18 +48,22 @@ Item {
         id: avatarImage
         visible: profileUrl !== "" && userName !== "";
         // Size
-        height: 42
+        height: parent.height
         width: visible ? height : 0;
-        anchors.top: parent.top
-        anchors.topMargin: 8
         anchors.left: parent.left
+        anchors.leftMargin: 150
+        anchors.verticalCenter: parent.verticalCenter
         clip: true
         Image {
+            height: 42
+            width: 42
             id: userImage
             source: profileUrl !== "" ? ((0 === profileUrl.indexOf("http")) ? profileUrl : (defaultBaseUrl + profileUrl)) : "";
             mipmap: true;
             // Anchors
-            anchors.fill: parent
+            anchors.verticalCenter: avatarImage.verticalCenter;
+            anchors.horizontalCenter: avatarImage.horizontalCenter;
+
             layer.enabled: true
             layer.effect: OpacityMask {
                 maskSource: Item {
@@ -108,8 +109,8 @@ Item {
         visible: avatarImage.visible;
         anchors.verticalCenter: avatarImage.verticalCenter;
         anchors.horizontalCenter: avatarImage.horizontalCenter;
-        width: avatarImage.width + border.width;
-        height: avatarImage.height + border.width;
+        width: 46;
+        height: 46;
         color: "transparent"
         radius: avatarImage.height;
         border.color: profilePicBorderColor;
@@ -121,30 +122,32 @@ Item {
         id: displayNameContainer
         visible: true
         // Size
-        width: parent.width - anchors.leftMargin - avatarImage.width - anchors.leftMargin;
+        width: parent.width / 3;// - anchors.leftMargin - avatarImage.width - anchors.leftMargin;
         height: displayNameTextPixelSize + 4
         // Anchors
-        anchors.top: avatarImage.top;
         anchors.left: avatarImage.right
         anchors.leftMargin: avatarImage.visible ? 5 : 0;
+        anchors.verticalCenter: avatarImage.verticalCenter;
         // DisplayName Text for others' cards
-        FiraSansSemiBold {
+        FiraSansRegular {
             id: displayNameText
             visible: true
             // Properties
-            text: thisNameCard.displayName
-            elide: Text.ElideRight
+            text: thisNameCard.userName === "Unknown user" ? "not logged in" : thisNameCard.userName; //thisNameCard.displayName
+            //elide: Text.ElideRight
             // Size
             width: parent.width
+            height: parent.height
             // Anchors
-            anchors.top: parent.top
+            //anchors.top: parent.top
             anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
             // Text Size
             size: displayNameTextPixelSize
             // Text Positioning
-            verticalAlignment: Text.AlignTop
+            verticalAlignment: Text.AlignVCenter
             // Style
-            color: hifi.colors.darkGray;
+            color: "#FFFFFF" // hifi.colors.darkGray;
             MouseArea {
                 anchors.fill: parent
                 enabled: isPresent;
@@ -170,45 +173,30 @@ Item {
         }
     }
 
-    // UserName Text
-    FiraSansRegular {
-        id: userNameText
-        // Properties
-        text: thisNameCard.userName === "Unknown user" ? "not logged in" : thisNameCard.userName;
-        elide: Text.ElideRight
-        visible: true
-        // Size
-        width: parent.width
-        height: usernameTextPixelSize + 4
-        // Anchors
-        anchors.top: displayNameContainer.bottom
-        anchors.left: displayNameContainer.left;
-        /*anchors.verticalCenter: avatarImage.verticalCenter
-        
-        anchors.leftMargin: avatarImage.visible ? 5 : 0;
-        anchors.rightMargin: 5;
-        */
-
-        // Text Size
-        size: displayNameTextPixelSize
-        // Text Positioning
-        verticalAlignment: Text.AlignVCenter;
-        // Style
-        color: hifi.colors.blueAccent;
-        MouseArea {
+    Rectangle {
+        id: buttonsContainer
+        color: "#A0A0A0"
+        width: parent.width * 0.25
+        height: parent.height
+        anchors.right: parent.right
+        Row {
+            spacing: 20
             anchors.fill: parent
-            enabled: thisNameCard.userName !== "" && isPresent;
-            hoverEnabled: enabled
-            onClicked: {
-                AddressManager.goToUser(thisNameCard.userName);
+            anchors.margins: 2
+            anchors.verticalCenter: parent.verticalCenter
+            Image {
+                //id: actionIcon;
+                source: "../../icons/android/chat-i.svg";
+                height: parent.height * 0.7
+                width: height
+                anchors.verticalCenter: parent.verticalCenter;
             }
-            onEntered: {
-                //displayNameText.color = hifi.colors.blueHighlight;
-                //userNameText.color = hifi.colors.blueHighlight;
-            }
-            onExited: {
-                //displayNameText.color = hifi.colors.darkGray;
-                //userNameText.color = hifi.colors.blueAccent;
+            Image {
+                //id: actionIcon2;
+                height: parent.height * 0.7
+                width: height
+                source: "../../icons/android/go-i.svg";
+                anchors.verticalCenter: parent.verticalCenter;
             }
         }
     }

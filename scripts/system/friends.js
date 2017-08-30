@@ -9,7 +9,8 @@
 //  Distributed under the Apache License, Version 2.0.
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
-var tablet = null;
+
+var window;
 var friendsQmlSource = "Friends.qml";
 var request = Script.require('request').request;
 var METAVERSE_BASE = location.metaverseServerUrl;
@@ -20,14 +21,17 @@ function printd(str) {
         print("[friends.js] " + str);
 }
 
-function init() {
-    tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
-    tablet.fromQml.connect(fromQml);
+function init() {    
+   
+    
+    //&&tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
+    //tablet.fromQml.connect(fromQml);
 }
 
 var first=true; // temporary
 function fromQml(message) { // messages are {method, params}, like json-rpc. See also sendToQml.
     var data;
+    //printd("[FRIENDS] fromQml " + message.method);
     switch (message.method) {
     case 'refreshAll': 
         // nearby & online friends
@@ -46,7 +50,7 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
     }
 }
 function sendToQml(message) {
-    tablet.sendToQml(message);
+    window.sendToQml(message);
 }
 
 function requestJSON(url, callback) { // callback(data) if successfull. Logs otherwise.
@@ -182,8 +186,13 @@ module.exports = {
         init();
     },
     show: function() {
-        printd("[FRIENDS] show");
-        tablet.loadQMLSource(friendsQmlSource);
+        //printd("[FRIENDS] show");
+        window = new QmlFragment({
+            menuId: "hifi/tablet/Friends",
+            visible: true
+        });
+        window.fromQml.connect(fromQml);
+        //tablet.loadQMLSource(friendsQmlSource);
         // temporary fix to avoid reconnection
         if (first) {
             Account.checkAndSignalForAccessToken();
@@ -192,11 +201,12 @@ module.exports = {
 
     },
     hide: function() {
-        printd("[FRIENDS] hide");
-        tablet.gotoHomeScreen();
+        //printd("[FRIENDS] hide");
+        window.setVisible(false);
+        //tablet.gotoHomeScreen();
     },
     destroy: function() {
-        tablet.fromQml.disconnect(fromQml);   
+        window.fromQml.disconnect(fromQml);   
     }
 };
 
