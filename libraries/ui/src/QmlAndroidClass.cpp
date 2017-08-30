@@ -73,3 +73,6 @@ QObject* QmlAndroidClass::addButton(const QVariant& properties) {
     
     return qmlButton;
 }
+
+void QmlAndroidClass::removeButton(QObject* button) {
+}

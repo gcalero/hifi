@@ -47,7 +47,16 @@ function update() {
 }
 
 var button;
-var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
+var tablet;
+if (!App.isAndroid()) {
+    tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
+} else {
+    tablet = new QmlFragment({
+        menuId: "hifi/android/modesbar"
+    });
+}
+
+
 
 // Independent and Entity mode make people sick. Third Person and Mirror have traps that we need to work through.
 // Disable them in hmd.

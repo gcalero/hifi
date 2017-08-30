@@ -38,6 +38,8 @@ function init() {
 	Controller.touchBeginEvent.connect(touchBegin);
 	Controller.touchEndEvent.connect(touchEnd);
 	Controller.touchUpdateEvent.connect(touchUpdate);
+
+    setupModesBar();
 }
 
 function shutdown() {
@@ -165,6 +167,12 @@ function hideFriends() {
     friends.destroy();
     isShowingFriends = false;
     printd("[FRIENDS] hiding");
+}
+
+function setupModesBar() {
+    var modesBar = new QmlFragment({
+        menuId: "hifi/android/modesbar"
+    });
 }
 
 Script.scriptEnding.connect(function () {

@@ -15,8 +15,8 @@
 print("[godView.js] outside scope");
 
 (function() { // BEGIN LOCAL_SCOPE
-var friends = Script.require('./friends.js');
-var logEnabled = false;
+//var friends = Script.require('./friends.js');
+var logEnabled = true;
 function printd(str) {
     if (logEnabled)
         print("[godView.js] " + str);
@@ -123,10 +123,8 @@ function toggleGodViewMode() {
     printd("-- toggleGodViewMode");
     if (godView) {
         endGodView();
-        disconnectGodModeEvents();
     } else {
         startGodView();
-        //entitiesAnalysis();
     }
 }
 
@@ -302,14 +300,25 @@ function findRayIntersection(pickRay) {
  * 
  ********************************************************************************************************/
 
+function isTouchValid(coords) {
+    // TODO: Extend to the detection of touches on new menu bars
+    return tablet.getItemAtPoint(coords);
+}
+
+/********************************************************************************************************
+ * 
+ ********************************************************************************************************/
+
 var touchStartingCoordinates = null;
 
 function touchBegin(event) {
     var coords = { x: event.x, y: event.y };
-    if (tablet.getItemAtPoint(coords) ) {
+    if (isTouchValid(coords) ) {
+        printd("GOD_VIEW_TOUCH - INVALID");
         currentTouchIsValid = false;
         touchStartingCoordinates = null;
     } else {
+        printd("GOD_VIEW_TOUCH - ok");
         currentTouchIsValid = true;
         touchStartingCoordinates = coords;
     }
@@ -724,23 +733,49 @@ function startGodView() {
     godView = true;
 
     connectGodModeEvents();
-    friends.init();
-    friends.show();
+    //friends.init();
+    //friends.show();
 }
 
 function endGodView() {
     printd("-- endGodView");
     Camera.mode = "first person";
     godView = false;
-    friends.hide();
-    friends.destroy();
+
+    disconnectGodModeEvents();
+    //friends.hide();
+    //friends.destroy();
 }
 
-var button;
-var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
+function onHmdChanged(isHmd) {
+    // if we are going to hmd, end god view if it's already on it
+    if (isHmd && godView) {
+        endGodView();
+    } else {
+        
+    }
+}
 
-function onClicked() {
-    toggleGodViewMode();
+var buttonMyViewMode;
+var buttonGodViewMode; // buttonRadar ¬¬
+var buttonsContainer;
+var tablet;
+if (!App.isAndroid()) {
+    buttonsContainer = Tablet.getTablet("com.highfidelity.interface.tablet.system");
+    tablet = buttonsContainer;
+} else {
+    buttonsContainer = new QmlFragment({
+        menuId: "hifi/android/modesbar"
+    });
+    tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
+}
+
+function onGodViewModeClicked() {
+    startGodView();
+}
+
+function onMyViewModeClicked() {
+    endGodView();
 }
 
 function updateGodView() {
@@ -780,10 +815,15 @@ function entitiesAnalysis() {
     //printd("ALL ENTITIES: " + JSON.stringify(entities));
 }
 
-button = tablet.addButton({
-    icon: "icons/tablet-icons/switch-desk-i.svg", // FIXME - use correct icon
-    text: "God View",
-    sortOrder: 2
+buttonGodViewMode = buttonsContainer.addButton({
+    icon: "icons/tablet-icons/goto-i.svg", // FIXME - use correct icon
+    text: "Radar"/*,
+    sortOrder: 2*/
+});
+
+buttonMyViewMode = buttonsContainer.addButton({
+    icon: "icons/tablet-icons/switch-desk-i.svg",
+    text: "My View",
 });
 
 function connectGodModeEvents() {
@@ -800,7 +840,8 @@ function disconnectGodModeEvents() {
     Controller.touchUpdateEvent.disconnect(touchUpdate);
 }
 
-button.clicked.connect(onClicked); // god view button
+buttonGodViewMode.clicked.connect(onGodViewModeClicked); // god view button
+buttonMyViewMode.clicked.connect(onMyViewModeClicked); // my view button
 
 Controller.touchBeginEvent.connect(touchBegin);
 Controller.touchEndEvent.connect(touchEnd);
@@ -814,14 +855,17 @@ AvatarList.avatarRemovedEvent.connect(avatarRemoved);
 Entities.addingEntity.connect(entityAdded);
 Entities.deletingEntity.connect(entityRemoved);
 
+HMD.displayModeChanged.connect(onHmdChanged);
+
 Script.scriptEnding.connect(function () {
     if (godView) {
         endGodView();
-        disconnectGodModeEvents();
     }
-    button.clicked.disconnect(onClicked);
-    if (tablet) {
-        tablet.removeButton(button);
+    buttonGodViewMode.clicked.disconnect(onGodViewModeClicked);
+    buttonMyViewMode.clicked.disconnect(onMyViewModeClicked);
+    if (buttonsContainer) {
+        buttonsContainer.removeButton(buttonGodViewMode);
+        buttonsContainer.removeButton(buttonMyViewMode);
     }
     Controller.touchBeginEvent.disconnect(touchBegin);
     Controller.touchEndEvent.disconnect(touchEnd);
@@ -834,6 +878,8 @@ Script.scriptEnding.connect(function () {
 
     Entities.addingEntity.disconnect(entityAdded);
     Entities.deletingEntity.disconnect(entityRemoved);
+
+    HMD.displayModeChanged.disconnect(onHmdChanged);
 });
 
 startGodView();

@@ -55,7 +55,7 @@ if (!App.isAndroid()) {
         "system/audio.js",
         "system/goto.js",
         "system/hmd.js",
-        "system/marketplaces/marketplace.js",
+        "system/marketplaces/marketplaces.js",
         //"system/edit.js",
         //"system/mod.js",
         //"system/selectAudioDevice.js",
@@ -73,7 +73,7 @@ if (!App.isAndroid()) {
         "system/help.js",
         "system/bubble.js",
         "system/android.js",
-        //"system/godView.js",
+        "system/godView.js",
         //"system/friends.js",
         "developer/debugging/debugAndroidMouse.js"
     ]);
