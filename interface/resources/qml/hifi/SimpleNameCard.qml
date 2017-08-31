@@ -147,24 +147,7 @@ Item {
             // Text Positioning
             verticalAlignment: Text.AlignVCenter
             // Style
-            color: "#FFFFFF" // hifi.colors.darkGray;
-            MouseArea {
-                anchors.fill: parent
-                enabled: isPresent;
-                hoverEnabled: enabled
-                onClicked: {
-                    AddressManager.goToUser(thisNameCard.userName);
-                    // UserActivityLogger.palAction("go_to_user", thisNameCard.userName);
-                }
-                onEntered: {
-                    displayNameText.color = hifi.colors.blueHighlight;
-                    userNameText.color = hifi.colors.blueHighlight;
-                }
-                onExited: {
-                    displayNameText.color = hifi.colors.darkGray
-                    userNameText.color = hifi.colors.blueAccent;
-                }
-            }
+            color: "#FFFFFF"
         }
         TextMetrics {
             id:     displayNameTextMetrics
@@ -184,19 +167,97 @@ Item {
             anchors.fill: parent
             anchors.margins: 2
             anchors.verticalCenter: parent.verticalCenter
-            Image {
-                //id: actionIcon;
-                source: "../../icons/android/chat-i.svg";
-                height: parent.height * 0.7
+            Item {
+                id: chatButton
+                height: parent.height
                 width: height
-                anchors.verticalCenter: parent.verticalCenter;
+                Image {
+                    id: chatIcon;
+                    source: "../../icons/android/chat-i.svg";
+                    height: parent.height * 0.7
+                    width: parent.width * 0.7
+                    anchors.verticalCenter: parent.verticalCenter;
+                }
+                MouseArea {
+                        anchors.fill: chatIcon
+                        hoverEnabled: true
+                        enabled: true
+                        onClicked: {
+                            console.log("[FRIEND] CHAT CLICKED");
+                        }
+                        onEntered: {
+                            chatButton.state = "hover";
+                        }
+                        onExited: {
+                            chatButton.state = "base";
+                        }
+                        onCanceled: {
+                            chatButton.state = "base";
+                        }
+                }
+                states: [
+                    State {
+                        name: "hover"
+                        PropertyChanges {
+                            target: chatIcon
+                            source: "../../icons/android/chat-a.svg"
+                        }
+                    },
+                    State {
+                        name: "base"
+                        PropertyChanges {
+                            target: chatIcon
+                            source: "../../icons/android/chat-i.svg"
+                        }
+                    }
+                ]
             }
-            Image {
-                //id: actionIcon2;
-                height: parent.height * 0.7
+
+            Item {
+                id: goButton
+                height: parent.height
                 width: height
-                source: "../../icons/android/go-i.svg";
-                anchors.verticalCenter: parent.verticalCenter;
+                Image {
+                    id: goIcon;
+                    source: "../../icons/android/go-i.svg"
+                    height: parent.height * 0.7
+                    width: parent.width * 0.7
+                    anchors.verticalCenter: parent.verticalCenter;
+                }
+                MouseArea {
+                        anchors.fill: goIcon
+                        hoverEnabled: true
+                        enabled: true
+                        onClicked: {
+                            AddressManager.goToUser(thisNameCard.userName);
+                            // TODO: hide this window?
+                        }
+                        onEntered: {
+                            goButton.state = "hover";
+                        }
+                        onExited: {
+                            goButton.state = "base";
+                        }
+                        onCanceled: {
+                            goButton.state = "base";
+                        }
+                }
+                states: [
+                    State {
+                        name: "hover"
+                        PropertyChanges {
+                            target: goIcon
+                            source: "../../icons/android/go-a.svg"
+                        }
+                    },
+                    State {
+                        name: "base"
+                        PropertyChanges {
+                            target: goIcon
+                            source: "../../icons/android/go-i.svg"
+                        }
+                    }
+                ]
             }
         }
     }

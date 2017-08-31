@@ -81,33 +81,100 @@ Rectangle {
             anchors.right: parent.right
             y: 0
 
-            Text {
-                    id: allTab
-                    text: "ALL"
-                    color: "#ffffff"
-                    font.family: "Helvetica"
-                    font.pointSize: 8
-                    //font.underline: true
-                    //font.bold: true
-                    anchors.left: parent.left
-                    width: parent.width * 0.45
-                    height: parent.height
-                    verticalAlignment: Text.AlignVCenter
-                    horizontalAlignment: Text.AlignHCenter
+            Item {
+                id: allTabItem
+                property bool isActive: false
+
+                width: parent.width * 0.45
+                height: parent.height
+
+                Text {
+                        id: allTabText
+                        text: "ALL"
+                        color: "#ffffff"
+                        font.family: "Helvetica"
+                        font.pointSize: 6
+                        anchors.fill: parent
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    enabled: true
+                    onClicked: {
+                        showAllConnections();
+                    }
+                }
+
+                states: [
+                    State {
+                        name: "active"
+                        PropertyChanges {
+                            target: allTabText
+                            font.underline: true
+                            font.bold: true
+                        }
+                    }, 
+                    State {
+                        name: "inactive"
+                        PropertyChanges {
+                            target: allTab
+                            font.underline: false
+                            font.bold: false
+                        }
+                    }
+                ]
             }
-            Text {
-                    id: nearbyTab
-                    text: "NEARBY"
-                    color: "#ffffff"
-                    font.family: "Helvetica"
-                    font.pointSize: 8
-                    font.underline: true
-                    font.bold: true
-                    width: allTab.width
-                    height: parent.height
-                    anchors.left : allTab.right
-                    verticalAlignment: Text.AlignVCenter
-                    horizontalAlignment: Text.AlignHCenter
+
+
+            Item {
+                id: nearbyTabItem
+
+                width: parent.width * 0.45
+                height: parent.height
+                anchors.right: parent.right
+
+                Text {
+                        id: nearbyTabText
+                        text: "NEARBY"
+                        color: "#ffffff"
+                        font.family: "Helvetica"
+                        font.pointSize: 6
+                        anchors.fill: parent
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignLeft
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    enabled: true
+                    onClicked: {
+                        showNearbyConnections();
+                    }
+                }
+
+                states: [
+                    State {
+                        name: "active"
+                        PropertyChanges {
+                            target: nearbyTabText
+                            font.underline: true
+                            font.bold: true
+                        }
+                    }, 
+                    State {
+                        name: "inactive"
+                        PropertyChanges {
+                            target: nearbyTabText
+                            font.underline: false
+                            font.bold: false
+                        }
+                    }
+                ]
+
             }
 
             HifiControlsUit.GlyphButton {
@@ -134,64 +201,27 @@ Rectangle {
         anchors.bottom: parent.bottom
         //anchors.topMargin: 10
         Connections {
+            id: nearbyConnections
+        }
+        Connections {
             id: allConnections
         }
     }
 
-    function loadNearbyFriends() {
-        //nearbyFriendModelData.sort(function (a, b) { ...        
-        //connectionsTable.selection.clear();
-        nearbyFriendModel.clear();
-        var userIndex = 0;
-        //var newSelectedIndexes = [];
-        nearbyFriendModelData.forEach(function (datum) {
-            datum.userIndex = userIndex++;
-            nearbyFriendModel.append(datum);
-            /*if (selectedIDs.indexOf(datum.sessionId) != -1) {
-                 newSelectedIndexes.push(datum.userIndex);
-            }*/
-        });
-        /*if (newSelectedIndexes.length > 0) {
-            connectionsTable.selection.select(newSelectedIndexes);
-            connectionsTable.positionViewAtRow(newSelectedIndexes[0], ListView.Beginning);
-        }*/
-    }
-
-    function loadOnlineFriends() {
-        //onlineFriendModelData.sort(function (a, b) { ...        
-        //connectionsTable.selection.clear();
-        onlineFriendModel.clear();
-        var userIndex = 0;
-        //var newSelectedIndexes = [];
-        onlineFriendModelData.forEach(function (datum) {
-            datum.userIndex = userIndex++;
-            onlineFriendModel.append(datum);
-            /*if (selectedIDs.indexOf(datum.sessionId) != -1) {
-                 newSelectedIndexes.push(datum.userIndex);
-            }*/
-        });
-        /*if (newSelectedIndexes.length > 0) {
-            connectionsTable.selection.select(newSelectedIndexes);
-            connectionsTable.positionViewAtRow(newSelectedIndexes[0], ListView.Beginning);
-        }*/
-    }
-
     function fromScript(message) {
-        //console.log("[FRIENDS] message from script " + message.method);
+        console.log("[FRIENDS] message from script " + message.method);
         switch (message.method) {
-        case "nearbyFriends":
+        case "allConnections":
             var data = message.params;
-            //console.log('Got nearbyFriends data: ', JSON.stringify(data));
             allConnections.modelData = data;
             allConnections.loadConnections();
             break;
-        case "onlineFriends":
-           /* var data = message.params;
-            //console.log('Got onlineFriends data: ', JSON.stringify(data));
-            onlineFriendModelData = data;
-            loadOnlineFriends();
+        case "nearbyConnections":
+            var data = message.params;
+            nearbyConnections.modelData = data;
+            nearbyConnections.loadConnections();
             break;
-        */
+        
         default:
             console.log('[FRIENDS] Unrecognized message:', JSON.stringify(message));
         }
@@ -204,12 +234,27 @@ Rectangle {
         sendToScript({method: 'refreshAll', params: {}});
     }
 
+    function showAllConnections() {
+        allConnections.visible = true;
+        nearbyConnections.visible = false;
+        nearbyTabItem.state = "inactive";
+        allTabItem.state = "active";
+    }
+
+    function showNearbyConnections() {
+        console.log("[FRIENDS] nearby load connections");
+        allConnections.visible = false;
+        nearbyConnections.visible = true;
+        nearbyTabItem.state = "active";
+        allTabItem.state = "inactive";
+    }
+
     Component.onCompleted: {
         // put on bottom
         y=0;
         x=Window.innerWidth / 3 - width;
-        // TODO: reactivate 
-        // sendToScript({method: 'refreshAll', params: {}});
+        showAllConnections();
+        sendToScript({method: 'refreshAll', params: {}});
     }
 
 }

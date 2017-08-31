@@ -35,11 +35,11 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
     switch (message.method) {
     case 'refreshAll': 
         // nearby & online friends
-        var nearbyFilter = isNearFriendFunction(Camera.position, Window.location.domainId);
-        var onlineFilter = function(c) { return isFriend(c) && isOnline(c); };
+        var allFilter = function(c) { return true; };
+        var nearbyFilter = isNearbyConnectionFunction(Camera.position, Window.location.domainId);
         refreshConnections([
-                            {filter: nearbyFilter, sendToQmlMethod: 'nearbyFriends'},
-                            {filter: onlineFilter, sendToQmlMethod: 'onlineFriends'}
+                            {filter: allFilter, sendToQmlMethod: 'allConnections'},
+                            {filter: nearbyFilter, sendToQmlMethod: 'nearbyConnections'}
                            ]);
         break;
     case 'locateFriend':
@@ -97,14 +97,16 @@ function getAvailableConnections(callback) { // callback([{usename, location}...
     });
 }
 
+/*
 function isFriend (c) {
     return c.connection === "friend";
 };
-
+*/
+/*
 function isOnline (c) {
     return c.online;
 }
-
+*/
 // Window.location.domainId returns a domain like {4840a904-5a71-41c0-b7ca-945d1674be2b}
 // while other APIs return the id without the curly brackets
 function normalizeDomainId(domainId) {
@@ -132,9 +134,9 @@ function parseOrientationFromPath(path) {
     return { x: x, y: y, z: z, w: w };
 }
 
-function isNearFriendFunction(myPosition, myDomainId) {
+function isNearbyConnectionFunction(myPosition, myDomainId) {
     return function (c) {
-        if (!isFriend(c) || !(c && c.location && c.location.root && c.location.root.domain)) {
+        if (!(c && c.location && c.location.root && c.location.root.domain)) {
             return false;
         }
         if (myDomainId === normalizeDomainId(c.location.root.domain.id)) {
@@ -147,7 +149,7 @@ function isNearFriendFunction(myPosition, myDomainId) {
     }
 }
 
-function formatFriendConnection(conn) { // get into the right format
+function formatConnection(conn) { // get into the right format
         var formattedSessionId = conn.location.node_id || '';
         if (formattedSessionId !== '' && formattedSessionId.indexOf("{") != 0) {
             formattedSessionId = "{" + formattedSessionId + "}";
@@ -173,9 +175,9 @@ function refreshConnections(filterParams) { // Update all the usernames that I a
     var avatars = AvatarList.getAvatarIdentifiers();
         for (var i=0; i < filterParams.length; i++) {
             var x = filterParams[i];
-            //var filtered = conns.filter(x.filter);
-            filtered = conns;
-            sendToQml({ method: x.sendToQmlMethod, params: filtered.map(formatFriendConnection)});            
+            var filtered = conns.filter(x.filter);
+            //filtered = conns;
+            sendToQml({ method: x.sendToQmlMethod, params: filtered.map(formatConnection)});            
         }
     });
 }
