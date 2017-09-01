@@ -88,11 +88,13 @@ function touchBegin(event) {
         swipingUp = true;
         initialTouchY = coords.y;
         swipeLastTouchY = coords.y;
-    } else if (bottombar && bottombar.isVisible && coords.y > SCREEN_HEIGHT - 300) {
+        printd("Swipe up started");
+    } else if (bottombar && bottombar.isVisible() && coords.y > SCREEN_HEIGHT - 300) {
         // possible swipe down started
         swipingDown = true;
         initialTouchY = coords.y;
         swipeLastTouchY = coords.y;
+        printd("Swipe down started");
     }
 
 
@@ -101,10 +103,12 @@ function touchBegin(event) {
             swipingLeft = true;
             initialTouchX = coords.x;
             swipeLastTouchX = coords.x;
+            printd("Swipe left started");
         } else if(connections.isVisible() && coords.x > SCREEN_WIDTH - (connections.width() * 3)) {
             swipingRight = true;
             initialTouchX = coords.x;
             swipeLastTouchX = coords.x;
+            printd("Swipe right started");
         }
 
     }
@@ -116,16 +120,16 @@ function touchEnd(event) {
     var coords = { x: event.x, y: event.y };
     if (swipingUp && swipeLastTouchX < initialTouchY - MIN_SWIPE_VERT) {
         raiseBottomBar();
-//    	printd("Swipe Up finished!");
+    	printd("Swipe Up finished!");
     } else if (swipingDown && swipeLastTouchY > initialTouchY + MIN_SWIPE_VERT) {
         lowerBottomBar();
-//        printd("Swipe Down finished!");
+        printd("Swipe Down finished!");
     } else if (swipingLeft && !connections.isVisible() && swipeLastTouchX < initialTouchX - MIN_SWIPE_HORIZ) {
         showConnections();
-//        printd("Swipe Left finished!");
+        printd("Swipe Left finished!");
     } else if (swipingRight && connections.isVisible() && swipeLastTouchX > initialTouchX + MIN_SWIPE_HORIZ) {
         hideConnections();
-//        printd("Swipe Right finished!");
+        printd("Swipe Right finished!");
     }
     touchInProgress=false;
     swipeLastTouchY = 0;
@@ -221,19 +225,21 @@ function touchUpdate(event) {
 	var coords = { x: event.x, y: event.y };
 	if (touchInProgress) {
         if(swipingUp && coords.y < swipeLastTouchY) {
-//            printd("[MENU] touch update swipingUp " + swipeLastTouchY);
+            printd("[MENU] touch update swipingUp (ini:" + initialTouchY + ")" + swipeLastTouchY);
             swipingDown = false;
             swipeLastTouchY = coords.y;
         } else if (swipingDown && coords.y > swipeLastTouchY) {
             swipingUp = false;
             swipeLastTouchY = coords.y;
-//            printd("[MENU] touch update swipingDown " + swipeLastTouchY);
+            printd("[MENU] touch update swipingDown (ini:" + initialTouchY + ")" + swipeLastTouchY);
         } else if (swipingLeft && coords.x < swipeLastTouchX) {
             swipingRight = false;
             swipeLastTouchX = coords.x;
+            printd("[MENU] touch update swipingLeft (ini:" + initialTouchX + ")" + swipeLastTouchX);
         } else if (swipingRight && coords.x > swipeLastTouchX) {
             swipingLeft = false;
             swipeLastTouchX = coords.x;
+            printd("[MENU] touch update swipingRight (ini:" + initialTouchX + ")" + swipeLastTouchX);
     	} else {
             touchInProgress = false; // or invalidateSwipingUp=true;
         }
