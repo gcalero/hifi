@@ -78,6 +78,8 @@ function isGodViewModeValidTouch(coords) {
     printd(" analyze touch " + JSON.stringify(coords));
     printd(" analyze touch vs posn " + (modesBar.qmlFragment.position.x * 3) + " , " + (modesBar.qmlFragment.position.y * 3));
     printd(" analyze touch vs size " + (modesBar.qmlFragment.size.x * 3) + " x " +(modesBar.qmlFragment.size.y * 3) );
+    //printd(" analyze touch vs Connposn " + (connections.position.x * 3) + " , " + (connections.position.y * 3));
+    //printd(" analyze touch vs Connsize " + (connections.width * 3) + " x " +(connections.height * 3) );
     var isValid = 
         (
             modesBar == null
@@ -87,7 +89,7 @@ function isGodViewModeValidTouch(coords) {
                 ||
                 (coords.y < modesBar.qmlFragment.position.y * 3 || coords.y > modesBar.qmlFragment.position.y * 3 + modesBar.qmlFragment.size.y * 3)
             )
-        ) &&
+        )/* &&
         (
             connections.position == null
             ||
@@ -96,7 +98,7 @@ function isGodViewModeValidTouch(coords) {
                 ||
                 (coords.y < connections.position.y *3 || coords.y > connections.position.y *3 + connections.height * 3)
             )
-        );
+        ) FIX CASE ABOUT NaN position and size on connections! */;
     printd(" analyze touch was valid " + isValid);
     return isValid;
 }
