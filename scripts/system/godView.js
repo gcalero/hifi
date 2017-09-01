@@ -14,6 +14,18 @@
 
 print("[godView.js] outside scope");
 
+var GODVIEWMODE = {};
+
+function cleanupGodViewModeObject() {
+    GODVIEWMODE.startGodViewMode = function () {
+        print("[godView.js] start god view mode not implemented");
+    }
+    GODVIEWMODE.endGodViewMode = function () {
+        print("[godView.js] end god view mode not implemented");
+    }
+}
+cleanupGodViewModeObject();
+
 (function() { // BEGIN LOCAL_SCOPE
 //var friends = Script.require('./friends.js');
 var logEnabled = true;
@@ -751,19 +763,18 @@ function onHmdChanged(isHmd) {
     // if we are going to hmd, end god view if it's already on it
     if (isHmd && godView) {
         endGodView();
-    } else {
-        
     }
 }
 
-var buttonMyViewMode;
-var buttonGodViewMode; // buttonRadar ¬¬
+//var buttonMyViewMode;
+//var buttonGodViewMode; // buttonRadar ¬¬
 var buttonsContainer;
 var tablet;
 if (!App.isAndroid()) {
     buttonsContainer = Tablet.getTablet("com.highfidelity.interface.tablet.system");
     tablet = buttonsContainer;
 } else {
+    // TODO Not so much needed?
     buttonsContainer = new QmlFragment({
         menuId: "hifi/android/modesbar"
     });
@@ -777,6 +788,16 @@ function onGodViewModeClicked() {
 function onMyViewModeClicked() {
     endGodView();
 }
+
+GODVIEWMODE.startGodViewMode = function () {
+    startGodView();
+};
+
+GODVIEWMODE.endGodViewMode = function () {
+    endGodView();
+};
+
+module.exports = GODVIEWMODE;
 
 function updateGodView() {
     // Update avatar icons
@@ -815,16 +836,16 @@ function entitiesAnalysis() {
     //printd("ALL ENTITIES: " + JSON.stringify(entities));
 }
 
-buttonGodViewMode = buttonsContainer.addButton({
+/*buttonGodViewMode = buttonsContainer.addButton({
     icon: "icons/tablet-icons/goto-i.svg", // FIXME - use correct icon
-    text: "Radar"/*,
-    sortOrder: 2*/
+    text: "Radar"
+    //,sortOrder: 2
 });
 
 buttonMyViewMode = buttonsContainer.addButton({
     icon: "icons/tablet-icons/switch-desk-i.svg",
     text: "My View",
-});
+});*/
 
 function connectGodModeEvents() {
     Script.update.connect(updateGodView); // 60Hz loop
@@ -840,8 +861,8 @@ function disconnectGodModeEvents() {
     Controller.touchUpdateEvent.disconnect(touchUpdate);
 }
 
-buttonGodViewMode.clicked.connect(onGodViewModeClicked); // god view button
-buttonMyViewMode.clicked.connect(onMyViewModeClicked); // my view button
+//buttonGodViewMode.clicked.connect(onGodViewModeClicked); // god view button
+//buttonMyViewMode.clicked.connect(onMyViewModeClicked); // my view button
 
 Controller.touchBeginEvent.connect(touchBegin);
 Controller.touchEndEvent.connect(touchEnd);
@@ -861,11 +882,11 @@ Script.scriptEnding.connect(function () {
     if (godView) {
         endGodView();
     }
-    buttonGodViewMode.clicked.disconnect(onGodViewModeClicked);
-    buttonMyViewMode.clicked.disconnect(onMyViewModeClicked);
+    //buttonGodViewMode.clicked.disconnect(onGodViewModeClicked);
+    //buttonMyViewMode.clicked.disconnect(onMyViewModeClicked);
     if (buttonsContainer) {
-        buttonsContainer.removeButton(buttonGodViewMode);
-        buttonsContainer.removeButton(buttonMyViewMode);
+        //buttonsContainer.removeButton(buttonGodViewMode);
+        //buttonsContainer.removeButton(buttonMyViewMode);
     }
     Controller.touchBeginEvent.disconnect(touchBegin);
     Controller.touchEndEvent.disconnect(touchEnd);
@@ -880,8 +901,9 @@ Script.scriptEnding.connect(function () {
     Entities.deletingEntity.disconnect(entityRemoved);
 
     HMD.displayModeChanged.disconnect(onHmdChanged);
-});
 
-startGodView();
+    // Cleanup GODVIEWMODE object
+    cleanupGodViewModeObject();
+});
 
 }()); // END LOCAL_SCOPE

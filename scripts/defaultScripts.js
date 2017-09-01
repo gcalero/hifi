@@ -54,7 +54,7 @@ if (!App.isAndroid()) {
         "system/tablet-users.js",
         "system/audio.js",
         "system/goto.js",
-        "system/hmd.js",
+        //"system/hmd.js",
         "system/marketplaces/marketplaces.js",
         //"system/edit.js",
         //"system/mod.js",
@@ -72,8 +72,8 @@ if (!App.isAndroid()) {
         "system/snapshot.js",
         "system/help.js",
         "system/bubble.js",
+        //"system/godView.js",
         "system/android.js",
-        "system/godView.js",
         //"system/friends.js",
         "developer/debugging/debugAndroidMouse.js"
     ]);

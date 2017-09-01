@@ -16,6 +16,21 @@ Item {
     property string activeText: button.text
     property string activeHoverText: button.activeText
     
+    property string bgColor: "#ffffff"
+    property string hoverBgColor: button.bgColor
+    property string activeBgColor: button.bgColor
+    property string activeHoverBgColor: button.bgColor
+
+    property real bgOpacity: 0
+    property real hoverBgOpacity: 1
+    property real activeBgOpacity: 0.5
+    property real activeHoverBgOpacity: 1
+
+    property string textColor: "#ffffff"
+    property string hoverTextColor: "#ffffff"
+    property string activeTextColor: "#ffffff"
+    property string activeHoverTextColor: "#ffffff"
+
     property bool isEntered: false
     property double sortOrder: 100
 
@@ -117,13 +132,16 @@ Item {
 
             PropertyChanges {
                 target: buttonBg
-                color: "#cfcfcf"
-                opacity: 1
+                //color: "#cfcfcf"
+                //opacity: 1
+                color: button.hoverBgColor
+                opacity: button.hoverBgOpacity
             }
 
             PropertyChanges {
                 target: text
-                color: "#ffffff"
+                //color: "#ffffff"
+                color: button.hoverTextColor
                 text: button.hoverText
             }
 
@@ -137,13 +155,16 @@ Item {
 
             PropertyChanges {
                 target: buttonBg
-                color: "#1fc6a6"
-                opacity: 1
+                //color: "#1fc6a6"
+                //opacity: 1
+                color: button.activeBgColor
+                opacity: button.activeBgOpacity
             }
 
             PropertyChanges {
                 target: text
-                color: "#333333"
+                //color: "#333333"
+                color: button.activeTextColor
                 text: button.activeText
             }
 
@@ -157,19 +178,45 @@ Item {
 
             PropertyChanges {
                 target: buttonBg
-                color: "#ff0000"
-                opacity: 1
+                //color: "#ff0000"
+                //opacity: 1
+                color: button.activeHoverBgColor
+                opacity: button.activeHoverBgOpacity
             }
 
             PropertyChanges {
                 target: text
-                color: "#333333"
+                //color: "#333333"
+                color: button.activeHoverTextColor
                 text: button.activeHoverText
             }
 
             PropertyChanges {
                 target: icon
                 source: urlHelper(button.activeHoverIcon)
+            }
+        },
+        State {
+            name: "base state"
+
+            PropertyChanges {
+                target: buttonBg
+                //color: "#9A9A9A"
+                //opacity: 0.1
+                color: button.bgColor
+                opacity: button.bgOpacity
+            }
+
+            PropertyChanges {
+                target: text
+                //color: "#ffffff"
+                color: button.textColor
+                text: button.text
+            }
+
+            PropertyChanges {
+                target: icon
+                source: urlHelper(button.icon)
             }
         }
     ]
