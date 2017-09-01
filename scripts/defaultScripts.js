@@ -54,8 +54,8 @@ if (!App.isAndroid()) {
         "system/tablet-users.js",
         "system/audio.js",
         "system/goto.js",
-        //"system/hmd.js",
-        "system/marketplaces/marketplaces.js",
+        //"system/hmd.js", HMD features in android.js
+        //"system/marketplaces/marketplaces.js", Not in Android UI specs
         //"system/edit.js",
         //"system/mod.js",
         //"system/selectAudioDevice.js",
@@ -69,12 +69,12 @@ if (!App.isAndroid()) {
         "system/controllers/toggleAdvancedMovementForHandControllers.js",
         "system/dialTone.js",
         "system/firstPersonHMD.js",
-        "system/snapshot.js",
-        "system/help.js",
+        //"system/snapshot.js", Not in Android UI specs
+        //"system/help.js", Not in Android UI specs
         "system/bubble.js",
-        //"system/godView.js",
+        //"system/godView.js", Used by android.js directly
         "system/android.js",
-        //"system/friends.js",
+        //"system/friends.js", Used by android.js directly
         "developer/debugging/debugAndroidMouse.js"
     ]);
 }

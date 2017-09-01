@@ -291,6 +291,12 @@ var setupModesBar = function() {
         buttonsRevealed = true;
     }
 
+    function hideAllButtons() {
+        for (var i=0; i<modesButtons.length; i++) {
+            modesButtons[i].visible = false;
+        }
+    }
+
     function hideOtherButtons(thisButton) {
         printd("Hiding all but " + thisButton);
         for (var i=0; i<modesButtons.length; i++) {
@@ -305,14 +311,18 @@ var setupModesBar = function() {
         buttonsRevealed = false;
     }
 
-    function switchModeButtons(clickedButton) {
+    function switchModeButtons(clickedButton, hideAllAfter) {
         currentSelected.isActive = false;
         currentSelected = clickedButton;
         clickedButton.isActive = true;
-        hideOtherButtons(clickedButton);
+        if (hideAllAfter) {
+            hideAllButtons();
+        } else {
+            hideOtherButtons(clickedButton);
+        }
     }
 
-    function onButtonClicked(clickedButton, whatToDo) {
+    function onButtonClicked(clickedButton, whatToDo, hideAllAfter) {
         if (currentSelected == clickedButton) {
             if (buttonsRevealed) {
                 hideOtherButtons(clickedButton);
@@ -322,7 +332,7 @@ var setupModesBar = function() {
         } else {
             // mode change
             whatToDo();
-            switchModeButtons(clickedButton);
+            switchModeButtons(clickedButton, hideAllAfter);
         }
     }
 
@@ -331,7 +341,7 @@ var setupModesBar = function() {
         onButtonClicked(vrBtn, function() {
             var isDesktop = Menu.isOptionChecked("Android");
             Menu.setIsOptionChecked(isDesktop ? "Daydream" : "Android", true);
-        });
+        }, true);
     });
     buttonGodViewMode.clicked.connect(function() {
         printd("Radar clicked");
