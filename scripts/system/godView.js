@@ -141,7 +141,9 @@ function toggleGodViewMode() {
 }
 
 function fakeDoubleTap() {
-    toggleGodViewMode();
+    // CLD - temporarily disable toggling mode through double tap
+    // * As we have a new UI for toggling between modes, it may be discarded completely in the future.
+    // toggleGodViewMode();
 }
 
 var currentTouchIsValid = false; // Currently used to know if touch hasn't started on a UI overlay
