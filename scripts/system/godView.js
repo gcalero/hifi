@@ -23,6 +23,10 @@ function cleanupGodViewModeObject() {
     GODVIEWMODE.endGodViewMode = function () {
         print("[godView.js] end god view mode not implemented");
     }
+    GODVIEWMODE.isTouchValid = function () {
+        print("[godView.js] isTouchValid not implemented (considers always valid)");
+        return true;
+    }
 }
 cleanupGodViewModeObject();
 
@@ -119,6 +123,16 @@ function moveToFromEvent(event) {
 
     moveTo(moveToPosition);
     return true;
+}
+
+function mousePress(event) {
+    if (!isTouchValid(coords)) {
+        currentTouchIsValid = false;
+        return;
+    } else {
+        currentTouchIsValid = true;
+    }
+    mousePressOrTouchEnd(event);
 }
 
 function mousePressOrTouchEnd(event) {
@@ -316,7 +330,7 @@ function findRayIntersection(pickRay) {
 
 function isTouchValid(coords) {
     // TODO: Extend to the detection of touches on new menu bars
-    return tablet.getItemAtPoint(coords);
+    return !tablet.getItemAtPoint(coords) && GODVIEWMODE.isTouchValid(coords);
 }
 
 /********************************************************************************************************
@@ -327,12 +341,12 @@ var touchStartingCoordinates = null;
 
 function touchBegin(event) {
     var coords = { x: event.x, y: event.y };
-    if (isTouchValid(coords) ) {
-        printd("GOD_VIEW_TOUCH - INVALID");
+    if (!isTouchValid(coords) ) {
+        printd("analyze touch - GOD_VIEW_TOUCH - INVALID");
         currentTouchIsValid = false;
         touchStartingCoordinates = null;
     } else {
-        printd("GOD_VIEW_TOUCH - ok");
+        printd("analyze touch - GOD_VIEW_TOUCH - ok");
         currentTouchIsValid = true;
         touchStartingCoordinates = coords;
     }
@@ -852,14 +866,14 @@ buttonMyViewMode = buttonsContainer.addButton({
 function connectGodModeEvents() {
     Script.update.connect(updateGodView); // 60Hz loop
     Controller.keyPressEvent.connect(keyPressEvent);
-    Controller.mousePressEvent.connect(mousePressOrTouchEnd); // single click/touch
+    Controller.mousePressEvent.connect(mousePress); // single click/touch
     Controller.touchUpdateEvent.connect(touchUpdate);
 }
 
 function disconnectGodModeEvents() {
     Script.update.disconnect(updateGodView);
     Controller.keyPressEvent.disconnect(keyPressEvent);
-    Controller.mousePressEvent.disconnect(mousePressOrTouchEnd);
+    Controller.mousePressEvent.disconnect(mousePress);
     Controller.touchUpdateEvent.disconnect(touchUpdate);
 }
 

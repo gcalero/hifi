@@ -50,6 +50,8 @@ function init() {
     Script.update.connect(update);
 
     modesBar = setupModesBar();
+
+    GODVIEWMODE.isTouchValid = isGodViewModeValidTouch;
 }
 
 function shutdown() {
@@ -70,6 +72,33 @@ function update() {
             modesBar.restoreMyViewButton();
         }
     }
+}
+
+function isGodViewModeValidTouch(coords) {
+    printd(" analyze touch " + JSON.stringify(coords));
+    printd(" analyze touch vs posn " + (modesBar.qmlFragment.position.x * 3) + " , " + (modesBar.qmlFragment.position.y * 3));
+    printd(" analyze touch vs size " + (modesBar.qmlFragment.size.x * 3) + " x " +(modesBar.qmlFragment.size.y * 3) );
+    var isValid = 
+        (
+            modesBar == null
+            ||
+            (
+                (coords.x < modesBar.qmlFragment.position.x * 3 || coords.x > modesBar.qmlFragment.position.x * 3 + modesBar.qmlFragment.size.x * 3)
+                ||
+                (coords.y < modesBar.qmlFragment.position.y * 3 || coords.y > modesBar.qmlFragment.position.y * 3 + modesBar.qmlFragment.size.y * 3)
+            )
+        ) &&
+        (
+            connections.position == null
+            ||
+            (
+                (coords.x < connections.position.x * 3 || coords.x > connections.position.x * 3+ connections.width * 3)
+                ||
+                (coords.y < connections.position.y *3 || coords.y > connections.position.y *3 + connections.height * 3)
+            )
+        );
+    printd(" analyze touch was valid " + isValid);
+    return isValid;
 }
 
 function touchBegin(event) {
@@ -266,20 +295,31 @@ var setupModesBar = function() {
         icon: "icons/android/vr-i.svg",
         activeIcon: "icons/android/vr-a.svg",
         bgOpacity: 0.1,
-        text: "VR"
+        text: "VR"/*,
+        textColor: "#b2b2b2",
+        hoverTextColor: "#b2b2b2",
+        activeTextColor: "#b2b2b2",
+        activeHoverTextColor: "#b2b2b2"*/
     });
     var buttonGodViewMode = modesBar.addButton({
         icon: "icons/android/radar-i.svg",
         activeIcon: "icons/android/radar-a.svg",
         bgOpacity: 0.1,
         text: "RADAR"/*,
-        sortOrder: 2*/
+        textColor: "#b2b2b2",
+        hoverTextColor: "#b2b2b2",
+        activeTextColor: "#b2b2b2",
+        activeHoverTextColor: "#b2b2b2"*/
     });
     var buttonMyViewMode = modesBar.addButton({
         icon: "icons/android/myview-i.svg",
         activeIcon: "icons/android/myview-a.svg",
         bgOpacity: 0.1,
-        text: "MY VIEW"
+        text: "MY VIEW"/*,
+        textColor: "#b2b2b2",
+        hoverTextColor: "#b2b2b2",
+        activeTextColor: "#b2b2b2",
+        activeHoverTextColor: "#b2b2b2"*/
     });
 
     var modesButtons = [vrBtn, buttonGodViewMode, buttonMyViewMode];
@@ -343,6 +383,8 @@ var setupModesBar = function() {
     }
 
     vrBtn.clicked.connect(function() {
+        if (connections.isVisible()) return;
+
         printd("VR clicked");
         onButtonClicked(vrBtn, function() {
             var isDesktop = Menu.isOptionChecked("Android");
@@ -351,12 +393,16 @@ var setupModesBar = function() {
         }, true);
     });
     buttonGodViewMode.clicked.connect(function() {
+        if (connections.isVisible()) return;
+
         printd("Radar clicked");
         onButtonClicked(buttonGodViewMode, function() {
             GODVIEWMODE.startGodViewMode();
         });
     });
     buttonMyViewMode.clicked.connect(function() {
+        if (connections.isVisible()) return;
+
         printd("My View clicked");
         onButtonClicked(buttonMyViewMode, function() {
             GODVIEWMODE.endGodViewMode();
@@ -366,11 +412,11 @@ var setupModesBar = function() {
     hideOtherButtons(buttonGodViewMode);
     GODVIEWMODE.startGodViewMode();
 
-
     return {
         restoreMyViewButton: function() {
             switchModeButtons(buttonMyViewMode);
-        }
+        },
+        qmlFragment: modesBar
     };
 
 };

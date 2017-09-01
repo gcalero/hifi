@@ -28,7 +28,7 @@ Item {
 	}
 
     Component.onCompleted: {
-        width = 50;
+        width = 110;
         height = Window.innerHeight/3
         x=Window.innerWidth / 3 - width;
     }
