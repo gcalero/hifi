@@ -228,6 +228,9 @@ module.exports = {
     },
     height: function() {
         return window ? window.size.y : 0;
+    },
+    position: function() {
+        return window ? window.position : null;
     }
 };
 

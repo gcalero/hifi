@@ -83,13 +83,13 @@ function touchBegin(event) {
     swipeLastTouchX = 0;
     initialTouchY = 0;
     initialTouchX = 0;
-    if ((!bottombar || !bottombar.isVisible()) && coords.y > SCREEN_HEIGHT - BOTTOM_ZONE_HEIGHT) {
+    if ((!bottombar || !bottombar.isVisible()) && !connections.isVisible() && coords.y > SCREEN_HEIGHT - BOTTOM_ZONE_HEIGHT) {
         // possible swipe up started
         swipingUp = true;
         initialTouchY = coords.y;
         swipeLastTouchY = coords.y;
         printd("Swipe up started");
-    } else if (bottombar && bottombar.isVisible() && coords.y > SCREEN_HEIGHT - 300) {
+    } else if (bottombar && bottombar.isVisible() && !connections.isVisible() && coords.y > SCREEN_HEIGHT - 300) {
         // possible swipe down started
         swipingDown = true;
         initialTouchY = coords.y;
@@ -347,6 +347,7 @@ var setupModesBar = function() {
         onButtonClicked(vrBtn, function() {
             var isDesktop = Menu.isOptionChecked("Android");
             Menu.setIsOptionChecked(isDesktop ? "Daydream" : "Android", true);
+            lowerBottomBar();
         }, true);
     });
     buttonGodViewMode.clicked.connect(function() {

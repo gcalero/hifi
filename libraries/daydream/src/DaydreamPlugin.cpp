@@ -66,6 +66,7 @@ JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnResu
 
 JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnExitVr(JNIEnv* env, jobject obj) {
     __vr_exit_requested = true;
+    qDebug() << "[TRANSITION] requestion vr exit from java";
 }
 
 
