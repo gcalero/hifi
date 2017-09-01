@@ -22,6 +22,9 @@ Item {
             anchors.fill: parent
             anchors.margins: 4
         }
+        /*border.width: 1
+        border.color: "red"
+        radius: 20*/
 	}
 
     Component.onCompleted: {

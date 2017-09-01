@@ -14,6 +14,7 @@ print("[android.js] outside scope");
 
 (function() { // BEGIN LOCAL_SCOPE
 
+var GODVIEWMODE = Script.require('./godView.js');
 
 var logEnabled = true;
 var mode="my view";
@@ -27,6 +28,8 @@ var swipingUp=false, swUplastTouchY=0;
 var friends = Script.require('./friends.js');
 var isShowingFriends=false;
 
+var modesBar;
+
 function printd(str) {
     if (logEnabled)
         print("[android.js] " + str);
@@ -39,13 +42,29 @@ function init() {
 	Controller.touchEndEvent.connect(touchEnd);
 	Controller.touchUpdateEvent.connect(touchUpdate);
 
-    setupModesBar();
+    Script.update.connect(update);
+
+    modesBar = setupModesBar();
 }
 
 function shutdown() {
     Controller.touchBeginEvent.disconnect(touchBegin);
     Controller.touchEndEvent.disconnect(touchEnd);
     Controller.touchUpdateEvent.disconnect(touchUpdate);
+
+    Script.update.disconnect(update);
+}
+
+function update() {
+    if (HMD.isVrExitRequested()) {
+        Menu.setIsOptionChecked("Android", true);
+        var isDesktop = Menu.isOptionChecked("Android");
+        //onHmdChanged(!isDesktop);
+        HMD.resetVrExitRequested();
+        if (modesBar) {
+            modesBar.restoreMyViewButton();
+        }
+    }
 }
 
 function touchBegin(event) {
@@ -169,11 +188,112 @@ function hideFriends() {
     printd("[FRIENDS] hiding");
 }
 
-function setupModesBar() {
+var setupModesBar = function() {
+
     var modesBar = new QmlFragment({
         menuId: "hifi/android/modesbar"
     });
-}
+    var vrBtn = modesBar.addButton({
+        icon: "icons/android/vr-i.svg",
+        activeIcon: "icons/android/vr-a.svg",
+        bgOpacity: 0.1,
+        text: "VR"
+    });
+    var buttonGodViewMode = modesBar.addButton({
+        icon: "icons/android/radar-i.svg",
+        activeIcon: "icons/android/radar-a.svg",
+        bgOpacity: 0.1,
+        text: "RADAR"/*,
+        sortOrder: 2*/
+    });
+    var buttonMyViewMode = modesBar.addButton({
+        icon: "icons/android/myview-i.svg",
+        activeIcon: "icons/android/myview-a.svg",
+        bgOpacity: 0.1,
+        text: "MY VIEW"
+    });
+
+    var modesButtons = [vrBtn, buttonGodViewMode, buttonMyViewMode];
+
+    // FIRST PRESELECTED IS GODVIEW (RADAR)
+
+    var currentSelected = buttonGodViewMode;
+    var buttonsRevealed = false;
+    buttonGodViewMode.isActive = true;
+
+    function showAllButtons() {
+        for (var i=0; i<modesButtons.length; i++) {
+            modesButtons[i].visible = true;
+        }
+        buttonsRevealed = true;
+    }
+
+    function hideOtherButtons(thisButton) {
+        printd("Hiding all but " + thisButton);
+        for (var i=0; i<modesButtons.length; i++) {
+            if (modesButtons[i] != thisButton) {
+                printd("----Hiding " + thisButton);
+                modesButtons[i].visible = false;
+            } else {
+                // be sure to keep it visible
+                modesButtons[i].visible = true;
+            }
+        }
+        buttonsRevealed = false;
+    }
+
+    function switchModeButtons(clickedButton) {
+        currentSelected.isActive = false;
+        currentSelected = clickedButton;
+        clickedButton.isActive = true;
+        hideOtherButtons(clickedButton);
+    }
+
+    function onButtonClicked(clickedButton, whatToDo) {
+        if (currentSelected == clickedButton) {
+            if (buttonsRevealed) {
+                hideOtherButtons(clickedButton);
+            } else {
+                showAllButtons();
+            }
+        } else {
+            // mode change
+            whatToDo();
+            switchModeButtons(clickedButton);
+        }
+    }
+
+    vrBtn.clicked.connect(function() {
+        printd("VR clicked");
+        onButtonClicked(vrBtn, function() {
+            var isDesktop = Menu.isOptionChecked("Android");
+            Menu.setIsOptionChecked(isDesktop ? "Daydream" : "Android", true);
+        });
+    });
+    buttonGodViewMode.clicked.connect(function() {
+        printd("Radar clicked");
+        onButtonClicked(buttonGodViewMode, function() {
+            GODVIEWMODE.startGodViewMode();
+        });
+    });
+    buttonMyViewMode.clicked.connect(function() {
+        printd("My View clicked");
+        onButtonClicked(buttonMyViewMode, function() {
+            GODVIEWMODE.endGodViewMode();
+        });
+    });
+
+    hideOtherButtons(buttonGodViewMode);
+    GODVIEWMODE.startGodViewMode();
+
+
+    return {
+        restoreMyViewButton: function() {
+            switchModeButtons(buttonMyViewMode);
+        }
+    };
+
+};
 
 Script.scriptEnding.connect(function () {
 	shutdown();
