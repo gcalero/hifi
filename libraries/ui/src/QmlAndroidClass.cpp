@@ -23,10 +23,10 @@ QmlAndroidClass::QmlAndroidClass(QString id) :
 QScriptValue QmlAndroidClass::constructor(QScriptContext* context, QScriptEngine* engine) {
 
     std::lock_guard<std::mutex> guard(_mutex);
-	auto menuId = context->argument(0).toVariant().toMap().value("menuId");
-	if (menuId.isValid()) {
+	auto qmlId = context->argument(0).toVariant().toMap().value("menuId");
+	if (qmlId.isValid()) {
 	    // look up tabletId in the map.
-	    auto iter = _menues.find(menuId.toString());
+	    auto iter = _menues.find(qmlId.toString());
 	    if (iter != _menues.end()) {
 	    	//qDebug() << "[QML-ANDROID] QmlAndroidClass menu already exists";
 	        return iter->second;
@@ -40,15 +40,19 @@ QScriptValue QmlAndroidClass::constructor(QScriptContext* context, QScriptEngine
     QmlAndroidClass* retVal { nullptr };
     auto offscreenUi = DependencyManager::get<OffscreenUi>();
     offscreenUi->executeOnUiThread([&] {
-        retVal = new QmlAndroidClass(menuId.toString());
+        retVal = new QmlAndroidClass(qmlId.toString());
         retVal->initQml(properties);
     }, true);
     Q_ASSERT(retVal);
     connect(engine, &QScriptEngine::destroyed, retVal, &QmlWindowClass::deleteLater);
     QScriptValue scriptObject = engine->newQObject(retVal);
-    _menues[menuId.toString()] = scriptObject;
-    //qDebug() << "[MENU] QmlAndroidClass new menu object for key " << menuId.toString();
+    _menues[qmlId.toString()] = scriptObject;
     return scriptObject;
+}
+
+void QmlAndroidClass::close() {
+    QmlWindowClass::close();
+    _menues.erase(qmlId);
 }
 
 QObject* QmlAndroidClass::addButton(const QVariant& properties) {

@@ -1,6 +1,6 @@
 "use strict";
 //
-//  friends.js
+//  connections.js
 //  scripts/system/
 //
 //  Created by Gabriel Calero & Cristian Duarte on 24 Jul 2017
@@ -11,14 +11,14 @@
 //
 
 var window;
-var friendsQmlSource = "Friends.qml";
+
 var request = Script.require('request').request;
 var METAVERSE_BASE = location.metaverseServerUrl;
 
 var logEnabled = false;
 function printd(str) {
     if (logEnabled)
-        print("[friends.js] " + str);
+        print("[connections.js] " + str);
 }
 
 function init() {    
@@ -31,10 +31,10 @@ function init() {
 var first=true; // temporary
 function fromQml(message) { // messages are {method, params}, like json-rpc. See also sendToQml.
     var data;
-    //printd("[FRIENDS] fromQml " + message.method);
+    //printd("[CONNECTIONS] fromQml " + message.method);
     switch (message.method) {
     case 'refreshAll': 
-        // nearby & online friends
+        // all & nearby connections
         var allFilter = function(c) { return true; };
         var nearbyFilter = isNearbyConnectionFunction(Camera.position, Window.location.domainId);
         refreshConnections([
@@ -46,7 +46,7 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
         locateFriend(message.params.username);
         break;
     default:
-        print('[friends.js] Unrecognized message from Friends.qml:', JSON.stringify(message));
+        print('[connections.js] Unrecognized message from Connections.qml:', JSON.stringify(message));
     }
 }
 function sendToQml(message) {
@@ -122,7 +122,7 @@ function parseLocationFromPath(path) {
     var path = path.replace(/\//g, ",");
     var match = path.split(",");
     var x=parseFloat(match[1]), y=parseFloat(match[2]), z=parseFloat(match[3]);
-    //printd("[FRIENDS] parseLocationFromPath x " + JSON.stringify({ x: x, y: y, z: z }));
+    //printd("[CONNECTIONS] parseLocationFromPath x " + JSON.stringify({ x: x, y: y, z: z }));
     return { x: x, y: y, z: z };
 }
 
@@ -143,7 +143,7 @@ function isNearbyConnectionFunction(myPosition, myDomainId) {
             var path = c.location.path;
             var cPosition = parseLocationFromPath(path);
             var distance = Vec3.distance(cPosition, myPosition);
-            return distance <= Settings.getValue('friends/nearDistance');
+            return distance <= Settings.getValue('connections/nearDistance');
         }
         return false;
     }
@@ -182,33 +182,52 @@ function refreshConnections(filterParams) { // Update all the usernames that I a
     });
 }
 
-//print("[friends.js]");
+var isVisible = false;
+
 module.exports = {
     init: function() {
         init();
+        window = new QmlFragment({
+            menuId: "hifi/tablet/ConnectionsWindow",
+            visible: false
+        });
     },
     show: function() {
-        //printd("[FRIENDS] show");
-        window = new QmlFragment({
-            menuId: "hifi/tablet/Friends",
-            visible: true
-        });
-        window.fromQml.connect(fromQml);
-        //tablet.loadQMLSource(friendsQmlSource);
-        // temporary fix to avoid reconnection
-        if (first) {
-            Account.checkAndSignalForAccessToken();
-            first=false;
+        //printd("[CONNECTIONS] show");
+        if (window) {
+            window.fromQml.connect(fromQml);
+            // temporary fix to avoid reconnection
+            if (first) {
+                Account.checkAndSignalForAccessToken();
+                first=false;
+            }
+            window.setVisible(true);
+            isVisible = true;
         }
-
     },
     hide: function() {
-        //printd("[FRIENDS] hide");
-        window.setVisible(false);
+        //printd("[CONNECTIONS] hide");
+        if (window) {
+            window.setVisible(false);
+        }
+        isVisible = false;
         //tablet.gotoHomeScreen();
     },
     destroy: function() {
-        window.fromQml.disconnect(fromQml);   
+        if (window) {
+            window.fromQml.disconnect(fromQml);   
+            window.close();
+            window = null;
+        }
+    },
+    isVisible: function() {
+        return isVisible;
+    },
+    width: function() {
+        return window ? window.size.x : 0;
+    },
+    height: function() {
+        return window ? window.size.y : 0;
     }
 };
 

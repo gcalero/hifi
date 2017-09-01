@@ -9,8 +9,15 @@ import "../../controls" as HifiControls
 import ".."
 
 Item {
-    id: button
+    id: bar
     x:0
+
+    property bool shown: true
+
+    onShownChanged: {
+        bar.visible = shown;
+    }
+
 	Rectangle {
         anchors.fill : parent
  		color: "#9A9A9A"

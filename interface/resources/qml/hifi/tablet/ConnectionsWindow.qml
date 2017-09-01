@@ -1,5 +1,5 @@
 //
-//  Friends.qml
+//  Connections.qml
 //  interface/resources/qml/tablet
 //
 //  Created by Gabriel Calero & Cristian Duarte on 24 Jul 2017
@@ -27,11 +27,13 @@ Rectangle {
     width: Window.innerWidth * 0.3;
     height: Window.innerHeight / 3;
 
-    property var onlineFriendModelData: []; // This simple list is essentially a mirror of the onlineFriendModel listModel without all the extra 
     property int rowHeight: 60;
-    property int locationColumnWidth: 170;
-    //property int nearbyNameCardWidth: nearbyTable.width
-    //property int connectionsNameCardWidth: connectionsTable.width;
+
+    property bool shown: true
+
+    onShownChanged: {
+        connections.visible = shown;
+    }
 
     HifiConstants { id: hifi; }
 
@@ -39,7 +41,7 @@ Rectangle {
 
     Settings {
         id: settings
-        category: 'friends'
+        category: 'connections'
         property int nearDistance: 30
     }
 
@@ -120,7 +122,7 @@ Rectangle {
                     State {
                         name: "inactive"
                         PropertyChanges {
-                            target: allTab
+                            target: allTabText
                             font.underline: false
                             font.bold: false
                         }
@@ -209,7 +211,7 @@ Rectangle {
     }
 
     function fromScript(message) {
-        console.log("[FRIENDS] message from script " + message.method);
+        console.log("[CONNECTIONS] message from script " + message.method);
         switch (message.method) {
         case "allConnections":
             var data = message.params;
@@ -223,14 +225,14 @@ Rectangle {
             break;
         
         default:
-            console.log('[FRIENDS] Unrecognized message:', JSON.stringify(message));
+            console.log('[CONNECTIONS] Unrecognized message:', JSON.stringify(message));
         }
     }
 
     signal sendToScript(var message);
 
     function refreshClicked() {
-        console.log("[FRIENDS] refresh clicked");
+        console.log("[CONNECTIONS] refresh clicked");
         sendToScript({method: 'refreshAll', params: {}});
     }
 
@@ -242,7 +244,7 @@ Rectangle {
     }
 
     function showNearbyConnections() {
-        console.log("[FRIENDS] nearby load connections");
+        console.log("[CONNECTIONS] nearby load connections");
         allConnections.visible = false;
         nearbyConnections.visible = true;
         nearbyTabItem.state = "active";

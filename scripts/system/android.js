@@ -18,14 +18,18 @@ print("[android.js] outside scope");
 var logEnabled = true;
 var mode="my view";
 var SCREEN_HEIGHT=Window.innerHeight;
+var SCREEN_WIDTH=Window.innerWidth;
 var BOTTOM_ZONE_HEIGHT=50;
+var RIGHT_ZONE_WIDTH=50;
+var MIN_SWIPE_VERT=10;
+var MIN_SWIPE_HORIZ=10;
 
 var touchInProgress=false;
-// vars for swipe up
-var swipingUp=false, swUplastTouchY=0;
+// vars for swipe up / down
+var swipingUp=false, swipingDown=false, swipeLastTouchY=0, initialTouchY=0;
+var swipingLeft=false, swipingRight=false, swipeLastTouchX=0, initialTouchX=0;
 
-var friends = Script.require('./friends.js');
-var isShowingFriends=false;
+var connections = Script.require('./connections.js');
 
 function printd(str) {
     if (logEnabled)
@@ -34,6 +38,7 @@ function printd(str) {
 
 function init() {
 	// temp while I build bottom bar
+    connections.init();
 
 	Controller.touchBeginEvent.connect(touchBegin);
 	Controller.touchEndEvent.connect(touchEnd);
@@ -51,122 +56,180 @@ function shutdown() {
 function touchBegin(event) {
     var coords = { x: event.x, y: event.y };
 	swipingUp = false;
+    swipingDown = false;
+    swipingLeft = false;
+    swipingRight = false;
 	touchInProgress = true;
-    if (event.y > SCREEN_HEIGHT - BOTTOM_ZONE_HEIGHT) {
-    	swUplastTouchY = event.y;
+    swipeLastTouchY = 0;
+    swipeLastTouchX = 0;
+    initialTouchY = 0;
+    initialTouchX = 0;
+    if ((!bottombar || !bottombar.isVisible()) && coords.y > SCREEN_HEIGHT - BOTTOM_ZONE_HEIGHT) {
+        // possible swipe up started
+        swipingUp = true;
+        initialTouchY = coords.y;
+        swipeLastTouchY = coords.y;
+    } else if (bottombar && bottombar.isVisible && coords.y > SCREEN_HEIGHT - 300) {
+        // possible swipe down started
+        swipingDown = true;
+        initialTouchY = coords.y;
+        swipeLastTouchY = coords.y;
     }
-    printd("touchBegin " + coords.x + "," + coords.y);
+
+
+    if (!swipingDown && !swipingUp) {
+        if (!connections.isVisible() && coords.x > SCREEN_WIDTH - RIGHT_ZONE_WIDTH) {
+            swipingLeft = true;
+            initialTouchX = coords.x;
+            swipeLastTouchX = coords.x;
+        } else if(connections.isVisible() && coords.x > SCREEN_WIDTH - (connections.width() * 3)) {
+            swipingRight = true;
+            initialTouchX = coords.x;
+            swipeLastTouchX = coords.x;
+        }
+
+    }
+
 }
 
 
 function touchEnd(event) {
     var coords = { x: event.x, y: event.y };
+    if (swipingUp && swipeLastTouchX < initialTouchY - MIN_SWIPE_VERT) {
+        raiseBottomBar();
+//    	printd("Swipe Up finished!");
+    } else if (swipingDown && swipeLastTouchY > initialTouchY + MIN_SWIPE_VERT) {
+        lowerBottomBar();
+//        printd("Swipe Down finished!");
+    } else if (swipingLeft && !connections.isVisible() && swipeLastTouchX < initialTouchX - MIN_SWIPE_HORIZ) {
+        showConnections();
+//        printd("Swipe Left finished!");
+    } else if (swipingRight && connections.isVisible() && swipeLastTouchX > initialTouchX + MIN_SWIPE_HORIZ) {
+        hideConnections();
+//        printd("Swipe Right finished!");
+    }
     touchInProgress=false;
-	swUplastTouchY = 0;
-    if (swipingUp) {
-		//var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
-		//tablet.loadQMLSource("../android/bottombar.qml");
-        var bottombar = new QmlFragment({
-	        menuId: "hifi/android/bottombar"	        
-	    });
+    swipeLastTouchY = 0;
+}
 
-	    var avatarBtn = bottombar.addButton({
-            icon: "icons/android/avatar-i.svg",
-            activeIcon: "icons/android/avatar-a.svg",
-            text: "AVATAR",
-        });
-        avatarBtn.clicked.connect(function() {
-        	printd("Avatar button clicked");
-        }); // god view button
-	    
-        var gotoBtn = bottombar.addButton({
-            icon: "icons/android/goto-i.svg",
-            activeIcon: "icons/android/goto-a.svg",
-            text: "GO TO",
-        });
-        gotoBtn.clicked.connect(function() {
-			printd("Goto clicked");
-            DialogsManager.toggleAddressBar();
-        });
-        var bubbleBtn = bottombar.addButton({
-            icon: "icons/android/bubble-i.svg",
-            activeIcon: "icons/android/bubble-a.svg",
-            text: "BUBBLE",
-        });
-        bubbleBtn.clicked.connect(function() {
-			printd("Bubble clicked");
-            Users.toggleIgnoreRadius();
-            bubbleBtn.editProperties({isActive: Users.getIgnoreRadiusEnabled()});
-        });
+var bottombar;
+function raiseBottomBar() {
+    if (bottombar) {
+        bottombar.setVisible(true);
+        return;
+    }
 
-        var chatBtn = bottombar.addButton({
-            icon: "icons/android/chat-i.svg",
-            activeIcon: "icons/android/chat-a.svg",
-            text: "CHAT",
-        });
-        chatBtn.clicked.connect(function() {
-			printd("Chat clicked");
-        });
+    bottombar = new QmlFragment({
+        menuId: "hifi/android/bottombar"
+    });
+    bottombar.setVisible(true);
+    bottombar.raise();
+    var avatarBtn = bottombar.addButton({
+        icon: "icons/android/avatar-i.svg",
+        activeIcon: "icons/android/avatar-a.svg",
+        text: "AVATAR",
+    });
+    avatarBtn.clicked.connect(function() {
+        printd("Avatar button clicked");
+    }); // god view button
+    
+    var gotoBtn = bottombar.addButton({
+        icon: "icons/android/goto-i.svg",
+        activeIcon: "icons/android/goto-a.svg",
+        text: "GO TO",
+    });
+    gotoBtn.clicked.connect(function() {
+        printd("Goto clicked");
+        DialogsManager.toggleAddressBar();
+    });
+    var bubbleBtn = bottombar.addButton({
+        icon: "icons/android/bubble-i.svg",
+        activeIcon: "icons/android/bubble-a.svg",
+        text: "BUBBLE",
+    });
+    bubbleBtn.clicked.connect(function() {
+        printd("Bubble clicked");
+        Users.toggleIgnoreRadius();
+        bubbleBtn.editProperties({isActive: Users.getIgnoreRadiusEnabled()});
+    });
 
-        var peopleBtn = bottombar.addButton({
-            icon: "icons/android/people-i.svg",
-            activeIcon: "icons/android/people-a.svg",
-            text: "PEOPLE",
-        });
-        peopleBtn.clicked.connect(function() {
-			printd("People clicked");
-            if (!isShowingFriends) {
-                showFriends();
-            } else {
-                hideFriends();
-            }
-            peopleBtn.editProperties({isActive: isShowingFriends});
-        });
+    var chatBtn = bottombar.addButton({
+        icon: "icons/android/chat-i.svg",
+        activeIcon: "icons/android/chat-a.svg",
+        text: "CHAT",
+    });
+    chatBtn.clicked.connect(function() {
+        printd("Chat clicked");
+    });
 
-        var settingsBtn = bottombar.addButton({
-            icon: "icons/android/settings-i.svg",
-            activeIcon: "icons/android/settings-a.svg",
-            text: "SETTINGS",
-        });
-        settingsBtn.clicked.connect(function() {
-			printd("Settings clicked");
-        });
+    var peopleBtn = bottombar.addButton({
+        icon: "icons/android/people-i.svg",
+        activeIcon: "icons/android/people-a.svg",
+        text: "PEOPLE",
+    });
+    peopleBtn.clicked.connect(function() {
+        printd("People clicked");
+        if (!connections.isVisible()) {
+            showConnections();
+        } else {
+            hideConnections();
+        }
+        peopleBtn.editProperties({isActive: connections.isVisible()});
+    });
 
-	    //friendsWindow.setURL(FRIENDS_WINDOW_URL);
-	    bottombar.setVisible(true);
-	    bottombar.raise();
-	    //bottombar.position.x=500;
-	    //bottombar.position.y=1000;
-		printd("BottomBar: " + JSON.stringify(bottombar));
-	    printd("Parent of bottombar is " + bottombar.parent)
-    	printd("Swipe Up finished!");	
+    var settingsBtn = bottombar.addButton({
+        icon: "icons/android/settings-i.svg",
+        activeIcon: "icons/android/settings-a.svg",
+        text: "SETTINGS",
+    });
+    settingsBtn.clicked.connect(function() {
+        printd("Settings clicked");
+    });
+
+    bottombar.setVisible(true);
+    bottombar.raise();
+}
+
+function lowerBottomBar() {
+    if (bottombar) {
+        printd("[MENU] hiding bottom bar");
+        bottombar.setVisible(false);
+        //bottombar = null;
     }
 }
 
 function touchUpdate(event) {
 	var coords = { x: event.x, y: event.y };
-	if (touchInProgress && coords.y <= swUplastTouchY) {
-		swipingUp = true;
-		swUplastTouchY = coords.y;
-		printd("Swiping up" + swUplastTouchY);
-	} else {
-		swipingUp = false;
-		touchInProgress = true; // or invalidateSwipingUp=true;
-	}
+	if (touchInProgress) {
+        if(swipingUp && coords.y < swipeLastTouchY) {
+//            printd("[MENU] touch update swipingUp " + swipeLastTouchY);
+            swipingDown = false;
+            swipeLastTouchY = coords.y;
+        } else if (swipingDown && coords.y > swipeLastTouchY) {
+            swipingUp = false;
+            swipeLastTouchY = coords.y;
+//            printd("[MENU] touch update swipingDown " + swipeLastTouchY);
+        } else if (swipingLeft && coords.x < swipeLastTouchX) {
+            swipingRight = false;
+            swipeLastTouchX = coords.x;
+        } else if (swipingRight && coords.x > swipeLastTouchX) {
+            swipingLeft = false;
+            swipeLastTouchX = coords.x;
+    	} else {
+            touchInProgress = false; // or invalidateSwipingUp=true;
+        }
+    }
 }
 
-function showFriends() {
-    friends.init();
-    friends.show();
-    isShowingFriends=true;
-    printd("[FRIENDS] showing");
+function showConnections() {
+    connections.show();    
+//    printd("[CONNECTIONS] showing");
 }
 
-function hideFriends() {
-    friends.hide();
-    friends.destroy();
-    isShowingFriends = false;
-    printd("[FRIENDS] hiding");
+function hideConnections() {
+    connections.hide();
+    //connections.destroy();
+//    printd("[CONNECTIONS] hiding");
 }
 
 function setupModesBar() {

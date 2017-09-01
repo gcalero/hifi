@@ -29,6 +29,8 @@ public:
      * TODO - not yet implemented
      */
     Q_INVOKABLE void removeButton(QObject* tabletButtonProxy);
+public slots:
+    Q_INVOKABLE void close();
 
 protected:
     QString qmlSource() const override { return qmlId + ".qml"; }
