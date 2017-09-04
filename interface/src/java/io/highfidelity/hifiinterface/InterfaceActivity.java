@@ -25,6 +25,7 @@ import com.google.vr.ndk.base.GvrApi;
 import android.graphics.Point;
 import android.content.res.Configuration;
 import android.content.pm.ActivityInfo;
+import android.view.View;
 
 public class InterfaceActivity extends QtActivity {
     
@@ -115,4 +116,23 @@ public class InterfaceActivity extends QtActivity {
         openUrlIntent.putExtra(WebViewActivity.WEB_VIEW_ACTIVITY_EXTRA_URL, urlString);
         startActivity(openUrlIntent);
     }
+
+    /**
+     * Called when view focus is changed
+     */
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            final int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+
+            getWindow().getDecorView().setSystemUiVisibility(uiOptions);
+        }
+    }
+
 }
