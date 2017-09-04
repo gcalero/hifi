@@ -51,9 +51,9 @@ if (!App.isAndroid()) {
     pushAll(DEFAULT_SCRIPTS, [
         "system/progress.js",
         "system/away.js",
-        "system/tablet-users.js",
-        "system/audio.js",
-        "system/goto.js",
+        //"system/tablet-users.js",
+        //"system/audio.js",
+        //"system/goto.js",
         //"system/hmd.js", HMD features in android.js
         //"system/marketplaces/marketplaces.js", Not in Android UI specs
         //"system/edit.js",
@@ -71,7 +71,7 @@ if (!App.isAndroid()) {
         "system/firstPersonHMD.js",
         //"system/snapshot.js", Not in Android UI specs
         //"system/help.js", Not in Android UI specs
-        "system/bubble.js",
+        //"system/bubble.js",
         //"system/godView.js", Used by android.js directly
         "system/android.js",
         //"system/friends.js", Used by android.js directly

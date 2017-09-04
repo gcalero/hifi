@@ -67,7 +67,7 @@ OriginalDesktop.Desktop {
         WebEngine.settings.spatialNavigationEnabled = false;
         WebEngine.settings.localContentCanAccessRemoteUrls = true;
 */
-        var toggleHudButton = sysToolbar.addButton({
+        /*var toggleHudButton = sysToolbar.addButton({
             objectName: "hudToggle",
             imageURL: "../../../icons/hud.svg",
             visible: true,
@@ -81,7 +81,7 @@ OriginalDesktop.Desktop {
             console.log("Clicked on hud button")
             var overlayMenuItem = "Overlays"
             MenuInterface.setIsOptionChecked(overlayMenuItem, !MenuInterface.isOptionChecked(overlayMenuItem));
-        });
+        });*/
     }
 
     // Accept a download through the webview

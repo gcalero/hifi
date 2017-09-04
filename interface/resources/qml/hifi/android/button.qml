@@ -47,7 +47,6 @@ Item {
     }
 
     function editProperties(props) {
-        print ("[MENU] edit properties " + JSON.stringify(props));
         for (var prop in props) {
             button[prop] = props[prop];
         }

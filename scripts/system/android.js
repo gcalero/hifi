@@ -33,6 +33,8 @@ var swipingLeft=false, swipingRight=false, swipeLastTouchX=0, initialTouchX=0;
 var connections = Script.require('./connections.js');
 
 var modesBar;
+var audiobar;
+var audioButton;
 
 function printd(str) {
     if (logEnabled)
@@ -50,6 +52,8 @@ function init() {
     Script.update.connect(update);
 
     modesBar = setupModesBar();
+
+    setupAudioBar();
 
     GODVIEWMODE.isTouchValid = isGodViewModeValidTouch;
 }
@@ -94,6 +98,7 @@ function isGodViewModeValidTouch(coords) {
                 (coords.y < connections.position().y *3 || coords.y > connections.position().y *3 + connections.height() * 3)
             )
         ) && 
+        (
             bottombar == null
             ||
             (
@@ -101,8 +106,17 @@ function isGodViewModeValidTouch(coords) {
                 ||
                 (coords.y < bottombar.position.y * 3 || coords.y > bottombar.position.y * 3 + bottombar.size.y * 3)
             )
-        ;
-//    printd("[CONNECTIONS] analyze touch at coords " + JSON.stringify(coords)+ " was valid " + isValid);
+        ) &&
+        (
+            audiobar == null
+            ||
+            (
+                (coords.x < audiobar.position.x * 3 || coords.x > audiobar.position.x * 3 + audiobar.size.x * 3)
+                ||
+                (coords.y < audiobar.position.y * 3 || coords.y > audiobar.position.y * 3 + audiobar.size.y * 3)
+            )
+        );
+    //printd("[AUDIO] analyze touch at coords " + JSON.stringify(coords)+ " was valid " + isValid);
     return isValid;
 }
 
@@ -425,6 +439,33 @@ var setupModesBar = function() {
     };
 
 };
+
+function onMuteToggled() {
+    Menu.setIsOptionChecked("Mute Microphone", !Menu.isOptionChecked("Mute Microphone"));
+    updateAudioButtonIcon();
+    //printd("[AUDIO] is option Mute Microphone checked " + Menu.isOptionChecked("Mute Microphone"))
+}
+
+function updateAudioButtonIcon() {
+    audioButton.isActive = Menu.isOptionChecked("Mute Microphone")
+}
+function setupAudioBar() {
+    audiobar = new QmlFragment({
+        menuId: "hifi/android/audiobar"
+    });
+
+    audioButton = audiobar.addButton({
+        icon: "icons/android/mic-unmute-a.svg",
+        activeIcon: "icons/android/mic-mute-a.svg",
+        text: "",
+        bgOpacity: 0.5,
+        bgColor: "#FFFFFF"
+    });
+
+    updateAudioButtonIcon();
+
+    audioButton.clicked.connect(onMuteToggled);
+}
 
 Script.scriptEnding.connect(function () {
 	shutdown();
