@@ -230,7 +230,7 @@ module.exports = {
         return window ? window.size.y : 0;
     },
     position: function() {
-        return window ? window.position : null;
+        return window && isVisible ? window.position : null;
     }
 };
 
