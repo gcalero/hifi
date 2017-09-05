@@ -35,6 +35,7 @@ var connections = Script.require('./connections.js');
 var modesBar;
 var audiobar;
 var audioButton;
+var peopleBtn;
 
 function printd(str) {
     if (logEnabled)
@@ -233,7 +234,7 @@ function raiseBottomBar() {
         printd("Chat clicked");
     });
 
-    var peopleBtn = bottombar.addButton({
+    peopleBtn = bottombar.addButton({
         icon: "icons/android/people-i.svg",
         activeIcon: "icons/android/people-a.svg",
         text: "PEOPLE",
@@ -245,7 +246,6 @@ function raiseBottomBar() {
         } else {
             hideConnections();
         }
-        peopleBtn.editProperties({isActive: connections.isVisible()});
     });
 
     var settingsBtn = bottombar.addButton({
@@ -295,12 +295,14 @@ function touchUpdate(event) {
 }
 
 function showConnections() {
-    connections.show();    
+    connections.show();
+    peopleBtn.isActive = true;    
 //    printd("[CONNECTIONS] showing");
 }
 
 function hideConnections() {
     connections.hide();
+    peopleBtn.isActive = false;
     //connections.destroy();
 //    printd("[CONNECTIONS] hiding");
 }
