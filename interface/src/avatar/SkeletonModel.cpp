@@ -107,7 +107,7 @@ void SkeletonModel::updateRig(float deltaTime, glm::mat4 parentTransform) {
 
         Rig::HeadParameters headParams;
 
-        if (qApp->isHMDMode()) {
+        if (qApp->isHMDMode() || qApp->isAndroid()) {
             headParams.isInHMD = true;
 
             // get HMD position from sensor space into world space, and back into rig space

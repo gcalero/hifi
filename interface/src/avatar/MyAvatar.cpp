@@ -1109,7 +1109,7 @@ void MyAvatar::updateLookAtTargetAvatar() {
                  qApp->copyViewFrustum(viewFrustum);
 
                 // scale gazeOffset by IPD, if wearing an HMD.
-                if (qApp->isHMDMode()) {
+                if (qApp->isHMDMode() || qApp->isAndroid()) {
                     glm::mat4 leftEye = qApp->getEyeOffset(Eye::Left);
                     glm::mat4 rightEye = qApp->getEyeOffset(Eye::Right);
                     glm::vec3 leftEyeHeadLocal = glm::vec3(leftEye[3]);
@@ -1389,7 +1389,7 @@ void MyAvatar::prepareForPhysicsSimulation() {
     _characterController.setParentVelocity(parentVelocity);
 
     _characterController.setPositionAndOrientation(getPosition(), getOrientation());
-    if (qApp->isHMDMode()) {
+    if (qApp->isHMDMode() || qApp->isAndroid()) {
         _follow.prePhysicsUpdate(*this, deriveBodyFromHMDSensor(), _bodySensorMatrix, hasDriveInput());
     } else {
         _follow.deactivate();
@@ -1738,7 +1738,7 @@ void MyAvatar::updateOrientation(float deltaTime) {
 
     getHead()->setBasePitch(getHead()->getBasePitch() + getDriveKey(PITCH) * _pitchSpeed * deltaTime);
 
-    if (qApp->isHMDMode()) {
+    if (qApp->isHMDMode() || qApp->isAndroid()) {
         glm::quat orientation = glm::quat_cast(getSensorToWorldMatrix()) * getHMDSensorOrientation();
         glm::quat bodyOrientation = getWorldBodyOrientation();
         glm::quat localOrientation = glm::inverse(bodyOrientation) * orientation;

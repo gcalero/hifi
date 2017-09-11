@@ -57,6 +57,9 @@ function init() {
     setupAudioBar();
 
     GODVIEWMODE.isTouchValid = isGodViewModeValidTouch;
+
+    setupVirtualPad();
+    //Controller.touchVPadEvent.connect(touchVPad);
 }
 
 function shutdown() {
@@ -65,6 +68,8 @@ function shutdown() {
     Controller.touchUpdateEvent.disconnect(touchUpdate);
 
     Script.update.disconnect(update);
+
+    //Controller.touchVPadEvent.disconnect(touchVPad);
 }
 
 function update() {
@@ -76,6 +81,24 @@ function update() {
         if (modesBar) {
             modesBar.restoreMyViewButton();
         }
+    }
+    if (Controller.isTouchVPadLeft()) {
+        printd("[VPAD][js] " + JSON.stringify(Controller.getTouchVPadFirstLeft()));
+        var firstPos = Controller.getTouchVPadFirstLeft();
+        var curPos = Controller.getTouchVPadCurrentLeft();
+        virtualPad.sendToQml({
+            method: 'updatePositions',
+            params: {
+                leftStickBaseX: firstPos.x,
+                leftStickBaseY: firstPos.y,
+                leftStickX: curPos.x,
+                leftStickY: curPos.y
+            }
+        });
+    } else {
+        virtualPad.sendToQml({
+            method: 'hideAll'
+        });
     }
 }
 
@@ -119,6 +142,11 @@ function isGodViewModeValidTouch(coords) {
         );
     //printd("[AUDIO] analyze touch at coords " + JSON.stringify(coords)+ " was valid " + isValid);
     return isValid;
+}
+
+function touchVPad(leftTouching, leftFirstPoint, leftCurrentPoint, rightTouching, rightFirstPoint, rightCurrentPoint) {
+    printd("[VPAD][js] " + (leftTouching?JSON.stringify(leftFirstPoint) + "->" + JSON.stringify(leftCurrentPoint) :"no-left")
+        + (rightTouching?JSON.stringify(rightFirstPoint) + "->" + JSON.stringify(rightCurrentPoint) :"no-right") );
 }
 
 function touchBegin(event) {
@@ -305,6 +333,12 @@ function hideConnections() {
     peopleBtn.isActive = false;
     //connections.destroy();
 //    printd("[CONNECTIONS] hiding");
+}
+
+var virtualPad;
+
+function setupVirtualPad() {
+    virtualPad = new QmlFragment({menuId: "hifi/android/touchscreenvirtualpad"});
 }
 
 var setupModesBar = function() {
