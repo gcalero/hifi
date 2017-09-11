@@ -27,6 +27,7 @@
 #include "OctreeStatsDialog.h"
 #include "PreferencesDialog.h"
 #include "UpdateDialog.h"
+#include <QQmlProperty>
 
 template<typename T>
 void DialogsManager::maybeCreateDialog(QPointer<T>& member) {
@@ -70,6 +71,16 @@ void DialogsManager::toggleLoginDialog() {
 
 void DialogsManager::showLoginDialog() {
     LoginDialog::show();
+#ifdef ANDROID
+    auto offscreenUi = DependencyManager::get<OffscreenUi>();
+    if (offscreenUi) {
+        QQuickItem* item = offscreenUi->getRootItem()->findChild<QQuickItem*>("LoginDialog");
+        if (item) {
+            QQmlProperty(item, "draggable").write(true);
+        }
+
+    }
+#endif    
 }
 
 void DialogsManager::showUpdateDialog() {

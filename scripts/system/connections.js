@@ -28,7 +28,6 @@ function init() {
     //tablet.fromQml.connect(fromQml);
 }
 
-var first=true; // temporary
 function fromQml(message) { // messages are {method, params}, like json-rpc. See also sendToQml.
     var data;
     //printd("[CONNECTIONS] fromQml " + message.method);
@@ -196,10 +195,8 @@ module.exports = {
         //printd("[CONNECTIONS] show");
         if (window) {
             window.fromQml.connect(fromQml);
-            // temporary fix to avoid reconnection
-            if (first) {
+            if (!Account.isLoggedIn()) {
                 Account.checkAndSignalForAccessToken();
-                first=false;
             }
             window.setVisible(true);
             isVisible = true;
