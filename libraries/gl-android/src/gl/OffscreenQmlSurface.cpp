@@ -37,6 +37,7 @@
 #include "GLHelpers.h"
 #include "GLLogging.h"
 #include "Context.h"
+#include <QInputMethodEvent>
 
 Q_LOGGING_CATEGORY(trace_render_qml, "trace.render.qml")
 Q_LOGGING_CATEGORY(trace_render_qml_gl, "trace.render.qml.gl")
@@ -827,7 +828,17 @@ bool OffscreenQmlSurface::eventFilter(QObject* originalDestination, QEvent* even
             //return true;// filter these out
             break;
         }
-
+        case QEvent::InputMethod:
+        case QEvent::InputMethodQuery: {
+            if (_quickWindow && _quickWindow->activeFocusItem()) {
+                event->ignore();
+                if (QCoreApplication::sendEvent(_quickWindow->activeFocusItem(), event)) {
+                    return event->isAccepted();
+                }
+                return false;
+            }
+            break;
+        }
         default:
             qInfo() << __FUNCTION__ << "default handler... event:" << event->type();
             if (QCoreApplication::sendEvent(_quickWindow, event)) {
