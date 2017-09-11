@@ -41,8 +41,8 @@ Item {
             leftStickBase.y = data.leftStickBaseY/3 - leftStickBase.height/2;
             leftStick.x = data.leftStickX/3 - leftStick.width/2;
             leftStick.y = data.leftStickY/3 - leftStick.height/2;
-            leftStickBase.visible = true;
-            leftStick.visible = true;
+            //leftStickBase.visible = true; TODO restore visibility when fixed or replaced
+            //leftStick.visible = true; TODO as it is also shown on radar mode
             break;
         
         default:
