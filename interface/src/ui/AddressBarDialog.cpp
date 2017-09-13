@@ -18,7 +18,11 @@
 #include "AddressManager.h"
 #include "DialogsManager.h"
 
+#ifdef ANDROID
+HIFI_QML_DEF_ANDROID(AddressBarDialog)
+#else
 HIFI_QML_DEF(AddressBarDialog)
+#endif
 
 AddressBarDialog::AddressBarDialog(QQuickItem* parent) : OffscreenQmlDialog(parent) {
     auto addressManager = DependencyManager::get<AddressManager>();

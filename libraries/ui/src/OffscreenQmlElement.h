@@ -66,6 +66,35 @@ private:
         offscreenUi->load(QML, f); \
     }
 
+
+#define HIFI_QML_DEF_ANDROID(x) \
+    const QUrl x::QML = QUrl(#x "-android.qml"); \
+    const QString x::NAME = #x; \
+    \
+    void x::registerType() { \
+        qmlRegisterType<x>("Hifi", 1, 0, NAME.toLocal8Bit().constData()); \
+    } \
+    \
+    void x::show(std::function<void(QQmlContext*, QObject*)> f) { \
+        auto offscreenUi = DependencyManager::get<OffscreenUi>(); \
+        offscreenUi->show(QML, NAME, f); \
+    } \
+    \
+    void x::hide() { \
+        auto offscreenUi = DependencyManager::get<OffscreenUi>(); \
+        offscreenUi->hide(NAME); \
+    } \
+    \
+    void x::toggle(std::function<void(QQmlContext*, QObject*)> f) { \
+        auto offscreenUi = DependencyManager::get<OffscreenUi>(); \
+        offscreenUi->toggle(QML, NAME, f); \
+    } \
+    void x::load(std::function<void(QQmlContext*, QObject*)> f) { \
+        auto offscreenUi = DependencyManager::get<OffscreenUi>(); \
+        offscreenUi->load(QML, f); \
+    }
+
+
 #define HIFI_QML_DEF_LAMBDA(x, f) \
     const QUrl x::QML = QUrl(#x ".qml"); \
     const QString x::NAME = #x; \

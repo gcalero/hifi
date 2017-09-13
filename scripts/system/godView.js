@@ -724,7 +724,7 @@ function renderAllEntitiesIcons() {
             if (entityProps != null) {
                 entityPos = entityProps.position;
                 //printd("entity icon for entity " + QUuid);
-                if (entitiesData[QUuid].icon != undefined) {
+                if (entitiesData[QUuid].icon != undefined && entityPos) {
                     //printd("entity icon " + entitiesData[QUuid].icon + " for entity " + QUuid);
                     var iconPos = findLineToHeightIntersectionCoords(   entityPos.x, entityPos.y + GOD_VIEW_ICONS_APPARENT_DISTANCE_TO_AVATAR_BASE, entityPos.z,
                                                                         Camera.position.x, Camera.position.y, Camera.position.z,

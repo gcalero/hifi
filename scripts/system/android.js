@@ -31,11 +31,13 @@ var swipingUp=false, swipingDown=false, swipeLastTouchY=0, initialTouchY=0;
 var swipingLeft=false, swipingRight=false, swipeLastTouchX=0, initialTouchX=0;
 
 var connections = Script.require('./connections.js');
+var gotoScript = Script.require('./goto-android.js');
 
 var modesBar;
 var audiobar;
 var audioButton;
 var peopleBtn;
+var gotoBtn;
 
 function printd(str) {
     if (logEnabled)
@@ -45,6 +47,14 @@ function printd(str) {
 function init() {
 	// temp while I build bottom bar
     connections.init();
+    gotoScript.init();
+    gotoScript.setOnShownChange(function (shown) {
+        if (shown) {
+            showAddressBar();
+        } else {
+            hideAddressBar();
+        }
+    });
 
 	Controller.touchBeginEvent.connect(touchBegin);
 	Controller.touchEndEvent.connect(touchEnd);
@@ -139,7 +149,16 @@ function isGodViewModeValidTouch(coords) {
                 ||
                 (coords.y < audiobar.position.y * 3 || coords.y > audiobar.position.y * 3 + audiobar.size.y * 3)
             )
-        );
+        )  &&
+        (
+            gotoScript.position() == null
+            ||
+            (
+                (coords.x < gotoScript.position().x * 3 || coords.x > gotoScript.position().x * 3+ gotoScript.width() * 3)
+                ||
+                (coords.y < gotoScript.position().y *3 || coords.y > gotoScript.position().y *3 + gotoScript.height() * 3)
+            )
+        ) ;
     //printd("[AUDIO] analyze touch at coords " + JSON.stringify(coords)+ " was valid " + isValid);
     return isValid;
 }
@@ -233,14 +252,19 @@ function raiseBottomBar() {
         printd("Avatar button clicked");
     }); // god view button
     
-    var gotoBtn = bottombar.addButton({
+    gotoBtn = bottombar.addButton({
         icon: "icons/android/goto-i.svg",
         activeIcon: "icons/android/goto-a.svg",
         text: "GO TO",
     });
     gotoBtn.clicked.connect(function() {
-        printd("Goto clicked");
-        DialogsManager.toggleAddressBar();
+        //printd("Goto clicked");
+        //DialogsManager.toggleAddressBar();
+        if (!gotoScript.isVisible()) {
+            showAddressBar();
+        } else {
+            hideAddressBar();
+        }
     });
     var bubbleBtn = bottombar.addButton({
         icon: "icons/android/bubble-i.svg",
@@ -248,7 +272,7 @@ function raiseBottomBar() {
         text: "BUBBLE",
     });
     bubbleBtn.clicked.connect(function() {
-        printd("Bubble clicked");
+        //printd("Bubble clicked");
         Users.toggleIgnoreRadius();
         bubbleBtn.editProperties({isActive: Users.getIgnoreRadiusEnabled()});
     });
@@ -268,7 +292,7 @@ function raiseBottomBar() {
         text: "PEOPLE",
     });
     peopleBtn.clicked.connect(function() {
-        printd("People clicked");
+        //printd("People clicked");
         if (!connections.isVisible()) {
             showConnections();
         } else {
@@ -291,7 +315,7 @@ function raiseBottomBar() {
 
 function lowerBottomBar() {
     if (bottombar) {
-        printd("[MENU] hiding bottom bar");
+        //printd("[MENU] hiding bottom bar");
         bottombar.setVisible(false);
         //bottombar = null;
     }
@@ -333,6 +357,16 @@ function hideConnections() {
     peopleBtn.isActive = false;
     //connections.destroy();
 //    printd("[CONNECTIONS] hiding");
+}
+
+function showAddressBar() {
+    gotoScript.show();
+    gotoBtn.isActive = true;
+}
+
+function hideAddressBar() {
+    gotoScript.hide();
+    gotoBtn.isActive = false;
 }
 
 var virtualPad;
