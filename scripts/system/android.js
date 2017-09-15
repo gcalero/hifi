@@ -68,7 +68,7 @@ function init() {
 
     GODVIEWMODE.isTouchValid = isGodViewModeValidTouch;
 
-    setupVirtualPad();
+    _virtualPad = setupVirtualPad();
     //Controller.touchVPadEvent.connect(touchVPad);
 }
 
@@ -92,8 +92,12 @@ function update() {
             modesBar.restoreMyViewButton();
         }
     }
+    updateTouchVPad();
+}
+
+function updateTouchVPad() {
     if (Controller.isTouchVPadLeft()) {
-        printd("[VPAD][js] " + JSON.stringify(Controller.getTouchVPadFirstLeft()));
+        /*printd("[VPAD][js] " + JSON.stringify(Controller.getTouchVPadFirstLeft()));
         var firstPos = Controller.getTouchVPadFirstLeft();
         var curPos = Controller.getTouchVPadCurrentLeft();
         virtualPad.sendToQml({
@@ -104,11 +108,14 @@ function update() {
                 leftStickX: curPos.x,
                 leftStickY: curPos.y
             }
-        });
+        });*/
+        var curPos = Controller.getTouchVPadCurrentLeft();
+        _virtualPad.update(curPos.x, curPos.y);
     } else {
-        virtualPad.sendToQml({
+        /*virtualPad.sendToQml({
             method: 'hideAll'
-        });
+        });*/
+        _virtualPad.hide();
     }
 }
 
@@ -369,10 +376,61 @@ function hideAddressBar() {
     gotoBtn.isActive = false;
 }
 
-var virtualPad;
+var _virtualPad;
 
 function setupVirtualPad() {
-    virtualPad = new QmlFragment({menuId: "hifi/android/touchscreenvirtualpad"});
+
+    var STICK_OVERLAY_DISTANCE_TO_CAMERA = 1.0;
+
+    //virtualPad = new QmlFragment({menuId: "hifi/android/touchscreenvirtualpad"});
+    var stickOverlayId;
+    var baseStickOverlayId;
+
+    var baseTouchPos;
+    var isVisible;
+
+    stickOverlayId = Overlays.addOverlay("rectangle3d", {
+            dimensions: {x:0.1, y:0.1},
+            visible: false,
+            solid: true,
+            drawInFront: true,
+            alpha: .5,
+            color: { red: 100, green: 100, blue: 100}
+        });
+    baseStickOverlayId = Overlays.addOverlay("rectangle3d", {
+            dimensions: {x:0.1, y:0.1},
+            visible: false,
+            solid: true,
+            alpha: .5,
+            color: { red: 120, green: 120, blue: 120}
+        });
+
+    function updateOverlay(overlayId, xPos, yPos) {
+        var pickRay = Camera.computePickRay(xPos, yPos);
+        var touchPosShow = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction, STICK_OVERLAY_DISTANCE_TO_CAMERA));
+
+        Overlays.editOverlay(overlayId, {
+            position: touchPosShow,
+            rotation: Quat.lookAt(Camera.position, touchPosShow, Vec3.UP),
+            visible: true
+        });
+    }
+
+    return {
+        hide : function() {
+            Overlays.editOverlay(stickOverlayId, {visible:false});
+            Overlays.editOverlay(baseStickOverlayId, {visible:false});
+            isVisible = false;
+        },
+        update: function(xPos, yPos) {
+            if (!isVisible) {
+                isVisible = true;
+                baseTouchPos = {x:xPos, y:yPos};
+            }
+            updateOverlay(stickOverlayId, xPos, yPos);
+            updateOverlay(baseStickOverlayId, baseTouchPos.x, baseTouchPos.y);
+        }
+    };
 }
 
 var setupModesBar = function() {
