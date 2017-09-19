@@ -81,8 +81,6 @@ protected:
     qreal _pinchScale;
     qreal _screenDPI;
     glm::vec2 _screenDPIScale;
-    //glm::vec2 _firstTouchVec;
-    //glm::vec2 _currentTouchVec;
     bool _validTouchLeft;
     glm::vec2 _firstTouchLeftPoint;
     glm::vec2 _currentTouchLeftPoint;

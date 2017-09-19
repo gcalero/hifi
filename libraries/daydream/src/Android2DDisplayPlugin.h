@@ -21,9 +21,9 @@ class Android2DDisplayPlugin : public Basic2DWindowOpenGLDisplayPlugin {
 public:
     virtual const QString getName() const override { return NAME; }
     bool isHmd() const override final { return false; }
-    bool isStereo() const { return false; }
+    bool isStereo() const override { return false; }
     virtual float getTargetFrameRate() const override { return  _framerateTarget ? (float) _framerateTarget : TARGET_FRAMERATE_Basic2DWindowOpenGL; }
-    virtual bool isDisplayVisible() const { return false; }
+    virtual bool isDisplayVisible() const override { return false; }
 
     virtual bool internalActivate() override;
 
@@ -53,10 +53,15 @@ protected:
     QMap<uint32_t, FrameInfo> _frameInfos;
     FrameInfo _currentRenderFrameInfo;
 
+    virtual void customizeContext() override;
+
+    virtual void compositeExtra() override;
 
 private:
     static const QString NAME;
     std::vector<QAction*> _framerateActions;
 	uint32_t _framerateTarget { 0 };
 
+    gpu::TexturePointer _stickTexture;
+    gpu::TexturePointer _stickBaseTexture;
 };

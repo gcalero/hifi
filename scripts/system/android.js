@@ -410,11 +410,13 @@ function setupVirtualPad() {
 
     return {
         hide : function() {
+            return; // remove all
             Overlays.editOverlay(stickOverlayId, {visible:false});
             Overlays.editOverlay(baseStickOverlayId, {visible:false});
             isVisible = false;
         },
         update: function(xPos, yPos) {
+            return; // remove all
             if (!isVisible) {
                 isVisible = true;
                 baseTouchPos = {x:xPos, y:yPos};

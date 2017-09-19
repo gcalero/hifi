@@ -92,6 +92,8 @@ public:
 
     glm::mat4 getReticleTransform(const glm::mat4& eyePose = glm::mat4(), const glm::vec3& headPosition = glm::vec3()) const;
 
+    glm::mat4 getPoint2DTransform(const glm::vec2& point = glm::vec2()) const;
+
     ReticleInterface* getReticleInterface() { return _reticleInterface; }
 
     /// return value - true means the caller should not process the event further

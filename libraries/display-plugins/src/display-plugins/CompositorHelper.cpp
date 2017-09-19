@@ -445,6 +445,21 @@ glm::mat4 CompositorHelper::getReticleTransform(const glm::mat4& eyePose, const 
     return result;
 }
 
+glm::mat4 CompositorHelper::getPoint2DTransform(const glm::vec2& point) const {
+    glm::mat4 result;
+    static const float STICK_PIXEL_SIZE = 512.0f;
+    const auto canvasSize = vec2(toGlm(_renderingWidget->size()));;
+    QPoint qPoint(point.x,point.y);
+    vec2 stickPosition = toGlm(_renderingWidget->mapFromGlobal(qPoint));
+    stickPosition /= canvasSize;
+    stickPosition *= 2.0;
+    stickPosition -= 1.0;
+    stickPosition.y *= -1.0f;
+
+    vec2 stickSize = STICK_PIXEL_SIZE / canvasSize;
+    result = glm::scale(glm::translate(glm::mat4(), vec3(stickPosition, 0.0f)), vec3(stickSize, 1.0f));
+    return result;
+}
 
 QVariant ReticleInterface::getPosition() const {
     return vec2toVariant(_compositor->getReticlePosition());

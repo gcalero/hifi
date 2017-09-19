@@ -111,18 +111,6 @@ void TouchscreenVirtualPadDevice::pluginUpdate(float deltaTime, const controller
         _inputDevice->_axisStateMap[controller::RY] = rightDistanceScaleY;
     }
 
-    //(static_cast<Application*>qApp)->getControllerScriptingInterface()->emitTouchVPadEvent(_validTouchLeft, _firstTouchLeftPoint, _currentTouchLeftPoint,
-                                                                //_validTouchRight, _firstTouchRightPoint, _currentTouchRightPoint);
-    // TODO Save a reference
-    /*auto controllerScriptingInterface = DependencyManager::get<controller::ScriptingInterface>().data();
-    ControllerScriptingInterface* _controllerScriptingInterface = dynamic_cast<ControllerScriptingInterface*>(controllerScriptingInterface);
-    _controllerScriptingInterface->emitTouchVPadEvent(_validTouchLeft, _firstTouchLeftPoint, _currentTouchLeftPoint,_validTouchRight, _firstTouchRightPoint, _currentTouchRightPoint);*/
-
-/*    qDebug() << "[VPAD][in] " << leftDistanceScaleX << " , " << leftDistanceScaleY << "       |       "
-            << rightDistanceScaleX << " , " << rightDistanceScaleY;
-
-    qDebug() << "[VPAD][in][clip] " << leftDistanceScaleX << " , " << leftDistanceScaleY << "       |       "
-            << rightDistanceScaleX << " , " << rightDistanceScaleY;*/
 }
 
 void TouchscreenVirtualPadDevice::InputDevice::update(float deltaTime, const controller::InputCalibrationData& inputCalibrationData) {
@@ -274,14 +262,6 @@ void TouchscreenVirtualPadDevice::touchGestureEvent(const QGestureEvent* event) 
         //qDebug() << "[VPAD] touchGestureEvent ()";
     }
 }
-
-/*controller::Input TouchscreenVirtualPadDevice::InputDevice::makeInput(TouchscreenVirtualPadDevice::TouchAxisChannel axis) const {
-    return controller::Input(_deviceID, axis, controller::ChannelType::AXIS);
-}*/
-
-/*controller::Input TouchscreenVirtualPadDevice::InputDevice::makeInput(TouchscreenVirtualPadDevice::TouchGestureAxisChannel gesture) const {
-    return controller::Input(_deviceID, gesture, controller::ChannelType::AXIS);
-}*/
 
 controller::Input::NamedVector TouchscreenVirtualPadDevice::InputDevice::getAvailableInputs() const {
     using namespace controller;
