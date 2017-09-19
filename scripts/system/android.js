@@ -32,12 +32,14 @@ var swipingLeft=false, swipingRight=false, swipeLastTouchX=0, initialTouchX=0;
 
 var connections = Script.require('./connections.js');
 var gotoScript = Script.require('./goto-android.js');
+var chat = Script.require('./chat.js');
 
 var modesBar;
 var audiobar;
 var audioButton;
 var peopleBtn;
 var gotoBtn;
+var chatBtn;
 
 function printd(str) {
     if (logEnabled)
@@ -48,6 +50,7 @@ function init() {
 	// temp while I build bottom bar
     connections.init();
     gotoScript.init();
+    chat.init();
     gotoScript.setOnShownChange(function (shown) {
         if (shown) {
             showAddressBar();
@@ -120,54 +123,28 @@ function updateTouchVPad() {
 }
 
 function isGodViewModeValidTouch(coords) {
-    var isValid = 
-        (
-            modesBar == null
-            ||
-            (
-                (coords.x < modesBar.qmlFragment.position.x * 3 || coords.x > modesBar.qmlFragment.position.x * 3 + modesBar.qmlFragment.size.x * 3)
-                ||
-                (coords.y < modesBar.qmlFragment.position.y * 3 || coords.y > modesBar.qmlFragment.position.y * 3 + modesBar.qmlFragment.size.y * 3)
-            )
-        ) &&
-        (
-            connections.position() == null
-            ||
-            (
-                (coords.x < connections.position().x * 3 || coords.x > connections.position().x * 3+ connections.width() * 3)
-                ||
-                (coords.y < connections.position().y *3 || coords.y > connections.position().y *3 + connections.height() * 3)
-            )
-        ) && 
-        (
-            bottombar == null
-            ||
-            (
-                (coords.x < bottombar.position.x * 3 || coords.x > bottombar.position.x * 3 + bottombar.size.x * 3)
-                ||
-                (coords.y < bottombar.position.y * 3 || coords.y > bottombar.position.y * 3 + bottombar.size.y * 3)
-            )
-        ) &&
-        (
-            audiobar == null
-            ||
-            (
-                (coords.x < audiobar.position.x * 3 || coords.x > audiobar.position.x * 3 + audiobar.size.x * 3)
-                ||
-                (coords.y < audiobar.position.y * 3 || coords.y > audiobar.position.y * 3 + audiobar.size.y * 3)
-            )
-        )  &&
-        (
-            gotoScript.position() == null
-            ||
-            (
-                (coords.x < gotoScript.position().x * 3 || coords.x > gotoScript.position().x * 3+ gotoScript.width() * 3)
-                ||
-                (coords.y < gotoScript.position().y *3 || coords.y > gotoScript.position().y *3 + gotoScript.height() * 3)
-            )
-        ) ;
-    //printd("[AUDIO] analyze touch at coords " + JSON.stringify(coords)+ " was valid " + isValid);
-    return isValid;
+    var qmlFragments = [modesBar.qmlFragment, bottombar, audiobar];
+    var windows = [connections, gotoScript, chat];
+    for (var i=0; i < qmlFragments.length; i++) {
+        var aQmlFrag = qmlFragments[i];
+        if (aQmlFrag != null &&
+            coords.x >= aQmlFrag.position.x * 3 && coords.x <= aQmlFrag.position.x * 3 + aQmlFrag.size.x * 3 &&
+            coords.y >= aQmlFrag.position.y * 3 && coords.y <= aQmlFrag.position.y * 3 + aQmlFrag.size.y * 3
+           ) {
+            return false;
+        }
+    }
+
+    for (var i=0; i < windows.length; i++) {
+        var aWin = windows[i];
+        if (aWin != null && aWin.position() != null && 
+            coords.x >= aWin.position().x * 3 && coords.x <= aWin.position().x * 3 + aWin.width() * 3 &&
+            coords.y >= aWin.position().y * 3 && coords.y <= aWin.position().y * 3 + aWin.height() * 3
+        ) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function touchVPad(leftTouching, leftFirstPoint, leftCurrentPoint, rightTouching, rightFirstPoint, rightCurrentPoint) {
@@ -284,13 +261,18 @@ function raiseBottomBar() {
         bubbleBtn.editProperties({isActive: Users.getIgnoreRadiusEnabled()});
     });
 
-    var chatBtn = bottombar.addButton({
+    chatBtn = bottombar.addButton({
         icon: "icons/android/chat-i.svg",
         activeIcon: "icons/android/chat-a.svg",
         text: "CHAT",
     });
     chatBtn.clicked.connect(function() {
-        printd("Chat clicked");
+        if (!chat.isVisible()) {
+            showChat()
+        } else {
+            hideChat();
+        }
+
     });
 
     peopleBtn = bottombar.addButton({
@@ -376,7 +358,17 @@ function hideAddressBar() {
     gotoBtn.isActive = false;
 }
 
-var _virtualPad;
+function showChat() {
+    chat.show();
+    chatBtn.isActive = true;
+}
+
+function hideChat() {
+    chat.hide();
+    chatBtn.isActive = false;
+}
+
+var virtualPad;
 
 function setupVirtualPad() {
 
