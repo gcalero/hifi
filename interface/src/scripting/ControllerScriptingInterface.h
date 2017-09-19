@@ -81,19 +81,12 @@ public:
     
     void emitWheelEvent(QWheelEvent* event);
 
-    void emitTouchVPadEvent(bool leftTouching, glm::vec2 leftFirstPoint, glm::vec2 leftCurrentPoint,
-                        bool rightTouching, glm::vec2 rightFirstPoint, glm::vec2 rightCurrentPoint);
-
     bool isKeyCaptured(QKeyEvent* event) const;
     bool isKeyCaptured(const KeyEvent& event) const;
     bool isJoystickCaptured(int joystickIndex) const;
     bool areEntityClicksCaptured() const;
 
     void updateInputControllers();
-
-    Q_INVOKABLE bool isTouchVPadLeft();
-    Q_INVOKABLE glm::vec2 getTouchVPadFirstLeft();
-    Q_INVOKABLE glm::vec2 getTouchVPadCurrentLeft();
 
 public slots:
 
@@ -133,9 +126,6 @@ signals:
     void touchUpdateEvent(const TouchEvent& event);
 
     void wheelEvent(const WheelEvent& event);
-
-    void touchVPadEvent(bool leftTouching, glm::vec2 leftFirstPoint, glm::vec2 leftCurrentPoint,
-                        bool rightTouching, glm::vec2 rightFirstPoint, glm::vec2 rightCurrentPoint);
 
 private:
     QString sanatizeName(const QString& name); /// makes a name clean for inclusing in JavaScript

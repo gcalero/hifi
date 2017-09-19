@@ -192,18 +192,3 @@ void ControllerScriptingInterface::emitTouchEndEvent(const TouchEvent& event) { 
 void ControllerScriptingInterface::emitTouchUpdateEvent(const TouchEvent& event) { emit touchUpdateEvent(event); }
 
 void ControllerScriptingInterface::emitWheelEvent(QWheelEvent* event) { emit wheelEvent(*event); }
-
-void ControllerScriptingInterface::emitTouchVPadEvent(bool leftTouching, glm::vec2 leftFirstPoint, glm::vec2 leftCurrentPoint,
-                            bool rightTouching, glm::vec2 rightFirstPoint, glm::vec2 rightCurrentPoint) {
-    emit touchVPadEvent(leftTouching, leftFirstPoint, leftCurrentPoint, rightTouching, rightFirstPoint, rightCurrentPoint);
-}
-
-bool ControllerScriptingInterface::isTouchVPadLeft() {
-    return _touchVPadLeft();
-}
-glm::vec2 ControllerScriptingInterface::getTouchVPadFirstLeft() {
-    return _touchVPadFirstLeft();
-}
-glm::vec2 ControllerScriptingInterface::getTouchVPadCurrentLeft() {
-    return _touchVPadCurrentLeft();
-}
