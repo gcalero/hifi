@@ -18,6 +18,9 @@
 #include "Menu.h"
 #include "Util.h"
 
+#ifdef ANDROID
+#include <Android2DDisplayPlugin.h>
+#endif
 
 CameraMode stringToMode(const QString& mode) {
     if (mode == "third person") {
@@ -96,6 +99,9 @@ void Camera::setOrientation(const glm::quat& orientation) {
 void Camera::setMode(CameraMode mode) {
     _mode = mode;
     emit modeUpdated(modeToString(mode));
+#ifdef ANDROID
+    _setCameraIsFirstPersonMode(mode == CAMERA_MODE_FIRST_PERSON);
+#endif
 }
 
 QUuid Camera::getCameraEntity() const {

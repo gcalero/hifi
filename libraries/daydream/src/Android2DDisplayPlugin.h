@@ -65,3 +65,6 @@ private:
     gpu::TexturePointer _stickTexture;
     gpu::TexturePointer _stickBaseTexture;
 };
+
+extern bool __cameraIsFirstPersonMode;
+void _setCameraIsFirstPersonMode(bool isFirstPerson);

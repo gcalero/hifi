@@ -17,7 +17,7 @@
 
 const QString Android2DDisplayPlugin::NAME("Android");
 
-
+bool __cameraIsFirstPersonMode = false;
 
 bool Android2DDisplayPlugin::internalActivate() {
     _container->setFullscreen(nullptr, true);
@@ -110,7 +110,7 @@ glm::mat4 Android2DDisplayPlugin::getHeadPose() const {
 
 
 void Android2DDisplayPlugin::compositeExtra() {
-    if(_touchVPadLeft()) {
+    if(_touchVPadLeft() && __cameraIsFirstPersonMode) {
         // render stick base
         auto stickBaseTransform = DependencyManager::get<CompositorHelper>()->getPoint2DTransform(_touchVPadFirstLeft());
         render([&](gpu::Batch& batch) {
@@ -137,4 +137,8 @@ void Android2DDisplayPlugin::compositeExtra() {
         });
     }
 
+}
+
+void _setCameraIsFirstPersonMode(bool isFirstPerson) {
+    __cameraIsFirstPersonMode = isFirstPerson;
 }
