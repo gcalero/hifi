@@ -621,7 +621,7 @@ function entityAdded(entityID) {
     print ("Entity added " + entityID + " PROPS " + JSON.stringify(props));
     if (props && props.type == "Web") {
         print ("Entity Web added " + entityID);
-        saveEntityData(entityID);
+        saveEntityData(entityID, true);
     }
 }
 
@@ -642,7 +642,7 @@ var entitiesData = {}; // by entityID
 var entitiesByOverlayID = {}; // by overlayID
 var entitiesIcons = []; // a parallel list of icons (overlays) to easily run through
 
-var ICON_ENTITY_WEB_MODEL_URL = Script.resolvePath("assets/models/teleport-destination.fbx"); // FIXME - use correct model&texture
+var ICON_ENTITY_WEB_MODEL_URL = Script.resolvePath("assets/images/web.svg");
 var ICON_ENTITY_IMG_MODEL_URL = Script.resolvePath("assets/models/teleport-cancel.fbx"); // FIXME - use correct model&texture
 var ICON_ENTITY_DEFAULT_DIMENSIONS = {
     x: 0.10,
@@ -659,6 +659,16 @@ function entityIconModelDimensions() {
     // reuse object
     return entityIconModelDimensionsVal;
 }
+/*
+ * entityIconPlaneDimensions: similar to entityIconModelDimensions but using xy plane
+ */
+function entityIconPlaneDimensions() {
+    var dim = entityIconModelDimensions();
+    var z = dim.z;
+    dim.z = dim.y;
+    dim.y = z;
+    return dim;
+}
 
 function currentOverlayForEntity(QUuid) {
     if (entitiesData[QUuid] != undefined) {
@@ -668,19 +678,23 @@ function currentOverlayForEntity(QUuid) {
     }
 }
 
-function saveEntityData(QUuid) {
+function saveEntityData(QUuid, planar) {
     if (QUuid == null) return;
     var entity = Entities.getEntityProperties(QUuid, ["position"]);
     printd("entity added save entity " + QUuid);
     if (entitiesData[QUuid] != undefined) {
         entitiesData[QUuid].position = entity.position;
     } else {
-        var entityIcon = Overlays.addOverlay("model", {
-            url: ICON_ENTITY_WEB_MODEL_URL,
-            dimensions: ICON_ENTITY_DEFAULT_DIMENSIONS,
-            ignoreRayIntersection: false,
-            visible: false
-        });
+        var entityIcon = Overlays.addOverlay("image3d", {
+                                          subImage: { x: 0, y: 0, width: 19, height: 24.80},
+                                          url: ICON_ENTITY_WEB_MODEL_URL,
+                                          dimensions: ICON_ENTITY_DEFAULT_DIMENSIONS,
+                                          visible: false,
+                                          ignoreRayIntersection: false,
+                                          orientation: Quat.fromPitchYawRollDegrees(-90,0,0)
+                                          });
+
+
         entitiesIcons.push(entityIcon);
         entitiesData[QUuid] = { position: entity.position, icon: entityIcon};
         entitiesByOverlayID[entityIcon] = QUuid;
@@ -717,6 +731,7 @@ function renderAllEntitiesIcons() {
     var entityPos;
     var entityProps;
     var iconDimensions = entityIconModelDimensions();
+    var planeDimensions = entityIconPlaneDimensions(); // plane overlays uses xy instead of xz
     for (var QUuid in entitiesData) {
         //printd("entity icon entity possible " + QUuid);
         if (entitiesData.hasOwnProperty(QUuid)) {
@@ -731,9 +746,10 @@ function renderAllEntitiesIcons() {
                                                                         Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
                     if (!iconPos) { print ("entity icon pos bad for " + QUuid); continue; }
                     //printd("entity icon pos " + QUuid + " pos " + JSON.stringify(iconPos));
+                    var dimensions = entitiesData[QUuid].planar? planeDimensions : iconDimensions;
                     Overlays.editOverlay(entitiesData[QUuid].icon, {
                         visible: entityProps.visible,
-                        dimensions: iconDimensions,
+                        dimensions: dimensions,
                         position: iconPos
                     });
                 }
