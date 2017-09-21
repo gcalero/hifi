@@ -54,6 +54,7 @@ var GOD_VIEW_HEIGHT_MAX_PLUS_AVATAR = 40;
 var GOD_VIEW_HEIGHT_MIN_PLUS_AVATAR = 2;
 var GOD_VIEW_CAMERA_DISTANCE_TO_ICONS = 0.5; // Icons are near the camera to prevent the LOD manager dismissing them
 var GOD_VIEW_ICONS_APPARENT_DISTANCE_TO_AVATAR_BASE = 1; // How much above the avatar base should the icon appear
+var AVATAR_DISPLAY_NAME_HEIGHT = 28;
 var lastDragAt;
 var lastDeltaDrag;
 
@@ -475,28 +476,38 @@ function touchUpdate(event) {
 // by QUuid
 var avatarsData = {};
 var avatarsIcons = []; // a parallel list of icons (overlays) to easily run through
+var avatarsNames = []; // a parallel list of names (overlays) to easily run through
 
 var ICON_MY_AVATAR_MODEL_URL = Script.resolvePath("assets/models/teleport-destination.fbx"); // FIXME - use correct model&texture
-var ICON_AVATAR_MODEL_URL = Script.resolvePath("assets/models/teleport-cancel.fbx"); // FIXME - use correct model&texture
+var ICON_AVATAR_MODEL_URL = Script.resolvePath("assets/images/avatar.svg"); // FIXME - use correct model&texture
+
 var ICON_AVATAR_DEFAULT_DIMENSIONS = {
     x: 0.10,
     y: 0.00001,
     z: 0.10
 };
 
-var avatarIconModelDimensionsVal = { x: 0, y: 0.00001, z: 0};
-function avatarIconModelDimensions() {
+var avatarIconDimensionsVal = { x: 0, y: 0, z: 0.00001};
+function avatarIconPlaneDimensions() {
     // given the current height, give a size
-    var xz = -0.002831 * godViewHeight + 0.1;
-    avatarIconModelDimensionsVal.x = xz;
-    avatarIconModelDimensionsVal.z = xz;
+    var xy = -0.003531 * godViewHeight + 0.1;
+    avatarIconDimensionsVal.x = Math.abs(xy);
+    avatarIconDimensionsVal.y = Math.abs(xy);
     // reuse object
-    return avatarIconModelDimensionsVal;
+    return avatarIconDimensionsVal;
 }
 
-function currentOverlayForAvatar(QUuid) {
+function currentOverlayIconForAvatar(QUuid) {
     if (avatarsData[QUuid] != undefined) {
         return avatarsData[QUuid].icon;
+    } else {
+        return null;
+    }
+}
+
+function currentOverlayNameForAvatar(QUuid) {
+    if (avatarsData[QUuid] != undefined) {
+        return avatarsData[QUuid].name;
     } else {
         return null;
     }
@@ -509,13 +520,31 @@ function saveAvatarData(QUuid) {
     if (avatarsData[QUuid] != undefined) {
         avatarsData[QUuid].position = avat.position;
     } else {
-        var avatarIcon = Overlays.addOverlay("model", {
-            url: ICON_AVATAR_MODEL_URL,
-            dimensions: ICON_AVATAR_DEFAULT_DIMENSIONS,
-            visible: false
+        var avatarIcon = Overlays.addOverlay("image3d", {
+                                          subImage: { x: 0, y: 0, width: 20, height: 18.50},
+                                          url: ICON_AVATAR_MODEL_URL,
+                                          dimensions: ICON_ENTITY_DEFAULT_DIMENSIONS,
+                                          visible: false,
+                                          ignoreRayIntersection: false,
+                                          orientation: Quat.fromPitchYawRollDegrees(-90,0,0)
+                                          });
+
+        var displayName = avat && avat.displayName ? avat.displayName : "Unknown";
+        var textWidth = displayName.length * 13;
+        var avatarName = Overlays.addOverlay("text", {
+            width: textWidth,
+            height: AVATAR_DISPLAY_NAME_HEIGHT,
+            //backgroundColor: { red: 255, green: 0, blue: 0},
+            color: { red: 255, green: 255, blue: 255},
+            backgroundAlpha: 0.0,
+            font: {size: 24, bold: true},
+            //topMargin: 8,
+            visible: false,
+            text: displayName
         });
         avatarsIcons.push(avatarIcon);
-        avatarsData[QUuid] = { position: avat.position, icon: avatarIcon};
+        avatarsNames.push(avatarName);
+        avatarsData[QUuid] = { position: avat.position, icon: avatarIcon, name: avatarName, textWidth: textWidth };
         //printd("avatar added save avatar DONE " + JSON.stringify(avatarsData[QUuid]));
     }
 }
@@ -523,12 +552,18 @@ function saveAvatarData(QUuid) {
 function removeAvatarData(QUuid) {
     if (QUuid == null) return;
 
-    var itsOverlay =  currentOverlayForAvatar(QUuid);
+    var itsOverlay =  currentOverlayIconForAvatar(QUuid);
     if (itsOverlay != null) {
         Overlays.deleteOverlay(itsOverlay);
     }
+    var itsNameOverlay = currentOverlayNameForAvatar(QUuid);
+    if (itsNameOverlay != null) {
+        Overlays.deleteOverlay(itsOverlay);
+    }
+
     var idx = avatarsIcons.indexOf(itsOverlay);
     avatarsIcons.splice(idx, 1);
+    avatarsNames.splice(idx, 1);
 
     delete avatarsData[QUuid];
 }
@@ -558,11 +593,26 @@ function avatarRemoved(QUuid) {
  * Avatar Icon/Markers rendering
  ********************************************************************************************************/
 
-var myAvatarIcon = Overlays.addOverlay("model", {
-    url: ICON_MY_AVATAR_MODEL_URL,
-    dimensions: ICON_AVATAR_DEFAULT_DIMENSIONS,
-    visible: false
+var myAvatarIcon = Overlays.addOverlay("image3d", {
+                      subImage: { x: 0, y: 0, width: 20, height: 18.50},
+                      url: ICON_AVATAR_MODEL_URL,
+                      dimensions: ICON_ENTITY_DEFAULT_DIMENSIONS,
+                      visible: false,
+                      ignoreRayIntersection: false,
+                      orientation: Quat.fromPitchYawRollDegrees(-90,0,0)
+                      });
+var myAvatarName = Overlays.addOverlay("text", {
+    width: 40,
+    height: AVATAR_DISPLAY_NAME_HEIGHT,
+    //backgroundColor: { red: 255, green: 0, blue: 0},
+    color: { red: 255, green: 255, blue: 255},
+    backgroundAlpha: 0.0,
+    font: {size: 28, bold: true},
+    //topMargin: 8,
+    visible: false,
+    text: "Me"
 });
+
 
 function renderMyAvatarIcon() {
     var iconPos = findLineToHeightIntersectionCoords(   MyAvatar.position.x,
@@ -571,31 +621,84 @@ function renderMyAvatarIcon() {
                                                         Camera.position.x, Camera.position.y, Camera.position.z,
                                                         Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
     if (!iconPos) { printd("avatarmy icon pos null"); return;}
-    var iconDimensions = avatarIconModelDimensions();
-    //printd("avatarmy icon pos " + JSON.stringify(iconPos));
+    var iconDimensions = avatarIconPlaneDimensions();
+    //printd("[POSITION] avatarmy icon pos " + JSON.stringify(MyAvatar.position) + " camera: " + JSON.stringify(Camera.position) + " diff " + JSON.stringify(MyAvatar.position-Camera.position));
+
+    var avatarPos = MyAvatar.position;
+    var cameraPos = Camera.position;
+    var commonY = Camera.position.y - 0.5;
+    var borderPoints = [
+        computePointAtPlaneY(0, 0, commonY),
+        computePointAtPlaneY(Window.innerWidth, Window.innerHeight, commonY)
+    ];
+
+    var p1 = findLineToHeightIntersectionCoords(avatarPos.x, avatarPos.y, avatarPos.z, 
+                                            cameraPos.x, cameraPos.y, cameraPos.z,
+                                                commonY);
+    var x = (p1.x - borderPoints[0].x) * (Window.innerWidth) / (borderPoints[1].x - borderPoints[0].x) / 3;
+    var y = (p1.z - borderPoints[0].z) * (Window.innerHeight) / (borderPoints[1].z - borderPoints[0].z) / 3;
+
+
     Overlays.editOverlay(myAvatarIcon, {
             visible: true,
             dimensions: iconDimensions,
             position: iconPos
     });
+    Overlays.editOverlay(myAvatarName, {
+        visible: true,
+        x: x - 20,
+        y: y + 36
+    });
+
+
 }
 
 function hideAllAvatarIcons() {
     var len = avatarsIcons.length;
     for (var i = 0; i < len; i++) {
         Overlays.editOverlay(avatarsIcons[i], {visible: false});
+        Overlays.editOverlay(avatarsNames[i], {visible: false});
     }
     Overlays.editOverlay(myAvatarIcon, {visible: false})
 }
 
+/**
+ * Given a 2d point (x,y) this function returns the intersection (x, y, z)
+ * of the computedPickRay for that point with the plane y = py
+ */
+function computePointAtPlaneY(x,y,py) {
+    var ray = Camera.computePickRay(x, y);
+    var p1=ray.origin;
+    var p2=Vec3.sum(p1, Vec3.multiply(ray.direction, 1));
+    return findLineToHeightIntersectionCoords(p1.x, p1.y, p1.z,
+                                              p2.x, p2.y, p2.z, py);
+}
+
 function renderAllOthersAvatarIcons() {
     var avatarPos;
-    var iconDimensions = avatarIconModelDimensions();
+    var iconDimensions = avatarIconPlaneDimensions();
+    var commonY = Camera.position.y - 0.5;
+    var borderPoints = [
+        computePointAtPlaneY(0, 0, commonY),
+        computePointAtPlaneY(Window.innerWidth, Window.innerHeight, commonY)
+    ];
+
     for (var QUuid in avatarsData) {
         //printd("avatar icon avatar possible " + QUuid);
         if (avatarsData.hasOwnProperty(QUuid)) {
             if (AvatarList.getAvatar(QUuid) != null) {
                 avatarPos = AvatarList.getAvatar(QUuid).position;
+
+                    //var avatarPos = MyAvatar.position;
+
+        		var cameraPos = Camera.position;
+        		var p1 = findLineToHeightIntersectionCoords(avatarPos.x, avatarPos.y, avatarPos.z, 
+                                                    cameraPos.x, cameraPos.y, cameraPos.z,
+                                                    commonY);
+
+        		var x = (p1.x - borderPoints[0].x) * (Window.innerWidth) / (borderPoints[1].x - borderPoints[0].x) / 3;
+        		var y = (p1.z - borderPoints[0].z) * (Window.innerHeight) / (borderPoints[1].z - borderPoints[0].z) / 3;
+
                 //printd("avatar icon for avatar " + QUuid);
                 if (avatarsData[QUuid].icon != undefined) {
                     //printd("avatar icon " + avatarsData[QUuid].icon + " for avatar " + QUuid);
@@ -603,11 +706,15 @@ function renderAllOthersAvatarIcons() {
                                                                         Camera.position.x, Camera.position.y, Camera.position.z,
                                                                         Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
                     if (!iconPos) { print ("avatar icon pos bad for " + QUuid); continue; }
-                    //printd("avatar icon pos " + QUuid + " pos " + JSON.stringify(iconPos));
                     Overlays.editOverlay(avatarsData[QUuid].icon, {
                         visible: true,
                         dimensions: iconDimensions,
                         position: iconPos
+                    });
+                    Overlays.editOverlay(avatarsData[QUuid].name, {
+                        visible: true,
+                        x: x - avatarsData[QUuid].textWidth * 0.55,
+                        y: y + 36
                     });
                 }
             }
@@ -618,9 +725,9 @@ function renderAllOthersAvatarIcons() {
 function entityAdded(entityID) {
     printd ("Entity added " + entityID);
     var props = Entities.getEntityProperties(entityID, ["type"]);
-    print ("Entity added " + entityID + " PROPS " + JSON.stringify(props));
+    printd ("Entity added " + entityID + " PROPS " + JSON.stringify(props));
     if (props && props.type == "Web") {
-        print ("Entity Web added " + entityID);
+        printd ("Entity Web added " + entityID);
         saveEntityData(entityID, true);
     }
 }
