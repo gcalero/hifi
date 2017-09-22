@@ -406,6 +406,8 @@ public slots:
 
     Q_INVOKABLE void toggleMuteAudio();
 
+    Q_INVOKABLE bool askBeforeSetAvatarUrl(const QString& avatarUrl) { return askToSetAvatarUrl(avatarUrl); }
+
 private slots:
     void showDesktop();
     void clearDomainOctreeDetails();

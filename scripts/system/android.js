@@ -33,6 +33,7 @@ var swipingLeft=false, swipingRight=false, swipeLastTouchX=0, initialTouchX=0;
 var connections = Script.require('./connections.js');
 var gotoScript = Script.require('./goto-android.js');
 var chat = Script.require('./chat.js');
+var avatarSelection = Script.require('./avatarSelection.js');
 
 var modesBar;
 var audiobar;
@@ -40,6 +41,7 @@ var audioButton;
 var peopleBtn;
 var gotoBtn;
 var chatBtn;
+var avatarBtn;
 
 function printd(str) {
     if (logEnabled)
@@ -51,6 +53,7 @@ function init() {
     connections.init();
     gotoScript.init();
     chat.init();
+    avatarSelection.init();
     gotoScript.setOnShownChange(function (shown) {
         if (shown) {
             showAddressBar();
@@ -194,14 +197,19 @@ function raiseBottomBar() {
     });
     bottombar.setVisible(true);
     bottombar.raise();
-    var avatarBtn = bottombar.addButton({
+    avatarBtn = bottombar.addButton({
         icon: "icons/android/avatar-i.svg",
         activeIcon: "icons/android/avatar-a.svg",
         text: "AVATAR",
     });
     avatarBtn.clicked.connect(function() {
         printd("Avatar button clicked");
-    }); // god view button
+        if (!avatarSelection.isVisible()) {
+            showAvatarSelection();
+        } else {
+            hideAvatarSelection();
+        }
+    });
     
     gotoBtn = bottombar.addButton({
         icon: "icons/android/goto-i.svg",
@@ -235,7 +243,7 @@ function raiseBottomBar() {
     });
     chatBtn.clicked.connect(function() {
         if (!chat.isVisible()) {
-            showChat()
+            showChat();
         } else {
             hideChat();
         }
@@ -333,6 +341,15 @@ function showChat() {
 function hideChat() {
     chat.hide();
     chatBtn.isActive = false;
+}
+
+function showAvatarSelection() {
+    avatarSelection.show();
+    avatarBtn.isActive = true;
+}
+function hideAvatarSelection() {
+    avatarSelection.hide();
+    avatarBtn.isActive = false;
 }
 
 var setupModesBar = function() {
