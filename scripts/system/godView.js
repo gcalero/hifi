@@ -662,7 +662,8 @@ function hideAllAvatarIcons() {
         Overlays.editOverlay(avatarsIcons[i], {visible: false});
         Overlays.editOverlay(avatarsNames[i], {visible: false});
     }
-    Overlays.editOverlay(myAvatarIcon, {visible: false})
+    Overlays.editOverlay(myAvatarIcon, {visible: false});
+    Overlays.editOverlay(myAvatarName, {visible: false})
 }
 
 /**
@@ -899,6 +900,8 @@ function endGodView() {
     godView = false;
 
     disconnectGodModeEvents();
+    hideAllEntitiesIcons();
+    hideAllAvatarIcons();
     //friends.hide();
     //friends.destroy();
 }
@@ -947,6 +950,7 @@ function updateGodView() {
     // Update avatar icons
     if (startedDraggingCamera) {
         hideAllAvatarIcons();
+        hideAllEntitiesIcons();
         startedDraggingCamera = false;
     } else if (!draggingCamera) {
         renderMyAvatarIcon();
