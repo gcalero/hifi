@@ -297,7 +297,7 @@ function touchUpdate(event) {
             swipeLastTouchX = coords.x;
             printd("[MENU] touch update swipingRight (ini:" + initialTouchX + ")" + swipeLastTouchX);
     	} else {
-            touchInProgress = false; // or invalidateSwipingUp=true;
+            //touchInProgress = false; // or invalidateSwipingUp=true;
         }
     }
 }

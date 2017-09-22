@@ -478,8 +478,8 @@ var avatarsData = {};
 var avatarsIcons = []; // a parallel list of icons (overlays) to easily run through
 var avatarsNames = []; // a parallel list of names (overlays) to easily run through
 
-var ICON_MY_AVATAR_MODEL_URL = Script.resolvePath("assets/models/teleport-destination.fbx"); // FIXME - use correct model&texture
-var ICON_AVATAR_MODEL_URL = Script.resolvePath("assets/images/avatar.svg"); // FIXME - use correct model&texture
+var ICON_MY_AVATAR_MODEL_URL = Script.resolvePath("assets/images/avatar.png"); // FIXME - use correct model&texture
+var ICON_AVATAR_MODEL_URL = Script.resolvePath("assets/images/avatar.png"); // FIXME - use correct model&texture
 
 var ICON_AVATAR_DEFAULT_DIMENSIONS = {
     x: 0.10,
@@ -521,7 +521,7 @@ function saveAvatarData(QUuid) {
         avatarsData[QUuid].position = avat.position;
     } else {
         var avatarIcon = Overlays.addOverlay("image3d", {
-                                          subImage: { x: 0, y: 0, width: 20, height: 18.50},
+                                          subImage: { x: 0, y: 0, width: 150, height: 142},
                                           url: ICON_AVATAR_MODEL_URL,
                                           dimensions: ICON_ENTITY_DEFAULT_DIMENSIONS,
                                           visible: false,
@@ -558,7 +558,7 @@ function removeAvatarData(QUuid) {
     }
     var itsNameOverlay = currentOverlayNameForAvatar(QUuid);
     if (itsNameOverlay != null) {
-        Overlays.deleteOverlay(itsOverlay);
+        Overlays.deleteOverlay(itsNameOverlay);
     }
 
     var idx = avatarsIcons.indexOf(itsOverlay);
@@ -594,8 +594,8 @@ function avatarRemoved(QUuid) {
  ********************************************************************************************************/
 
 var myAvatarIcon = Overlays.addOverlay("image3d", {
-                      subImage: { x: 0, y: 0, width: 20, height: 18.50},
-                      url: ICON_AVATAR_MODEL_URL,
+                      subImage: { x: 0, y: 0, width: 150, height: 142},
+                      url: ICON_MY_AVATAR_MODEL_URL,
                       dimensions: ICON_ENTITY_DEFAULT_DIMENSIONS,
                       visible: false,
                       ignoreRayIntersection: false,
@@ -644,10 +644,13 @@ function renderMyAvatarIcon() {
             dimensions: iconDimensions,
             position: iconPos
     });
+    var textSize = (14 + (iconDimensions.y - 0.03) * 15 / 0.06);
+    
     Overlays.editOverlay(myAvatarName, {
         visible: true,
-        x: x - 20,
-        y: y + 36
+        x: x - 18 + (iconDimensions.y - 0.03) * 2 / 0.06,
+        y: y + iconDimensions.y * 550,
+        font: {size: textSize, bold: true},
     });
 
 
@@ -706,6 +709,7 @@ function renderAllOthersAvatarIcons() {
                                                                         Camera.position.x, Camera.position.y, Camera.position.z,
                                                                         Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
                     if (!iconPos) { print ("avatar icon pos bad for " + QUuid); continue; }
+                    var textSize = (14 + (iconDimensions.y - 0.03) * 15 / 0.06);
                     Overlays.editOverlay(avatarsData[QUuid].icon, {
                         visible: true,
                         dimensions: iconDimensions,
@@ -713,8 +717,9 @@ function renderAllOthersAvatarIcons() {
                     });
                     Overlays.editOverlay(avatarsData[QUuid].name, {
                         visible: true,
-                        x: x - avatarsData[QUuid].textWidth * 0.55,
-                        y: y + 36
+                        x: x - avatarsData[QUuid].textWidth * 0.45,
+                        y: y + iconDimensions.y * 550,
+                        font: {size: textSize, bold: true}
                     });
                 }
             }
@@ -749,7 +754,7 @@ var entitiesData = {}; // by entityID
 var entitiesByOverlayID = {}; // by overlayID
 var entitiesIcons = []; // a parallel list of icons (overlays) to easily run through
 
-var ICON_ENTITY_WEB_MODEL_URL = Script.resolvePath("assets/images/web.svg");
+var ICON_ENTITY_WEB_MODEL_URL = Script.resolvePath("assets/images/web.png");
 var ICON_ENTITY_IMG_MODEL_URL = Script.resolvePath("assets/models/teleport-cancel.fbx"); // FIXME - use correct model&texture
 var ICON_ENTITY_DEFAULT_DIMENSIONS = {
     x: 0.10,
@@ -793,7 +798,7 @@ function saveEntityData(QUuid, planar) {
         entitiesData[QUuid].position = entity.position;
     } else {
         var entityIcon = Overlays.addOverlay("image3d", {
-                                          subImage: { x: 0, y: 0, width: 19, height: 24.80},
+                                          subImage: { x: 0, y: 0, width: 150, height: 150},
                                           url: ICON_ENTITY_WEB_MODEL_URL,
                                           dimensions: ICON_ENTITY_DEFAULT_DIMENSIONS,
                                           visible: false,
