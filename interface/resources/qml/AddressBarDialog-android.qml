@@ -19,6 +19,8 @@ import "controls-uit" as HifiControls
 Item {
     x: 0
     y: 75
+    width: 853
+    height: 100
     id: root
     property bool isCursorVisible: false  // Override default cursor visibility.
     property bool shown: true
@@ -26,9 +28,11 @@ Item {
     onShownChanged: {
         root.visible = shown;
         sendToScript({method: 'shownChanged', params: { shown: shown }});
-        updateLocationTextTimer.start();
     }
 
+    Component.onCompleted: {
+        updateLocationText(false);
+    }
 
     HifiConstants { id: hifi }
     HifiStyles.HifiConstants { id: hifiStyleConstants }
@@ -103,6 +107,7 @@ Item {
         TextInput {
             id: addressLine
             focus: true
+            inputMethodHints: Qt.ImhNoPredictiveText
             anchors {
                 top: parent.top
                 bottom: parent.bottom
@@ -114,19 +119,18 @@ Item {
                 bottomMargin: parent.inputAreaStep
             }
             font.pixelSize: hifi.fonts.pixelSize * 0.75
-            cursorVisible: false
             onTextChanged: {
                 //filterChoicesByText();
-                updateLocationText(text.length > 0);
+                updateLocationText(addressLine.text.length > 0);
                 if (!isCursorVisible && text.length > 0) {
                     isCursorVisible = true;
                     cursorVisible = true;
                 }
             }
             onActiveFocusChanged: {
-                cursorVisible = isCursorVisible && focus;
+                //cursorVisible = isCursorVisible && focus;
             }
-            MouseArea {
+            /*MouseArea {
                 // If user clicks in address bar show cursor to indicate ability to enter address.
                 anchors.fill: parent
                 onClicked: {
@@ -134,7 +138,7 @@ Item {
                     parent.cursorVisible = true;
                     parent.forceActiveFocus();
                 }
-            }
+            }*/
         }
 
         function toggleOrGo() {
@@ -166,15 +170,6 @@ Item {
     }
 
     Timer {
-        // Delay updating location text a bit to avoid flicker of content and so that connection status is valid.
-        id: updateLocationTextTimer
-        running: false
-        interval: 500  // ms
-        repeat: false
-        onTriggered: updateLocationText(false);
-    }
-
-    Timer {
         // Delay clearing address line so as to avoid flicker of "not connected" being displayed after entering an address.
         id: clearAddressLineTimer
         running: false
@@ -186,16 +181,17 @@ Item {
         }
     }
     function updateLocationText(enteringAddress) {
-        console.log("updateLocationText");
-            if (enteringAddress) {
-                notice.text = "Go to a place, @user, path or network address";
-                notice.color = hifiStyleConstants.colors.baseGrayHighlight;
-            } else {
-                notice.text = AddressManager.isConnected ? "Your location:" : "Not Connected";
-                notice.color = AddressManager.isConnected ? hifiStyleConstants.colors.baseGrayHighlight : hifiStyleConstants.colors.redHighlight;
-                // Display hostname, which includes ip address, localhost, and other non-placenames.
-                location.text = (AddressManager.placename || AddressManager.hostname || '') + (AddressManager.pathname ? AddressManager.pathname.match(/\/[^\/]+/)[0] : '');
-            }
+        if (enteringAddress) {
+            notice.text = "Go to a place, @user, path or network address";
+            notice.color = hifiStyleConstants.colors.baseGrayHighlight;
+            location.visible = false;
+        } else {
+            notice.text = AddressManager.isConnected ? "Your location:" : "Not Connected";
+            notice.color = AddressManager.isConnected ? hifiStyleConstants.colors.baseGrayHighlight : hifiStyleConstants.colors.redHighlight;
+            // Display hostname, which includes ip address, localhost, and other non-placenames.
+            location.text = (AddressManager.placename || AddressManager.hostname || '') + (AddressManager.pathname ? AddressManager.pathname.match(/\/[^\/]+/)[0] : '');
+            location.visible = true;
         }
+    }
 
 }
