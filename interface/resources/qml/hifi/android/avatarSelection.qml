@@ -92,6 +92,13 @@ Item {
                     font.pointSize: 5
                     wrapMode: Text.WordWrap
                     width: parent
+                    MouseArea {
+                        id: itemNameArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        enabled: true
+                        onClicked: { sendToParentQml({ method: "selectAvatar", params: { avatarUrl: "##AVATAR_URL##" } }); }
+                    }
                 }
 
                 Component.onCompleted:{
@@ -104,11 +111,51 @@ Item {
         var newObject = Qt.createQmlObject(qmlStr, grid, "dynamicSnippet1");
     }
 
+    function addTextEntry(str, hspan, methodNameWhenClicked) {
+        var template = '
+            import QtQuick.Layouts 1.3
+            import QtQuick 2.5
+
+            Text {
+                signal sendToParentQml(var message);
+
+                id: itemName
+                text: "##STR##"
+                color: "#1398BB"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font.pointSize: 7
+                wrapMode: Text.WordWrap
+                width: parent
+                Layout.columnSpan: ##H_SPAN##
+                MouseArea {
+                    id: itemNameArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    enabled: true
+                    onClicked: { sendToParentQml({ method: "##METHOD_CLICK##", params: {  } }); }
+                }
+
+                Component.onCompleted:{
+                    sendToParentQml.connect(sendToScript);
+                }
+            }
+        ';
+
+        var qmlStr = replaceAll(template, '##STR##', str);
+        qmlStr = replaceAll(qmlStr, '##H_SPAN##', hspan);
+        qmlStr = replaceAll(qmlStr, '##METHOD_CLICK##', methodNameWhenClicked);
+        var newObject = Qt.createQmlObject(qmlStr, grid, "dynamicSnippet2");
+    }
+
     function fromScript(message) {
         //console.log("[CHAT] fromScript " + JSON.stringify(message));
         switch (message.type) {
             case "addAvatar":
                 addAvatar(message.name, message.thumbnailUrl, message.avatarUrl);
+            break;
+            case "addTextEntry":
+                addTextEntry(message.str, message.hspan, message.methodNameWhenClicked);
             break;
             default:
         }

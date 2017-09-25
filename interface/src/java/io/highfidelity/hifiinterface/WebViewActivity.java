@@ -9,6 +9,7 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
+//package hifiinterface.highfidelity.io.mybrowserapplication;
 package io.highfidelity.hifiinterface;
 
 import android.app.ActionBar;
@@ -182,6 +183,33 @@ public class WebViewActivity extends Activity {
             super.onReceivedSslError(view, handler, error);
             Toast.makeText(WebViewActivity.this, "SSL error loading page: " + error.toString(), Toast.LENGTH_LONG).show();
             safenessLevel = SafenessLevel.BAD_SECURE;
+        }
+
+        private boolean isFst(WebResourceRequest request) {
+            return isFst(request.getUrl().toString());
+        }
+
+        private boolean isFst(String url) {
+            return url.endsWith(".fst");
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            // managing avatar selections
+            if (isFst(request)) {
+                Log.d("avatarSelection", "fst detected at " + request.getUrl());
+                return true;
+            }
+            return super.shouldOverrideUrlLoading(view, request);
+        }
+
+        @Override
+        public void onLoadResource(WebView view, String url) {
+            if (isFst(url)) {
+                Log.d("avatarSelection", "fst detected LOAD at " + url);
+            } else {
+                super.onLoadResource(view, url);
+            }
         }
     }
 

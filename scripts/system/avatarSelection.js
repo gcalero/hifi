@@ -34,6 +34,10 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
             isVisible  = false;
         }
         break;
+    case 'openAvatarMarket':
+        // good
+        App.openUrl("https://metaverse.highfidelity.com/marketplace?category=avatars");
+        break;
     default:
         print('[avatarSelection.js] Unrecognized message from avatarSelection.qml:', JSON.stringify(message));
     }
@@ -75,6 +79,12 @@ function init() {
         name: "Albert",
         thumbnailUrl: "https://hifi-metaverse.s3-us-west-1.amazonaws.com/marketplace/previews/1e57c395-612e-4acd-9561-e79dbda0bc49/thumbnail/hifi-mp-1e57c395-612e-4acd-9561-e79dbda0bc49.jpg",
         avatarUrl: "http://mpassets.highfidelity.com/1e57c395-612e-4acd-9561-e79dbda0bc49-v1/albert.fst"
+    });
+    sendToQml({
+        type: "addTextEntry",
+        str: "More choices...",
+        hspan: 2,
+        methodNameWhenClicked: "openAvatarMarket"
     });
 }
 
