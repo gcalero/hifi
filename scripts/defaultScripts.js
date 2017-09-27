@@ -71,7 +71,7 @@ if (!App.isAndroid()) {
         "system/firstPersonHMD.js",
         //"system/snapshot.js", Not in Android UI specs
         //"system/help.js", Not in Android UI specs
-        //"system/bubble.js",
+        "system/bubble.js",
         //"system/godView.js", Used by android.js directly
         "system/android.js",
         //"system/friends.js", Used by android.js directly

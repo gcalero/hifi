@@ -970,6 +970,8 @@ function MyController(hand) {
     };
 
     this.overlayLineOn = function(closePoint, farPoint, color) {
+        // turn c++ laser off
+        HMD.setHandLasers(2, false, {x: 10 / 255, y: 10 / 255, z: 255 / 255, w: 0.5}, {x: 0, y: 0, z: -1});
         if (this.overlayLine === null) {
             var lineProperties = {
                 glow: 1.0,
@@ -1050,6 +1052,8 @@ function MyController(hand) {
     };
 
     this.overlayLineOff = function() {
+        // restore c++ laser
+        HMD.setHandLasers(2, true, {x: 10 / 255, y: 10 / 255, z: 255 / 255, w: 0.5}, {x: 0, y: 0, z: -1});
         if (this.overlayLine !== null) {
             Overlays.deleteOverlay(this.overlayLine);
         }

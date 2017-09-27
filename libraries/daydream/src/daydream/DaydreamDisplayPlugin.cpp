@@ -208,7 +208,7 @@ bool DaydreamDisplayPlugin::beginFrameRender(uint32_t frameIndex) {
         _uiModelTransform = DependencyManager::get<CompositorHelper>()->getModelTransform();
         _frameInfos[frameIndex] = _currentRenderFrameInfo;
         
-        _handPoses[0] = handPoses[0];//glm::translate(mat4(), vec3(0.1f, 0.3f, 0.0f));
+//        _handPoses[0] = handPoses[0];//glm::translate(mat4(), vec3(0.1f, 0.3f, 0.0f));
 /*      _handLasers[0].color = vec4(0, 0, 0, 0);
         _handLasers[0].mode = HandLaserMode::Overlay;
         _handLasers[0].direction = vec3(0,0,0);

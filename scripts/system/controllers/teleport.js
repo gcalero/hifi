@@ -205,6 +205,10 @@ function Teleporter() {
     this.deleteOverlayBeams = function() {
         for (key in this.overlayLines) {
             if (this.overlayLines[key] !== null) {
+                // if android, restore c++ lasers
+                if (App.isAndroid()) {
+                    HMD.setHandLasers(2, true, {x: 10 / 255, y: 10 / 255, z: 255 / 255, w: 0.5}, {x: 0, y: 0, z: -1});
+                }
                 Overlays.deleteOverlay(this.overlayLines[key]);
                 this.overlayLines[key] = null;
             }
@@ -305,6 +309,10 @@ function Teleporter() {
 
     this.updateLineOverlay = function(hand, closePoint, farPoint, color) {
         if (this.overlayLines[hand] === null) {
+            // if android, turn off c++ laser
+            if (App.isAndroid()) {
+                HMD.setHandLasers(2, false, {x: 10 / 255, y: 10 / 255, z: 255 / 255, w: 0.5}, {x: 0, y: 0, z: -1});
+            }
             var lineProperties = {
                 start: closePoint,
                 end: farPoint,

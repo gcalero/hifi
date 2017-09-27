@@ -80,7 +80,9 @@
 
     // Used to set the state of the bubble HUD button
     function writeButtonProperties(parameter) {
-        button.editProperties({isActive: parameter});
+        if (button) {
+            button.editProperties({isActive: parameter});            
+        }
     }
 
     // The bubble script's update function
@@ -156,24 +158,30 @@
     // Setup the bubble button
     var buttonName = "BUBBLE";
     var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
-    button = tablet.addButton({
-        icon: "icons/tablet-icons/bubble-i.svg",
-        activeIcon: "icons/tablet-icons/bubble-a.svg",
-        text: buttonName,
-        sortOrder: 4
-    });
-
+    if (!App.isAndroid()) {
+        button = tablet.addButton({
+            icon: "icons/tablet-icons/bubble-i.svg",
+            activeIcon: "icons/tablet-icons/bubble-a.svg",
+            text: buttonName,
+            sortOrder: 4
+        });
+    }
+    
     onBubbleToggled();
 
-    button.clicked.connect(Users.toggleIgnoreRadius);
+    if (button) {
+        button.clicked.connect(Users.toggleIgnoreRadius);
+    }
     Users.ignoreRadiusEnabledChanged.connect(onBubbleToggled);
     Users.enteredIgnoreRadius.connect(enteredIgnoreRadius);
 
     // Cleanup the tablet button and overlays when script is stopped
     Script.scriptEnding.connect(function () {
-        button.clicked.disconnect(Users.toggleIgnoreRadius);
-        if (tablet) {
-            tablet.removeButton(button);
+        if (button) {
+            button.clicked.disconnect(Users.toggleIgnoreRadius);
+            if (tablet) {
+                tablet.removeButton(button);
+            }
         }
         Users.ignoreRadiusEnabledChanged.disconnect(onBubbleToggled);
         Users.enteredIgnoreRadius.disconnect(enteredIgnoreRadius);

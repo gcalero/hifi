@@ -1554,8 +1554,6 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
 
     // Turn off the bubble for android by now
     DependencyManager::get<NodeList>()->ignoreNodesInRadius(false);
-
-    DependencyManager::get<AccountManager>()->checkAndSignalForAccessToken();
 #else
         if (shouldGoToTutorial) {
             if (sandboxIsRunning) {
