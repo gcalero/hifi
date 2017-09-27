@@ -23,10 +23,14 @@ import java.util.List;
 public class PermissionChecker extends Activity {
     private static final int REQUEST_PERMISSIONS = 20;
 
+    private static final boolean CHOOSE_AVATAR_ON_STARTUP = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-         showMenu();
+        if (CHOOSE_AVATAR_ON_STARTUP) {
+            showMenu();
+        }
         this.requestAppPermissions(new
                 String[]{
                 Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -54,8 +58,7 @@ public class PermissionChecker extends Activity {
             }
         } else {
             System.out.println("Launching the other activity..");
-            showMenu();
-
+            launchActivityWithPermissions();
         }
     }
 
@@ -103,15 +106,10 @@ public class PermissionChecker extends Activity {
                 } else {
                     System.out.println("Default avatar selected...");
                 }
-
                 launchActivityWithPermissions();
             }
         }).show();
-
-
-
     }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -121,12 +119,10 @@ public class PermissionChecker extends Activity {
             permissionCheck = permissionCheck + permission;
         }
         if ((grantResults.length > 0) && permissionCheck == PackageManager.PERMISSION_GRANTED) {
-           // launchActivityWithPermissions();
-            showMenu();
+            launchActivityWithPermissions();
         } else {
             System.out.println("User has deliberately denied Permissions. Launching anyways");
-            //launchActivityWithPermissions();
-            showMenu();
+            launchActivityWithPermissions();
         }
     }
 

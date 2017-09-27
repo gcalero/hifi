@@ -68,6 +68,8 @@ function init() {
 
     Script.update.connect(update);
 
+    App.fullAvatarURLChanged.connect(processedNewAvatar);
+
     modesBar = setupModesBar();
 
     setupAudioBar();
@@ -83,6 +85,7 @@ function shutdown() {
 
     Script.update.disconnect(update);
 
+    App.fullAvatarURLChanged.disconnect(processedNewAvatar);
 }
 
 function update() {
@@ -355,6 +358,10 @@ function showAvatarSelection() {
 function hideAvatarSelection() {
     avatarSelection.hide();
     avatarBtn.isActive = false;
+}
+
+function processedNewAvatar(url, modelName) {
+    hideAvatarSelection();
 }
 
 var setupModesBar = function() {

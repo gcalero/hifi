@@ -26,13 +26,7 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
     switch (message.method) {
     case 'selectAvatar':
         // use this message.params.avatarUrl
-        if (App.askBeforeSetAvatarUrl(message.params.avatarUrl)) {
-            // close this too
-            if (window) {
-                window.setVisible(false);
-            }
-            isVisible  = false;
-        }
+        App.askBeforeSetAvatarUrl(message.params.avatarUrl);
         break;
     case 'openAvatarMarket':
         // good
@@ -101,7 +95,6 @@ module.exports = {
     },
     show: function() {
         if (window) {
-            //window.fromQml.connect(fromQml);
             window.setVisible(true);
             isVisible = true;
         }
