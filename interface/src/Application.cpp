@@ -5641,6 +5641,20 @@ void Application::registerScriptEngineWithApplicationServices(ScriptEngine* scri
     connect(scriptEngine, &ScriptEngine::infoMessage, DependencyManager::get<ScriptEngines>().data(), &ScriptEngines::onInfoMessage);
 }
 
+
+#ifdef ANDROID
+extern "C" {
+
+JNIEXPORT void Java_io_highfidelity_hifiinterface_WebViewActivity_nativeProcessURL(JNIEnv* env, jobject obj, jstring url_str) {
+    const char *nativeString = env->GetStringUTFChars(url_str, 0);
+    if (qApp->canAcceptURL(QString::fromUtf8(nativeString))) {
+        qApp->acceptURL(QString::fromUtf8(nativeString));
+    }
+}
+
+}
+#endif
+
 bool Application::canAcceptURL(const QString& urlString) const {
     QUrl url(urlString);
     if (urlString.startsWith(HIFI_URL_SCHEME)) {

@@ -36,6 +36,9 @@ import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 import android.widget.Toolbar;
+import android.os.Looper;
+import java.lang.Thread;
+import java.lang.Runnable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -43,6 +46,8 @@ import java.net.URL;
 public class WebViewActivity extends Activity {
 
     public static final String WEB_VIEW_ACTIVITY_EXTRA_URL = "url";
+
+    private native void nativeProcessURL(String url);
 
     private WebView myWebView;
     private ProgressBar mProgressBar;
@@ -197,7 +202,13 @@ public class WebViewActivity extends Activity {
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             // managing avatar selections
             if (isFst(request)) {
-                Log.d("avatarSelection", "fst detected at " + request.getUrl());
+                final String url = request.getUrl().toString();
+                new Thread(new Runnable() {
+                    public void run() {
+                        nativeProcessURL(url);
+                    }
+                }).start(); // Avoid deadlock in Qt dialog
+                WebViewActivity.this.finish();
                 return true;
             }
             return super.shouldOverrideUrlLoading(view, request);
@@ -206,7 +217,7 @@ public class WebViewActivity extends Activity {
         @Override
         public void onLoadResource(WebView view, String url) {
             if (isFst(url)) {
-                Log.d("avatarSelection", "fst detected LOAD at " + url);
+                // processed separately
             } else {
                 super.onLoadResource(view, url);
             }
