@@ -254,6 +254,7 @@ function raiseBottomBar() {
         icon: "icons/android/people-i.svg",
         activeIcon: "icons/android/people-a.svg",
         text: "PEOPLE",
+        isActive: connections.isVisible()
     });
     peopleBtn.clicked.connect(function() {
         //printd("People clicked");
@@ -312,13 +313,17 @@ function touchUpdate(event) {
 
 function showConnections() {
     connections.show();
-    peopleBtn.isActive = true;    
+    if (peopleBtn) {
+        peopleBtn.isActive = true;    
+    }
 //    printd("[CONNECTIONS] showing");
 }
 
 function hideConnections() {
     connections.hide();
-    peopleBtn.isActive = false;
+    if (peopleBtn) {
+        peopleBtn.isActive = false;        
+    }
     //connections.destroy();
 //    printd("[CONNECTIONS] hiding");
 }

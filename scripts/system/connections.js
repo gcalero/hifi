@@ -35,7 +35,7 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
     case 'refreshAll': 
         // all & nearby connections
         var allFilter = function(c) { return true; };
-        var nearbyFilter = isNearbyConnectionFunction(Camera.position, Window.location.domainId);
+        var nearbyFilter = isNearbyConnectionFunction(MyAvatar.position, Window.location.domainId);
         refreshConnections([
                             {filter: allFilter, sendToQmlMethod: 'allConnections'},
                             {filter: nearbyFilter, sendToQmlMethod: 'nearbyConnections'}
