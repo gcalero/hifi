@@ -531,7 +531,7 @@ function saveAvatarData(QUuid) {
 
         var needRefresh = !avat || !avat.displayName;
         var displayName = avat && avat.displayName ? avat.displayName : "Unknown";
-        var theWidth = displayName.length * 13;
+        var textWidth = displayName.length * 13;
         var avatarName = Overlays.addOverlay("text", {
             width: textWidth,
             height: AVATAR_DISPLAY_NAME_HEIGHT,
