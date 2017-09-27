@@ -529,8 +529,9 @@ function saveAvatarData(QUuid) {
                                           orientation: Quat.fromPitchYawRollDegrees(-90,0,0)
                                           });
 
+        var needRefresh = !avat || !avat.displayName;
         var displayName = avat && avat.displayName ? avat.displayName : "Unknown";
-        var textWidth = displayName.length * 13;
+        var theWidth = displayName.length * 13;
         var avatarName = Overlays.addOverlay("text", {
             width: textWidth,
             height: AVATAR_DISPLAY_NAME_HEIGHT,
@@ -544,7 +545,7 @@ function saveAvatarData(QUuid) {
         });
         avatarsIcons.push(avatarIcon);
         avatarsNames.push(avatarName);
-        avatarsData[QUuid] = { position: avat.position, icon: avatarIcon, name: avatarName, textWidth: textWidth };
+        avatarsData[QUuid] = { position: avat.position, icon: avatarIcon, name: avatarName, textWidth: textWidth, needRefresh: needRefresh };
         //printd("avatar added save avatar DONE " + JSON.stringify(avatarsData[QUuid]));
     }
 }
@@ -710,6 +711,15 @@ function renderAllOthersAvatarIcons() {
                                                                         Camera.position.x, Camera.position.y, Camera.position.z,
                                                                         Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
                     if (!iconPos) { print ("avatar icon pos bad for " + QUuid); continue; }
+                    if (avatarsData[QUuid].needRefresh) {
+                        var avat = AvatarList.getAvatar(QUuid);
+                        if (avat && avat.displayName) {
+                            Overlays.editOverlay(avatarsData[QUuid].name, {
+                                text: avat.displayName
+                            });
+                            avatarsData[QUuid].needRefresh = false;
+                        }
+                    }
                     var textSize = (14 + (iconDimensions.y - 0.03) * 15 / 0.06);
                     Overlays.editOverlay(avatarsData[QUuid].icon, {
                         visible: true,
