@@ -42,6 +42,7 @@ var peopleBtn;
 var gotoBtn;
 var chatBtn;
 var avatarBtn;
+var loginBtn;
 
 function printd(str) {
     if (logEnabled)
@@ -268,13 +269,17 @@ function raiseBottomBar() {
         }
     });
 
-    var settingsBtn = bottombar.addButton({
-        icon: "icons/android/settings-i.svg",
-        activeIcon: "icons/android/settings-a.svg",
-        text: "SETTINGS",
+    loginBtn = bottombar.addButton({
+        icon: "icons/android/login-i.svg",
+        activeIcon: "icons/android/login-a.svg",
+        text: Account.isLoggedIn() ? "Log out" : "Log in"
     });
-    settingsBtn.clicked.connect(function() {
-        printd("Settings clicked");
+    loginBtn.clicked.connect(function() {
+        if (!Account.isLoggedIn()) {
+            Account.checkAndSignalForAccessToken();
+        } else {
+            Menu.triggerOption("Login / Sign Up");
+        }
     });
 
     bottombar.setVisible(true);
@@ -524,10 +529,24 @@ function setupAudioBar() {
     updateAudioButtonIcon();
 
     audioButton.clicked.connect(onMuteToggled);
+    GlobalServices.connected.connect(handleLogin);
+    GlobalServices.disconnected.connect(handleLogout);
+}
+function handleLogin() {
+    if (loginBtn) {
+        loginBtn.editProperties({text: "Logout"});
+    }
+}
+function handleLogout() {
+    if (loginBtn) {
+        loginBtn.editProperties({text: "Login"});
+    }
 }
 
 Script.scriptEnding.connect(function () {
 	shutdown();
+    GlobalServices.connected.disconnect(handleLogin);
+    GlobalServices.disconnected.disconnect(handleLogout);
 });
 
 init();
