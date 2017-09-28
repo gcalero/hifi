@@ -181,7 +181,7 @@ function touchEnd(event) {
         // no action
         printd("Swipe Left finished!");
     } else if (swipingRight && connections.isVisible() && swipeLastTouchX > initialTouchX + MIN_SWIPE_HORIZ) {
-        hideConnections();
+        // no action
         printd("Swipe Right finished!");
     }
     touchInProgress=false;
