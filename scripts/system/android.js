@@ -178,7 +178,7 @@ function touchEnd(event) {
         lowerBottomBar();
         printd("Swipe Down finished!");
     } else if (swipingLeft && !connections.isVisible() && swipeLastTouchX < initialTouchX - MIN_SWIPE_HORIZ) {
-        showConnections();
+        // no action
         printd("Swipe Left finished!");
     } else if (swipingRight && connections.isVisible() && swipeLastTouchX > initialTouchX + MIN_SWIPE_HORIZ) {
         hideConnections();

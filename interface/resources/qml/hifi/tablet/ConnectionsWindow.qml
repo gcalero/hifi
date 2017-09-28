@@ -25,7 +25,7 @@ Rectangle {
 
     //size
     width: Window.innerWidth * 0.3;
-    height: Window.innerHeight / 3;
+    height: Window.innerHeight / 3 - 100;
 
     property int rowHeight: 60;
 
