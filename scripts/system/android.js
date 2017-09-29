@@ -533,11 +533,17 @@ function setupAudioBar() {
     GlobalServices.disconnected.connect(handleLogout);
 }
 function handleLogin() {
+    Script.setTimeout(function() {
+        if (Account.isLoggedIn()) {
+            MyAvatar.displayName=Account.getUsername();
+        }
+    }, 2000);
     if (loginBtn) {
         loginBtn.editProperties({text: "Logout"});
     }
 }
 function handleLogout() {
+    MyAvatar.displayName="";
     if (loginBtn) {
         loginBtn.editProperties({text: "Login"});
     }

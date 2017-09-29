@@ -30,16 +30,28 @@ function printd(str) {
 function init() {
     Messages.subscribe(channelName);
     Messages.messageReceived.connect(onChatMessageReceived);
+    GlobalServices.connected.connect(handleLogin);
+    GlobalServices.disconnected.connect(handleLogout);
     loadSettings();
+}
+
+function handleLogin() {
+    Script.setTimeout(function() {
+        resetSettings();
+    }, 2000);
+    
+}
+
+function handleLogout() {
+    Script.setTimeout(function() {
+        resetSettings();
+    }, 2000);
 }
 
 // Load the persistent variables from the Settings, with defaults.
 function loadSettings() {
-    chatName = Settings.getValue('Chat_chatName', MyAvatar.displayName);
-    printd("loadSettings: chatName", chatName);
-    if (!chatName) {
-        chatName = randomAvatarName();
-    }
+    chatName = Settings.getValue('Chat_chatName', getChatName());
+    
     printd("loadSettings: now chatName", chatName);
     //chatLogMaxSize = Settings.getValue('Chat_chatLogMaxSize', 100);
     sendTyping = Settings.getValue('Chat_sendTyping', true);
@@ -112,8 +124,12 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
         break;
     case 'EndTyping':
         endTyping();
+        break;
+    case 'EmptyChatMessage':
+        break;
     default:
         print('[chat.js] Unrecognized message from chat.qml:', JSON.stringify(message));
+        break;
     }
 }
 function sendToQml(message) {
@@ -147,6 +163,8 @@ module.exports = {
     destroy: function() {
         Messages.unsubscribe(channelName);
         Messages.messageReceived.disconnect(onChatMessageReceived);
+        GlobalServices.connected.diconnect(handleLogin);
+        GlobalServices.disconnected.disconnect(handleLogout);
         if (window) {
             window.fromQml.disconnect(fromQml);   
             window.close();
@@ -270,6 +288,19 @@ function handleWho(myAvatarID) {
         }));
 }
 
+function getChatName() {
+    var username = Account.getUsername();
+    if (Account.isLoggedIn() && username && username != "") {
+        return username;
+    } else if (MyAvatar.sessionDisplayName && MyAvatar.sessionDisplayName != "") {
+        return MyAvatar.sessionDisplayName;
+    } else if (MyAvatar.displayName && MyAvatar.displayName) {
+        return MyAvatar.displayName;
+    } else {
+        return randomAvatarName();
+    }
+    return;
+}
 // Receive the reply to a "Who" message. Ignore it unless we were the one
 // who sent it out (if myAvatarIS is our avatar's id).
 function handleReplyWho(myAvatarID, avatarID, displayName, message, data) {
@@ -290,11 +321,9 @@ function randomAvatarName() {
 function handleChatMessage(message, data) {
 
     var messageLines = message.trim().split('\n');
-    printd("[CHAT] handleChatMessage: " + message);
 
     for (var i = 0, n = messageLines.length; i < n; i++) {
         var messageLine = messageLines[i];
-        printd("[CHAT] messageLine: " + messageLine);
         if (messageLine.substr(0, 1) == '/') {
             handleChatCommand(messageLine, data);
         } else {
@@ -409,7 +438,7 @@ function logMessage(message, data) {
 
 // Send out a chat message to everyone.
 function transmitChatMessage(message, data) {
-    printd("[CHAT] transmitChatMessage: " + message);
+    //printd("[CHAT] transmitChatMessage: " + message + "displayName: " + chatName);
     Messages.sendMessage(
         channelName, 
         JSON.stringify({
@@ -443,7 +472,6 @@ function clearChatLog() {
 // Notification that we began typing. 
 // Notify everyone that we started typing.
 function beginTyping() {
-    printd("[chat] beginTyping " + chatName + " (" + MyAvatar.sessionUUID +")" );
     if (!sendTyping) {
         return;
     }
