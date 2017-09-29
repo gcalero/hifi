@@ -15,9 +15,11 @@ print("[android.js] outside scope");
 (function() { // BEGIN LOCAL_SCOPE
 
 var GODVIEWMODE = Script.require('./godView.js');
+var SETTING_CURRENT_MODE_KEY = 'Android/Mode';
+var MODE_VR = "VR", MODE_RADAR = "RADAR", MODE_MY_VIEW = "MY VIEW";
+var DEFAULT_MODE = MODE_RADAR;
 
-var logEnabled = true;
-var mode="my view";
+var logEnabled = false;
 var SCREEN_HEIGHT=Window.innerHeight;
 var SCREEN_WIDTH=Window.innerWidth;
 var BOTTOM_ZONE_HEIGHT=50;
@@ -93,6 +95,7 @@ function update() {
     if (HMD.isVrExitRequested()) {
         Menu.setIsOptionChecked("Android", true);
         var isDesktop = Menu.isOptionChecked("Android");
+        saveCurrentModeSetting(MODE_RADAR);
         //onHmdChanged(!isDesktop);
         HMD.resetVrExitRequested();
         if (modesBar) {
@@ -407,11 +410,18 @@ var setupModesBar = function() {
 
     var modesButtons = [vrBtn, buttonGodViewMode, buttonMyViewMode];
 
-    // FIRST PRESELECTED IS GODVIEW (RADAR)
+    var mode = getCurrentModeSetting();
+    var currentSelected;
+    if (mode == MODE_VR) {
+        currentSelected = vrBtn;
+    } else if (mode == MODE_MY_VIEW) {
+        currentSelected = buttonMyViewMode;
+    } else {
+        currentSelected = buttonGodViewMode;
+    }
 
-    var currentSelected = buttonGodViewMode;
     var buttonsRevealed = false;
-    buttonGodViewMode.isActive = true;
+    currentSelected.isActive = true;
 
     function showAllButtons() {
         for (var i=0; i<modesButtons.length; i++) {
@@ -469,6 +479,7 @@ var setupModesBar = function() {
         if (connections.isVisible()) return;
 
         printd("VR clicked");
+        saveCurrentModeSetting(MODE_VR);
         onButtonClicked(vrBtn, function() {
             var isDesktop = Menu.isOptionChecked("Android");
             Menu.setIsOptionChecked(isDesktop ? "Daydream" : "Android", true);
@@ -477,7 +488,7 @@ var setupModesBar = function() {
     });
     buttonGodViewMode.clicked.connect(function() {
         if (connections.isVisible()) return;
-
+        saveCurrentModeSetting(MODE_RADAR);
         printd("Radar clicked");
         onButtonClicked(buttonGodViewMode, function() {
             GODVIEWMODE.startGodViewMode();
@@ -485,24 +496,33 @@ var setupModesBar = function() {
     });
     buttonMyViewMode.clicked.connect(function() {
         if (connections.isVisible()) return;
-
+        saveCurrentModeSetting(MODE_MY_VIEW);
         printd("My View clicked");
         onButtonClicked(buttonMyViewMode, function() {
             GODVIEWMODE.endGodViewMode();
         });
     });
 
-    hideOtherButtons(buttonGodViewMode);
-    GODVIEWMODE.startGodViewMode();
+    hideOtherButtons(currentSelected);
+    currentSelected.clicked();
 
     return {
         restoreMyViewButton: function() {
             switchModeButtons(buttonMyViewMode);
+            saveCurrentModeSetting(MODE_MY_VIEW);
         },
         qmlFragment: modesBar
     };
 
 };
+
+function saveCurrentModeSetting(mode) {
+    Settings.setValue(SETTING_CURRENT_MODE_KEY, mode);
+}
+
+function getCurrentModeSetting(mode) {
+    return Settings.getValue(SETTING_CURRENT_MODE_KEY, DEFAULT_MODE);
+}
 
 function onMuteToggled() {
     Menu.setIsOptionChecked("Mute Microphone", !Menu.isOptionChecked("Mute Microphone"));
