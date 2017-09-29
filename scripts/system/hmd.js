@@ -36,16 +36,6 @@ function updateControllerDisplay() {
         controllerDisplay = false;
     }
 }
-
-function update() {
-    if (HMD.isVrExitRequested()) {
-        Menu.setIsOptionChecked(desktopMenuItemName, true);
-        var isDesktop = Menu.isOptionChecked(desktopMenuItemName);
-        onHmdChanged(!isDesktop);
-        HMD.resetVrExitRequested();
-    }
-}
-
 var button;
 var tablet;
 if (!App.isAndroid()) {
@@ -98,10 +88,6 @@ if (headset) {
     HMD.displayModeChanged.connect(onHmdChanged);
     Camera.modeUpdated.connect(updateControllerDisplay);
 
-    if (App.isAndroid) { // android only
-        Script.update.connect(update);
-    }
-
     Script.scriptEnding.connect(function () {
         button.clicked.disconnect(onClicked);
         if (tablet) {
@@ -109,9 +95,6 @@ if (headset) {
         }
         HMD.displayModeChanged.disconnect(onHmdChanged);
         Camera.modeUpdated.disconnect(updateControllerDisplay);
-        if (App.isAndroid) { // android only
-            Script.update.disconnect(update);
-        }
     });
 }
 
