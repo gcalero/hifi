@@ -256,7 +256,10 @@ Item {
 
             text: qsTr("Cancel")
 
-            onClicked: root.destroy()
+            onClicked: {
+                linkAccountBody.forceActiveFocus();
+                root.destroy();
+            }
         }
     }
 
