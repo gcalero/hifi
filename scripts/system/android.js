@@ -412,16 +412,8 @@ var setupModesBar = function() {
 
     var mode = getCurrentModeSetting();
     var currentSelected;
-    if (mode == MODE_VR) {
-        currentSelected = vrBtn;
-    } else if (mode == MODE_MY_VIEW) {
-        currentSelected = buttonMyViewMode;
-    } else {
-        currentSelected = buttonGodViewMode;
-    }
 
     var buttonsRevealed = false;
-    currentSelected.isActive = true;
 
     function showAllButtons() {
         for (var i=0; i<modesButtons.length; i++) {
@@ -451,7 +443,9 @@ var setupModesBar = function() {
     }
 
     function switchModeButtons(clickedButton, hideAllAfter) {
-        currentSelected.isActive = false;
+        if (currentSelected) {
+            currentSelected.isActive = false;
+        }
         currentSelected = clickedButton;
         clickedButton.isActive = true;
         if (hideAllAfter) {
@@ -484,6 +478,9 @@ var setupModesBar = function() {
             var isDesktop = Menu.isOptionChecked("Android");
             Menu.setIsOptionChecked(isDesktop ? "Daydream" : "Android", true);
             lowerBottomBar();
+            if (currentSelected == buttonGodViewMode) {
+                GODVIEWMODE.endGodViewMode();
+            }
         }, true);
     });
     buttonGodViewMode.clicked.connect(function() {
@@ -499,13 +496,24 @@ var setupModesBar = function() {
         saveCurrentModeSetting(MODE_MY_VIEW);
         printd("My View clicked");
         onButtonClicked(buttonMyViewMode, function() {
-            GODVIEWMODE.endGodViewMode();
+            if (currentSelected == buttonGodViewMode) {
+                GODVIEWMODE.endGodViewMode();
+            }
         });
     });
 
-    hideOtherButtons(currentSelected);
-    currentSelected.clicked();
+    var savedButton;
+    if (mode == MODE_VR) {
+        savedButton = vrBtn;
+    } else if (mode == MODE_MY_VIEW) {
+        savedButton = buttonMyViewMode;
+    } else {
+        savedButton = buttonGodViewMode;
+    }
+    printd("[MODE] previous mode " + mode);
 
+//    hideOtherButtons(currentSelected);
+    savedButton.clicked();
     return {
         restoreMyViewButton: function() {
             switchModeButtons(buttonMyViewMode);
