@@ -25,7 +25,11 @@
 #include "DependencyManager.h"
 #include "Menu.h"
 
+#ifndef ANDROID
 HIFI_QML_DEF(LoginDialog)
+#else 
+HIFI_QML_DEF_ANDROID(LoginDialog)
+#endif
 
 LoginDialog::LoginDialog(QQuickItem *parent) : OffscreenQmlDialog(parent) {
     auto accountManager = DependencyManager::get<AccountManager>();
