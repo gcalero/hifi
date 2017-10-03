@@ -220,8 +220,17 @@ function touchEnd(event) {
     if (movingCamera) {
         // if camera was indeed moving, we should not further process, it was just dragging
         movingCamera = false;
+        dragModeFunc = null;
         return;
     }
+
+    // teleport release analysis
+    if (dragTeleportUpdate == dragModeFunc) {
+        dragTeleportRelease(event);
+        dragModeFunc = null;
+        return;
+    }
+    dragModeFunc = null;
 
     // if pinching or moving is still detected, cancel
     if (event.isPinching) { printd("touchEnd fail because isPinching");return;}
@@ -340,6 +349,9 @@ function isTouchValid(coords) {
 
 var touchStartingCoordinates = null;
 
+var KEEP_PRESSED_FOR_TELEPORT_MODE_TIME = 1000;
+var touchBeginTime;
+
 function touchBegin(event) {
     var coords = { x: event.x, y: event.y };
     if (!isTouchValid(coords) ) {
@@ -350,6 +362,7 @@ function touchBegin(event) {
         printd("analyze touch - GOD_VIEW_TOUCH - ok");
         currentTouchIsValid = true;
         touchStartingCoordinates = coords;
+        touchBeginTime = Date.now();
     }
 }
 
@@ -401,11 +414,15 @@ function pinchUpdate(event) {
     prevTouchPinchRadius = event.radius;
 }
 
+function isInsideSquare(coords0, coords1, halfside) {
+    return Math.abs(coords0.x-coords1.x) <= halfside && Math.abs(coords0.y-coords1.y) <= halfside;
+}
+
 function dragScrollUpdate(event) {
     if (!event.isMoved) return;
 
     // drag management
-    printd("touchUpdate HERE - " + "isMoved --------------------");
+    //printd("touchUpdate HERE - " + "isMoved --------------------");
     //event.x
     var pickRay = Camera.computePickRay(event.x, event.y);
     var dragAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction, godViewHeight));
@@ -417,7 +434,7 @@ function dragScrollUpdate(event) {
         return;
     }
 
-    printd("touchUpdate HERE - " + " event " + event.x + " x " + event.y);
+    //printd("touchUpdate HERE - " + " event " + event.x + " x " + event.y);
     //printd("touchUpdate HERE - " + " lastDragAt " + JSON.stringify(lastDragAt));
     //printd("touchUpdate HERE - " + " dragAt " + JSON.stringify(dragAt));
 
@@ -434,11 +451,12 @@ function dragScrollUpdate(event) {
         draggingCamera = true;
     } else {
         if (!movingCamera) {
-            if (Math.abs(touchStartingCoordinates.x-event.x) > MIN_DRAG_DISTANCE_TO_CONSIDER
-                || Math.abs(touchStartingCoordinates.y-event.y) > MIN_DRAG_DISTANCE_TO_CONSIDER) {
+            if (!isInsideSquare(touchStartingCoordinates, event, MIN_DRAG_DISTANCE_TO_CONSIDER)) {
                 movingCamera = true;
             }
         }
+        printd("[newTeleport] SCROLL (xsquared distance was) " + Math.abs(touchStartingCoordinates.x-event.x) + " , " + Math.abs(touchStartingCoordinates.y-event.y));
+        printd("[newTeleport] SCROLL xmovingCamera " + movingCamera);
         if (movingCamera) {
             if (Math.sign(deltaDrag.x) == Math.sign(lastDeltaDrag.x) && Math.sign(deltaDrag.z) == Math.sign(lastDeltaDrag.z)) {
                 // Process movement if direction of the movement is the same than the previous frame
@@ -457,15 +475,51 @@ function dragScrollUpdate(event) {
     }
 }
 
+function dragTeleportBegin(event) {
+    printd("[newTeleport] TELEPORT began");
+}
+
+function dragTeleportUpdate(event) {
+    printd("[newTeleport] TELEPORT ! " + JSON.stringify(event));
+}
+
+function dragTeleportRelease(event) {
+    printd("[newTeleport] TELEPORT released at " + JSON.stringify(event));
+    // TODO hide teleport overlay
+    moveToFromEvent(event);
+}
+
+var dragModeFunc = null; // by default is nothing
+
+function oneFingerTouchUpdate(event) {
+    if (dragModeFunc) {
+        dragModeFunc(event);
+    } else {
+        if (!isInsideSquare(touchStartingCoordinates, event, MIN_DRAG_DISTANCE_TO_CONSIDER)) {
+            printd("[newTeleport] SCROLL established");
+            dragModeFunc = dragScrollUpdate;
+            dragModeFunc(event);
+        } else {
+            var now = Date.now(); // check time
+            if (now - touchBeginTime >= KEEP_PRESSED_FOR_TELEPORT_MODE_TIME) {
+                dragTeleportBegin();
+                dragModeFunc = dragTeleportUpdate;
+                dragModeFunc(event);
+            } else {
+                // not defined yet, let's wait for time or movement to happen
+            }
+        }
+    }
+}
+
 function touchUpdate(event) {
     if (!currentTouchIsValid) {
-        // avoid moving and zooming when tap is over UI entities
-        return;
+        return; // avoid moving and zooming when tap is over UI entities
     }
     if (event.isPinching || event.isPinchOpening) {
         pinchUpdate(event);
     } else {
-        dragScrollUpdate(event);
+        oneFingerTouchUpdate(event);
     }
 }
 
