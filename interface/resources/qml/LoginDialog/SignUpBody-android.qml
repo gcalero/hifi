@@ -1,8 +1,8 @@
 //
-//  LinkAccountBody.qml
+//  SignUpBody.qml
 //
-//  Created by Clement on 7/18/16
-//  Copyright 2015 High Fidelity, Inc.
+//  Created by Stephen Birarda on 7 Dec 2016
+//  Copyright 2016 High Fidelity, Inc.
 //
 //  Distributed under the Apache License, Version 2.0.
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
@@ -17,15 +17,15 @@ import "../controls-uit"
 import "../styles-uit"
 
 Item {
-    id: linkAccountBody
+    id: signupBody
     clip: true
-    height: 100
+    height: root.pane.height
     width: root.pane.width
-    property bool failAfterSignUp: false
-    function login() {
+
+    function signup() {
         mainTextContainer.visible = false
         toggleLoading(true)
-        loginDialog.login(usernameField.text, passwordField.text)
+        loginDialog.signup(emailField.text, usernameField.text, passwordField.text)
     }
 
     property bool keyboardEnabled: false
@@ -38,34 +38,25 @@ Item {
         id: d
         readonly property int minWidth: 480
         readonly property int maxWidth: 1280
-        readonly property int minHeight: 50
-        readonly property int maxHeight: 220
+        readonly property int minHeight: 100
+        readonly property int maxHeight: 200
 
         function resize() {
             var targetWidth = Math.max(titleWidth, form.contentWidth);
             var targetHeight =  hifi.dimensions.contentSpacing.y + mainTextContainer.height +
-                            4 * hifi.dimensions.contentSpacing.y + form.height +
+                                4 * hifi.dimensions.contentSpacing.y + form.height +
                                 hifi.dimensions.contentSpacing.y + buttons.height;
 
-            if (additionalInformation.visible) {
-                targetWidth = Math.max(targetWidth, additionalInformation.width);
-                targetHeight += hifi.dimensions.contentSpacing.y + additionalInformation.height
-            }
-
             parent.width = root.width = Math.max(d.minWidth, Math.min(d.maxWidth, targetWidth));
-            parent.height = 140;
-            /*root.height = Math.max(d.minHeight, Math.min(d.maxHeight, targetHeight))
-                    + (keyboardEnabled && keyboardRaised ? (200 + 2 * hifi.dimensions.contentSpacing.y) : hifi.dimensions.contentSpacing.y);*/
+            //parent.height = 650;
+            parent.height = root.height = Math.max(d.minHeight, Math.min(d.maxHeight, targetHeight));
+                
         }
     }
 
     function toggleLoading(isLoading) {
         linkAccountSpinner.visible = isLoading
         form.visible = !isLoading
-
-        if (loginDialog.isSteamRunning()) {
-            additionalInformation.visible = !isLoading
-        }
 
         leftButton.visible = !isLoading
         buttons.visible = !isLoading
@@ -93,17 +84,15 @@ Item {
             top: parent.top
             left: parent.left
             margins: 0
-            topMargin: hifi.dimensions.contentSpacing.y / 2
+            topMargin: hifi.dimensions.contentSpacing.y
         }
 
         visible: false
 
-        text: qsTr("Username or password incorrect.")
+        text: qsTr("There was an unknown error while creating your account.")
         wrapMode: Text.WordWrap
         color: hifi.colors.redAccent
-        lineHeight: 1
-        lineHeightMode: Text.ProportionalHeight
-        horizontalAlignment: Text.AlignHCenter
+        horizontalAlignment: Text.AlignLeft
     }
 
     Column {
@@ -112,9 +101,23 @@ Item {
             top: mainTextContainer.bottom
             left: parent.left
             margins: 0
-            topMargin: 0 //  hifi.dimensions.contentSpacing.y
+            topMargin: 0; // 2 * hifi.dimensions.contentSpacing.y
         }
         spacing: hifi.dimensions.contentSpacing.y / 2
+
+        Row {
+            spacing: hifi.dimensions.contentSpacing.x
+
+            TextField {
+                id: emailField
+                anchors {
+                    verticalCenter: parent.verticalCenter
+                }
+                width: 350
+
+                placeholderText: "Email"
+            }
+        }
 
         Row {
             spacing: hifi.dimensions.contentSpacing.x
@@ -126,7 +129,7 @@ Item {
                 }
                 width: 350
 
-                placeholderText: qsTr("Username or Email")
+                placeholderText: "Username"
             }
 
             ShortcutText {
@@ -134,15 +137,15 @@ Item {
                     verticalCenter: parent.verticalCenter
                 }
 
-                text: "<a href='https://highfidelity.com/users/password/new'>Forgot Username?</a>"
+                text: qsTr("No spaces / special chars.")
 
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
-                linkColor: hifi.colors.blueAccent
 
-                onLinkActivated: loginDialog.openUrl(link)
+                color: hifi.colors.blueAccent
             }
         }
+
         Row {
             spacing: hifi.dimensions.contentSpacing.x
 
@@ -153,7 +156,7 @@ Item {
                 }
                 width: 350
 
-                placeholderText: qsTr("Password")
+                placeholderText: "Password"
                 echoMode: TextInput.Password
             }
 
@@ -162,35 +165,15 @@ Item {
                     verticalCenter: parent.verticalCenter
                 }
 
-                text: "<a href='https://highfidelity.com/users/password/new'>Forgot Password?</a>"
+                text: qsTr("At least 6 characters")
 
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
-                linkColor: hifi.colors.blueAccent
 
-                onLinkActivated: loginDialog.openUrl(link)
+                color: hifi.colors.blueAccent
             }
         }
 
-    }
-
-    InfoItem {
-        id: additionalInformation
-        anchors {
-            top: form.bottom
-            left: parent.left
-            margins: 0
-            topMargin: hifi.dimensions.contentSpacing.y
-        }
-
-        visible: loginDialog.isSteamRunning()
-
-        text: qsTr("Your steam account informations will not be exposed to other users.")
-        wrapMode: Text.WordWrap
-        color: hifi.colors.baseGrayHighlight
-        lineHeight: 1
-        lineHeightMode: Text.ProportionalHeight
-        horizontalAlignment: Text.AlignHCenter
     }
 
     // Override ScrollingWindow's keyboard that would be at very bottom of dialog.
@@ -210,23 +193,22 @@ Item {
         anchors {
             left: parent.left
             top: form.bottom
-            topMargin: hifi.dimensions.contentSpacing.y / 2 
+            topMargin: hifi.dimensions.contentSpacing.y / 2
         }
 
         spacing: hifi.dimensions.contentSpacing.x
         onHeightChanged: d.resize(); onWidthChanged: d.resize();
 
         Button {
-          anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenter: parent.verticalCenter
 
-          text: qsTr("Sign Up")
-          visible: !loginDialog.isSteamRunning()
+            text: qsTr("Existing User")
 
-          onClicked: {
-              bodyLoader.setSource("SignUpBody-android.qml")
-              bodyLoader.item.width = root.pane.width
-              bodyLoader.item.height = root.pane.height
-          }
+            onClicked: {
+                bodyLoader.setSource("LinkAccountBody-android.qml")
+                bodyLoader.item.width = root.pane.width
+                bodyLoader.item.height = root.pane.height
+            }
         }
     }
 
@@ -235,7 +217,7 @@ Item {
         anchors {
             right: parent.right
             top: form.bottom
-            topMargin: hifi.dimensions.contentSpacing.y / 2 
+            topMargin: hifi.dimensions.contentSpacing.y / 2
         }
         spacing: hifi.dimensions.contentSpacing.x
         onHeightChanged: d.resize(); onWidthChanged: d.resize();
@@ -245,10 +227,10 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: 200
 
-            text: qsTr(loginDialog.isSteamRunning() ? "Link Account" : "Login")
+            text: qsTr("Sign Up")
             color: hifi.buttons.blue
 
-            onClicked: linkAccountBody.login()
+            onClicked: signupBody.signup()
         }
 
         Button {
@@ -256,55 +238,46 @@ Item {
 
             text: qsTr("Cancel")
 
-            onClicked: {
-                linkAccountBody.forceActiveFocus();
-                root.destroy();
-            }
+            onClicked: root.destroy()
         }
     }
 
     Component.onCompleted: {
-        root.title = qsTr("Sign Into High Fidelity")
+        root.title = qsTr("Create an Account")
         root.iconText = "<"
         keyboardEnabled = HMD.active;
         d.resize();
 
-        if (failAfterSignUp) {
-            mainTextContainer.text = "Account created successfully."
-            mainTextContainer.visible = true
-        }
-
-        usernameField.forceActiveFocus();
+        emailField.forceActiveFocus();
     }
 
     Connections {
         target: loginDialog
-        onHandleLoginCompleted: {
-            console.log("Login Succeeded, linking steam account")
+        onHandleSignupCompleted: {
+            console.log("Sign Up Succeeded");
 
-            if (loginDialog.isSteamRunning()) {
-                loginDialog.linkSteam()
-            } else {
-                bodyLoader.setSource("WelcomeBody.qml", { "welcomeBack" : true })
-                bodyLoader.item.width = root.pane.width
-                bodyLoader.item.height = root.pane.height
-            }
+            // now that we have an account, login with that username and password
+            loginDialog.login(usernameField.text, passwordField.text)
         }
-        onHandleLoginFailed: {
-            console.log("Login Failed")
-            mainTextContainer.visible = true
+        onHandleSignupFailed: {
+            console.log("Sign Up Failed")
             toggleLoading(false)
-        }
-        onHandleLinkCompleted: {
-            console.log("Link Succeeded")
 
-            bodyLoader.setSource("WelcomeBody.qml", { "welcomeBack" : true })
+            mainTextContainer.text = errorString
+            mainTextContainer.visible = true
+
+            d.resize();
+        }
+        onHandleLoginCompleted: {
+            bodyLoader.setSource("WelcomeBody.qml", { "welcomeBack": false })
             bodyLoader.item.width = root.pane.width
             bodyLoader.item.height = root.pane.height
         }
-        onHandleLinkFailed: {
-            console.log("Link Failed")
-            toggleLoading(false)
+        onHandleLoginFailed: {
+            // we failed to login, show the LoginDialog so the user will try again
+            bodyLoader.setSource("LinkAccountBody.qml", { "failAfterSignUp": true })
+            bodyLoader.item.width = root.pane.width
+            bodyLoader.item.height = root.pane.height
         }
     }
 
@@ -314,11 +287,11 @@ Item {
         }
 
         switch (event.key) {
-            case Qt.Key_Enter:
-            case Qt.Key_Return:
-                event.accepted = true
-                linkAccountBody.login()
-                break
+        case Qt.Key_Enter:
+        case Qt.Key_Return:
+            event.accepted = true
+            signupBody.signup()
+            break
         }
     }
 }
