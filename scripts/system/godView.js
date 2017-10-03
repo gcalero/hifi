@@ -105,24 +105,18 @@ function actionOnObjectFromEvent(event) {
     return false;
 }
 
+/* 
+ * TODO: Should be enhanced with intersection with terrain instead of using current avatar y position
+*/
+function computeDestination(touchEventPos, avatarPosition, cameraPosition, godViewH) {
+    var pickRay = Camera.computePickRay(touchEventPos.x, touchEventPos.y);
+    var pointingAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction, godViewH));
+    var destination = { x: pointingAt.x, y: avatarPosition.y, z: pointingAt.z };
+    return destination;
+}
+
 function moveToFromEvent(event) {
-    //printd("-- mousePressOrTouchEnd in godView");
-    //printd("-- event.x, event.y:", event.x, ",", event.y);
-    var pickRay = Camera.computePickRay(event.x, event.y);
-
-    //printd("-- pr.o:", pickRay.origin.x, ",", pickRay.origin.y, ",", pickRay.origin.z);
-    //printd("-- pr.d:", pickRay.direction.x, ",", pickRay.direction.y, ",", pickRay.direction.z);
-    //printd("-- c.p:", Camera.position.x, ",", Camera.position.y, ",", Camera.position.z);
-
-    var pointingAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction,godViewHeight));
-
-    //printd("-- pointing at:", pointingAt.x, ",", pointingAt.y, ",", pointingAt.z);
-
-    var moveToPosition = { x: pointingAt.x, y: MyAvatar.position.y, z: pointingAt.z };
-
-    //printd("-- moveToPosition:", moveToPosition.x, ",", moveToPosition.y, ",", moveToPosition.z);
-
-    moveTo(moveToPosition);
+    moveTo(computeDestination(event, MyAvatar.position, Camera.position, godViewHeight));
     return true;
 }
 
@@ -318,20 +312,23 @@ function findLineToHeightIntersectionCoords(px, py, pz, qx, qy, qz, planeY) {
 
 function findRayIntersection(pickRay) {
     // Check 3D overlays and entities. Argument is an object with origin and direction.
-    /* TMP
-      bool intersects;
-    OverlayID overlayID;
-    float distance;
-    BoxFace face;
-    glm::vec3 surfaceNormal;
-    glm::vec3 intersection;
-    QString extraInfo;
-    */
     var result = Overlays.findRayIntersection(pickRay);
     if (!result.intersects) {
         result = Entities.findRayIntersection(pickRay, true);
     }
     return result;
+}
+
+/**
+ * Given a 2d point (x,y) this function returns the intersection (x, y, z)
+ * of the computedPickRay for that point with the plane y = py
+ */
+function computePointAtPlaneY(x,y,py) {
+    var ray = Camera.computePickRay(x, y);
+    var p1=ray.origin;
+    var p2=Vec3.sum(p1, Vec3.multiply(ray.direction, 1));
+    return findLineToHeightIntersectionCoords(p1.x, p1.y, p1.z,
+                                              p2.x, p2.y, p2.z, py);
 }
 
 /********************************************************************************************************
@@ -475,19 +472,84 @@ function dragScrollUpdate(event) {
     }
 }
 
+/********************************************************************************************************
+ * Teleport rendering
+ ********************************************************************************************************/
+
+var TELEPORT_TARGET_MODEL_URL = Script.resolvePath("assets/models/teleport-destination.fbx");
+var TELEPORT_TOO_CLOSE_MODEL_URL = Script.resolvePath("assets/models/teleport-cancel.fbx");
+
+var TELEPORT_MODEL_DEFAULT_DIMENSIONS = {
+    x: 0.10,
+    y: 0.00001,
+    z: 0.10
+};
+
+var teleportOverlay = Overlays.addOverlay("model", {
+    url: TELEPORT_TARGET_MODEL_URL,
+    dimensions: TELEPORT_MODEL_DEFAULT_DIMENSIONS,
+    visible: false
+});
+
+var teleportLine = Overlays.addOverlay("line3d", {
+    start: { x: 0, y: 0, z:0 },
+    end: { x: 0, y: 0, z: 0 },
+    color: { red: 0, green: 255, blue: 255},
+    alpha: 1,
+    lineWidth: 2,
+    visible: false
+});
+
 function dragTeleportBegin(event) {
     printd("[newTeleport] TELEPORT began");
+    var overlayDimensions = entityIconModelDimensions();
+    var destination = computeDestination(event, MyAvatar.position, Camera.position, godViewHeight);
+    var overlayPosition = findLineToHeightIntersection(destination, Camera.position, Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
+    Overlays.editOverlay(teleportOverlay,
+            {
+                visible: true,
+                dimensions: overlayDimensions,
+                position: overlayPosition
+            });
+    Overlays.editOverlay(teleportLine,
+            {
+                visible: true,
+                start: MyAvatar.position,
+                end: destination
+            });
 }
 
 function dragTeleportUpdate(event) {
     printd("[newTeleport] TELEPORT ! " + JSON.stringify(event));
+    // if in border, move camera
+
+    // TODO update teleport overlay position (if above avatar, change it for CANCEL)
+    var destination = computeDestination(event, MyAvatar.position, Camera.position, godViewHeight);
+    var overlayPosition = findLineToHeightIntersection(destination, Camera.position, Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
+    printd("[newTeleport] TELEPORT ! camera position " + JSON.stringify(Camera.position));
+    printd("[newTeleport] TELEPORT ! render overlay at " + JSON.stringify(overlayPosition));
+    Overlays.editOverlay(teleportOverlay,
+            {
+                position: overlayPosition
+            });
+    Overlays.editOverlay(teleportLine,
+            {
+                start: MyAvatar.position,
+                end: destination
+            });
 }
 
 function dragTeleportRelease(event) {
     printd("[newTeleport] TELEPORT released at " + JSON.stringify(event));
     // TODO hide teleport overlay
+    Overlays.editOverlay(teleportOverlay, { visible: false });
+    Overlays.editOverlay(teleportLine, { visible: false });
     moveToFromEvent(event);
 }
+
+/********************************************************************************************************
+ *
+ ********************************************************************************************************/
 
 var dragModeFunc = null; // by default is nothing
 
@@ -502,7 +564,7 @@ function oneFingerTouchUpdate(event) {
         } else {
             var now = Date.now(); // check time
             if (now - touchBeginTime >= KEEP_PRESSED_FOR_TELEPORT_MODE_TIME) {
-                dragTeleportBegin();
+                dragTeleportBegin(event);
                 dragModeFunc = dragTeleportUpdate;
                 dragModeFunc(event);
             } else {
@@ -534,12 +596,6 @@ var avatarsNames = []; // a parallel list of names (overlays) to easily run thro
 
 var ICON_MY_AVATAR_MODEL_URL = Script.resolvePath("assets/images/avatar.png"); // FIXME - use correct model&texture
 var ICON_AVATAR_MODEL_URL = Script.resolvePath("assets/images/avatar.png"); // FIXME - use correct model&texture
-
-var ICON_AVATAR_DEFAULT_DIMENSIONS = {
-    x: 0.10,
-    y: 0.00001,
-    z: 0.10
-};
 
 var avatarIconDimensionsVal = { x: 0, y: 0, z: 0.00001};
 function avatarIconPlaneDimensions() {
@@ -681,7 +737,7 @@ function renderMyAvatarIcon() {
 
     var avatarPos = MyAvatar.position;
     var cameraPos = Camera.position;
-    var commonY = Camera.position.y - 0.5;
+    var commonY = Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS;
     var borderPoints = [
         computePointAtPlaneY(0, 0, commonY),
         computePointAtPlaneY(Window.innerWidth, Window.innerHeight, commonY)
@@ -721,22 +777,10 @@ function hideAllAvatarIcons() {
     Overlays.editOverlay(myAvatarName, {visible: false})
 }
 
-/**
- * Given a 2d point (x,y) this function returns the intersection (x, y, z)
- * of the computedPickRay for that point with the plane y = py
- */
-function computePointAtPlaneY(x,y,py) {
-    var ray = Camera.computePickRay(x, y);
-    var p1=ray.origin;
-    var p2=Vec3.sum(p1, Vec3.multiply(ray.direction, 1));
-    return findLineToHeightIntersectionCoords(p1.x, p1.y, p1.z,
-                                              p2.x, p2.y, p2.z, py);
-}
-
 function renderAllOthersAvatarIcons() {
     var avatarPos;
     var iconDimensions = avatarIconPlaneDimensions();
-    var commonY = Camera.position.y - 0.5;
+    var commonY = Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS;
     var borderPoints = [
         computePointAtPlaneY(0, 0, commonY),
         computePointAtPlaneY(Window.innerWidth, Window.innerHeight, commonY)
