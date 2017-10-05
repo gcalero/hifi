@@ -488,12 +488,14 @@ var TELEPORT_MODEL_DEFAULT_DIMENSIONS = {
 var teleportOverlay = Overlays.addOverlay("model", {
     url: TELEPORT_TARGET_MODEL_URL,
     dimensions: TELEPORT_MODEL_DEFAULT_DIMENSIONS,
+    orientation: Quat.fromPitchYawRollDegrees(0,180,0),
     visible: false
 });
 
 var teleportCancelOverlay = Overlays.addOverlay("model", {
     url: TELEPORT_TOO_CLOSE_MODEL_URL,
     dimensions: TELEPORT_MODEL_DEFAULT_DIMENSIONS,
+    orientation: Quat.fromPitchYawRollDegrees(0,180,0),
     visible: false
 });
 
@@ -537,6 +539,35 @@ function renderTeleportOverlays(destination) {
     }
 }
 
+var BORDER_DISTANCE_PX = 100;
+var border_top = 0;
+var border_left = 0;
+var border_right = Window.innerWidth;
+var border_bottom = Window.innerHeight;
+
+function moveOnBorders(event) {
+    var xDelta = 0;
+    var zDelta = 0;
+    
+    if (event.y <= border_top + BORDER_DISTANCE_PX) {
+        zDelta = -0.1;
+    } else if (event.y >= border_bottom - BORDER_DISTANCE_PX) {
+        zDelta = 0.1;
+    }
+    if (event.x <= border_left + BORDER_DISTANCE_PX) {
+        xDelta = -0.1;
+    } else if (event.x >= border_right - BORDER_DISTANCE_PX) {
+        xDelta = 0.1;
+    }
+    if (xDelta == 0 && zDelta == 0) {
+        draggingCamera = false;
+        return;
+    }
+
+    Camera.position = Vec3.sum(Camera.position, {x:xDelta, y: 0, z: zDelta});
+    draggingCamera = true;
+}
+
 function dragTeleportBegin(event) {
     printd("[newTeleport] TELEPORT began");
     var overlayDimensions = entityIconModelDimensions();
@@ -551,6 +582,7 @@ function dragTeleportBegin(event) {
 function dragTeleportUpdate(event) {
     printd("[newTeleport] TELEPORT ! " + JSON.stringify(event));
     // if in border, move camera
+    moveOnBorders(event);
 
     var destination = computeDestination(event, MyAvatar.position, Camera.position, godViewHeight);
     printd("[newTeleport] TELEPORT ! camera position " + JSON.stringify(Camera.position));
