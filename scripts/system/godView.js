@@ -105,21 +105,6 @@ function actionOnObjectFromEvent(event) {
     return false;
 }
 
-/* 
- * TODO: Should be enhanced with intersection with terrain instead of using current avatar y position
-*/
-function computeDestination(touchEventPos, avatarPosition, cameraPosition, godViewH) {
-    var pickRay = Camera.computePickRay(touchEventPos.x, touchEventPos.y);
-    var pointingAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction, godViewH));
-    var destination = { x: pointingAt.x, y: avatarPosition.y, z: pointingAt.z };
-    return destination;
-}
-
-function moveToFromEvent(event) {
-    moveTo(computeDestination(event, MyAvatar.position, Camera.position, godViewHeight));
-    return true;
-}
-
 function mousePress(event) {
     if (!isTouchValid(coords)) {
         currentTouchIsValid = false;
@@ -136,7 +121,6 @@ function mousePressOrTouchEnd(event) {
     }
     if (godView) {
         if (actionOnObjectFromEvent(event)) return;
-        if (moveToFromEvent(event)) return;
     }
 }
 
@@ -219,8 +203,8 @@ function touchEnd(event) {
     }
 
     // teleport release analysis
-    if (dragTeleportUpdate == dragModeFunc) {
-        dragTeleportRelease(event);
+    if (teleporter && teleporter.dragTeleportUpdate == dragModeFunc) {
+        teleporter.dragTeleportRelease(event);
         dragModeFunc = null;
         return;
     }
@@ -473,141 +457,228 @@ function dragScrollUpdate(event) {
 }
 
 /********************************************************************************************************
- * Teleport rendering
+ * Teleport feature
  ********************************************************************************************************/
 
-var TELEPORT_TARGET_MODEL_URL = Script.resolvePath("assets/models/teleport-destination.fbx");
-var TELEPORT_TOO_CLOSE_MODEL_URL = Script.resolvePath("assets/models/teleport-cancel.fbx");
+function Teleporter() {
 
-var TELEPORT_MODEL_DEFAULT_DIMENSIONS = {
-    x: 0.10,
-    y: 0.00001,
-    z: 0.10
-};
+    var SURFACE_DETECTION_FOR_TELEPORT = true; // true if uses teleport.js similar logic to detect surfaces. false if uses plain teleport to avatar same height.
 
-var teleportOverlay = Overlays.addOverlay("model", {
-    url: TELEPORT_TARGET_MODEL_URL,
-    dimensions: TELEPORT_MODEL_DEFAULT_DIMENSIONS,
-    orientation: Quat.fromPitchYawRollDegrees(0,180,0),
-    visible: false
-});
+    var TELEPORT_TARGET_MODEL_URL = Script.resolvePath("assets/models/teleport-destination.fbx");
+    var TELEPORT_TOO_CLOSE_MODEL_URL = Script.resolvePath("assets/models/teleport-cancel.fbx");
 
-var teleportCancelOverlay = Overlays.addOverlay("model", {
-    url: TELEPORT_TOO_CLOSE_MODEL_URL,
-    dimensions: TELEPORT_MODEL_DEFAULT_DIMENSIONS,
-    orientation: Quat.fromPitchYawRollDegrees(0,180,0),
-    visible: false
-});
+    var TELEPORT_MODEL_DEFAULT_DIMENSIONS = {
+        x: 0.10,
+        y: 0.00001,
+        z: 0.10
+    };
 
-var TELEPORT_COLOR = { red: 0, green: 255, blue: 255};
-var TELEPORT_CANCEL_COLOR = { red: 255, green: 255, blue: 0};
+    var teleportOverlay = Overlays.addOverlay("model", {
+        url: TELEPORT_TARGET_MODEL_URL,
+        dimensions: TELEPORT_MODEL_DEFAULT_DIMENSIONS,
+        orientation: Quat.fromPitchYawRollDegrees(0,180,0),
+        visible: false
+    });
 
-var teleportLine = Overlays.addOverlay("line3d", {
-    start: { x: 0, y: 0, z:0 },
-    end: { x: 0, y: 0, z: 0 },
-    color: TELEPORT_COLOR,
-    alpha: 1,
-    lineWidth: 2,
-    dashed: false,
-    visible: false
-});
+    var teleportCancelOverlay = Overlays.addOverlay("model", {
+        url: TELEPORT_TOO_CLOSE_MODEL_URL,
+        dimensions: TELEPORT_MODEL_DEFAULT_DIMENSIONS,
+        orientation: Quat.fromPitchYawRollDegrees(0,180,0),
+        visible: false
+    });
 
-// code from teleport.js
-var TELEPORT_TARGET = {
-    NONE: 'none',            // Not currently targetting anything
-    INVISIBLE: 'invisible',  // The current target is an invvsible surface
-    INVALID: 'invalid',      // The current target is invalid (wall, ceiling, etc.)
-    SURFACE: 'surface',      // The current target is a valid surface
-    SEAT: 'seat',            // The current target is a seat
-}
+    var TELEPORT_COLOR = { red: 0, green: 255, blue: 255};
+    var TELEPORT_CANCEL_COLOR = { red: 255, green: 255, blue: 0};
 
-var TELEPORT_CANCEL_RANGE = 1;
-var teleportTargetType = TELEPORT_TARGET.NONE;
+    var teleportLine = Overlays.addOverlay("line3d", {
+        start: { x: 0, y: 0, z:0 },
+        end: { x: 0, y: 0, z: 0 },
+        color: TELEPORT_COLOR,
+        alpha: 1,
+        lineWidth: 2,
+        dashed: false,
+        visible: false
+    });
 
-function renderTeleportOverlays(destination) {
-    var overlayPosition = findLineToHeightIntersection(destination, Camera.position, Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
-    printd("[newTeleport] TELEPORT ! render overlay at " + JSON.stringify(overlayPosition));
-
-    if (teleportTargetType == TELEPORT_TARGET.SURFACE) {
-        Overlays.editOverlay(teleportOverlay, { visible: true, position: overlayPosition });
-        Overlays.editOverlay(teleportCancelOverlay, { visible: false, position: overlayPosition });
-        Overlays.editOverlay(teleportLine, { start: MyAvatar.position, end: destination, color: TELEPORT_COLOR });
-    } else {
-        Overlays.editOverlay(teleportOverlay, { visible: false, position: overlayPosition });
-        Overlays.editOverlay(teleportCancelOverlay, { visible: true, position: overlayPosition });
-        Overlays.editOverlay(teleportLine, { start: MyAvatar.position, end: destination, color: TELEPORT_CANCEL_COLOR });
-    }
-}
-
-var BORDER_DISTANCE_PX = 100;
-var border_top = 0;
-var border_left = 0;
-var border_right = Window.innerWidth;
-var border_bottom = Window.innerHeight;
-
-function moveOnBorders(event) {
-    var xDelta = 0;
-    var zDelta = 0;
-    
-    if (event.y <= border_top + BORDER_DISTANCE_PX) {
-        zDelta = -0.1;
-    } else if (event.y >= border_bottom - BORDER_DISTANCE_PX) {
-        zDelta = 0.1;
-    }
-    if (event.x <= border_left + BORDER_DISTANCE_PX) {
-        xDelta = -0.1;
-    } else if (event.x >= border_right - BORDER_DISTANCE_PX) {
-        xDelta = 0.1;
-    }
-    if (xDelta == 0 && zDelta == 0) {
-        draggingCamera = false;
-        return;
+    // code from teleport.js
+    var TELEPORT_TARGET = {
+        NONE: 'none',            // Not currently targetting anything
+        INVISIBLE: 'invisible',  // The current target is an invvsible surface
+        INVALID: 'invalid',      // The current target is invalid (wall, ceiling, etc.)
+        SURFACE: 'surface',      // The current target is a valid surface
+        SEAT: 'seat',            // The current target is a seat
     }
 
-    Camera.position = Vec3.sum(Camera.position, {x:xDelta, y: 0, z: zDelta});
-    draggingCamera = true;
-}
+    var TELEPORT_CANCEL_RANGE = 1;
+    var teleportTargetType = TELEPORT_TARGET.NONE;
 
-function dragTeleportBegin(event) {
-    printd("[newTeleport] TELEPORT began");
-    var overlayDimensions = entityIconModelDimensions();
-    var destination = computeDestination(event, MyAvatar.position, Camera.position, godViewHeight);
-    // Dimension teleport and cancel overlays (not show them yet)
-    Overlays.editOverlay(teleportOverlay, { dimensions: overlayDimensions });
-    Overlays.editOverlay(teleportCancelOverlay, { dimensions: overlayDimensions });
-    // Position line
-    Overlays.editOverlay(teleportLine, { visible: true, start: MyAvatar.position, end: destination });
-}
-
-function dragTeleportUpdate(event) {
-    printd("[newTeleport] TELEPORT ! " + JSON.stringify(event));
-    // if in border, move camera
-    moveOnBorders(event);
-
-    var destination = computeDestination(event, MyAvatar.position, Camera.position, godViewHeight);
-    printd("[newTeleport] TELEPORT ! camera position " + JSON.stringify(Camera.position));
-
-    if (Vec3.distance(MyAvatar.position, destination) <= TELEPORT_CANCEL_RANGE) {
-        teleportTargetType = TELEPORT_TARGET.INVALID;
-    } else {
-        teleportTargetType = TELEPORT_TARGET.SURFACE;
+    function parseJSON(json) {
+        try {
+            return JSON.parse(json);
+        } catch (e) {
+            return undefined;
+        }
     }
 
-    renderTeleportOverlays(destination);
-}
-
-function dragTeleportRelease(event) {
-    printd("[newTeleport] TELEPORT released at " + JSON.stringify(event));
-    // TODO hide teleport overlay
-    if (teleportTargetType == TELEPORT_TARGET.SURFACE) {
-        moveToFromEvent(event);
+    /* 
+     * TODO: Should be enhanced with intersection with terrain instead of using current avatar y position
+    */
+    function computeDestination(touchEventPos, avatarPosition, cameraPosition, godViewH) {
+        if (SURFACE_DETECTION_FOR_TELEPORT) {
+            var pickRay = Camera.computePickRay(touchEventPos.x, touchEventPos.y);
+            printd("newTeleportDetect - pickRay " + JSON.stringify(pickRay));
+            var destination = Entities.findRayIntersection(pickRay, true, [], [], false, true);
+            printd("newTeleportDetect - destination " + JSON.stringify(pickRay));
+            return destination;
+        } else {
+            var pickRay = Camera.computePickRay(touchEventPos.x, touchEventPos.y);
+            var pointingAt = Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction, godViewH));
+            var destination = { x: pointingAt.x, y: avatarPosition.y, z: pointingAt.z };
+            return destination;
+        }
     }
-    teleportTargetType = TELEPORT_TARGET.NONE;
 
-    Overlays.editOverlay(teleportOverlay, { visible: false });
-    Overlays.editOverlay(teleportLine, { visible: false });
-    Overlays.editOverlay(teleportCancelOverlay, { visible: false });
+    function renderTeleportOverlays(destination) {
+        var overlayPosition = findLineToHeightIntersection(destination, Camera.position, Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
+        printd("[newTeleport] TELEPORT ! render overlay at " + JSON.stringify(overlayPosition));
+
+        if (teleportTargetType == TELEPORT_TARGET.SURFACE) {
+            Overlays.editOverlay(teleportOverlay, { visible: true, position: overlayPosition });
+            Overlays.editOverlay(teleportCancelOverlay, { visible: false });
+            Overlays.editOverlay(teleportLine, { start: MyAvatar.position, end: destination, color: TELEPORT_COLOR, visible: true });
+        } else if (teleportTargetType == TELEPORT_TARGET.INVALID) {
+            Overlays.editOverlay(teleportOverlay, { visible: false});
+            Overlays.editOverlay(teleportCancelOverlay, { visible: true, position: overlayPosition });
+            Overlays.editOverlay(teleportLine, { start: MyAvatar.position, end: destination, color: TELEPORT_CANCEL_COLOR, visible: true });
+        } else { // TELEPORT_TARGET:NONE?
+            Overlays.editOverlay(teleportOverlay, { visible: false });
+            Overlays.editOverlay(teleportCancelOverlay, { visible: false });
+            Overlays.editOverlay(teleportLine, { visible: false });
+        }
+    }
+
+    var BORDER_DISTANCE_PX = 100;
+    var border_top = 0;
+    var border_left = 0;
+    var border_right = Window.innerWidth;
+    var border_bottom = Window.innerHeight;
+
+    function moveOnBorders(event) {
+        var xDelta = 0;
+        var zDelta = 0;
+        
+        if (event.y <= border_top + BORDER_DISTANCE_PX) {
+            zDelta = -0.1;
+        } else if (event.y >= border_bottom - BORDER_DISTANCE_PX) {
+            zDelta = 0.1;
+        }
+        if (event.x <= border_left + BORDER_DISTANCE_PX) {
+            xDelta = -0.1;
+        } else if (event.x >= border_right - BORDER_DISTANCE_PX) {
+            xDelta = 0.1;
+        }
+        if (xDelta == 0 && zDelta == 0) {
+            draggingCamera = false;
+            return;
+        }
+
+        Camera.position = Vec3.sum(Camera.position, {x:xDelta, y: 0, z: zDelta});
+        draggingCamera = true;
+    }
+
+    // When determininig whether you can teleport to a location, the normal of the
+    // point that is being intersected with is looked at. If this normal is more
+    // than MAX_ANGLE_FROM_UP_TO_TELEPORT degrees from <0, 1, 0> (straight up), then
+    // you can't teleport there.
+    const MAX_ANGLE_FROM_UP_TO_TELEPORT = 70;
+    function getTeleportTargetType(intersection) {
+        if (SURFACE_DETECTION_FOR_TELEPORT) {
+            if (!intersection.intersects) {
+                return TELEPORT_TARGET.NONE;
+            }
+            var props = Entities.getEntityProperties(intersection.entityID, ['userData', 'visible']);
+            var data = parseJSON(props.userData);
+            if (data !== undefined && data.seat !== undefined) {
+                return TELEPORT_TARGET.SEAT;
+            }
+
+            if (!props.visible) {
+                return TELEPORT_TARGET.INVISIBLE;
+            }
+
+            var surfaceNormal = intersection.surfaceNormal;
+            var adj = Math.sqrt(surfaceNormal.x * surfaceNormal.x + surfaceNormal.z * surfaceNormal.z);
+            var angleUp = Math.atan2(surfaceNormal.y, adj) * (180 / Math.PI);
+
+            if (angleUp < (90 - MAX_ANGLE_FROM_UP_TO_TELEPORT) ||
+                    angleUp > (90 + MAX_ANGLE_FROM_UP_TO_TELEPORT) ||
+                    Vec3.distance(MyAvatar.position, intersection.intersection) <= TELEPORT_CANCEL_RANGE) {
+                return TELEPORT_TARGET.INVALID;
+            } else {
+                return TELEPORT_TARGET.SURFACE;
+            }
+        } else {
+            var destination = intersection;
+            if (Vec3.distance(MyAvatar.position, destination) <= TELEPORT_CANCEL_RANGE) {
+                return TELEPORT_TARGET.INVALID;
+            } else  {
+                return TELEPORT_TARGET.SURFACE;
+            }
+        }
+    };
+
+    function moveToFromEvent(event) {
+        var destination = computeDestination(event, MyAvatar.position, Camera.position, godViewHeight);
+        moveTo(SURFACE_DETECTION_FOR_TELEPORT?
+            Vec3.sum(destination.intersection, {y: 1})
+            :destination);
+        return true;
+    }
+
+    return {
+        dragTeleportBegin : function(event) {
+            printd("[newTeleport] TELEPORT began");
+            var overlayDimensions = entityIconModelDimensions();
+            //var destination = computeDestination(event, MyAvatar.position, Camera.position, godViewHeight);
+            // Dimension teleport and cancel overlays (not show them yet)
+            Overlays.editOverlay(teleportOverlay, { dimensions: overlayDimensions });
+            Overlays.editOverlay(teleportCancelOverlay, { dimensions: overlayDimensions });
+            // Position line
+            Overlays.editOverlay(teleportLine, { visible: true, start: 0, end: 0 });
+        },
+
+        dragTeleportUpdate : function(event) {
+            printd("[newTeleport] TELEPORT ! " + JSON.stringify(event));
+            // if in border, move camera
+            moveOnBorders(event);
+
+            var destination = computeDestination(event, MyAvatar.position, Camera.position, godViewHeight);
+            printd("[newTeleport] TELEPORT ! camera position " + JSON.stringify(Camera.position));
+
+            teleportTargetType = getTeleportTargetType(destination);
+
+            renderTeleportOverlays( SURFACE_DETECTION_FOR_TELEPORT?
+                                    destination.intersection:
+                                    destination);
+        },
+
+        dragTeleportRelease : function (event) {
+            printd("[newTeleport] TELEPORT released at " + JSON.stringify(event));
+
+            if (teleportTargetType == TELEPORT_TARGET.SURFACE) {
+                moveToFromEvent(event);
+            }
+            teleportTargetType = TELEPORT_TARGET.NONE;
+
+            Overlays.editOverlay(teleportOverlay, { visible: false });
+            Overlays.editOverlay(teleportLine, { visible: false });
+            Overlays.editOverlay(teleportCancelOverlay, { visible: false });
+        }
+    };
+
 }
+
+var teleporter = Teleporter();
 
 /********************************************************************************************************
  *
@@ -626,8 +697,8 @@ function oneFingerTouchUpdate(event) {
         } else {
             var now = Date.now(); // check time
             if (now - touchBeginTime >= KEEP_PRESSED_FOR_TELEPORT_MODE_TIME) {
-                dragTeleportBegin(event);
-                dragModeFunc = dragTeleportUpdate;
+                teleporter.dragTeleportBegin(event);
+                dragModeFunc = teleporter.dragTeleportUpdate;
                 dragModeFunc(event);
             } else {
                 // not defined yet, let's wait for time or movement to happen
