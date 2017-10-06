@@ -71,22 +71,27 @@ Item {
     }
     Image {
         id: icon
-        width: 50
-        height: 50
+        width: 55
+        height: 55
         anchors.bottom: text.top
         anchors.bottomMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter
         fillMode: Image.Stretch
         source: urlHelper(button.icon)
     }
+    FontLoader {
+        id: firaSans
+        source: "../../../fonts/FiraSans-Regular.ttf"
+    }
     Text {
         id: text
         color: "#ffffff"
         text: button.text
-        font.bold: true
+        font.family: "FiraSans"
+        //font.bold: true
         font.pixelSize: 18
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
+        anchors.bottomMargin: 3
         anchors.horizontalCenter: parent.horizontalCenter
         horizontalAlignment: Text.AlignHCenter
     }

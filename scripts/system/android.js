@@ -207,7 +207,11 @@ function raiseBottomBar() {
     avatarBtn = bottombar.addButton({
         icon: "icons/android/avatar-i.svg",
         activeIcon: "icons/android/avatar-a.svg",
-        text: "AVATAR",
+        bgOpacity: 0,
+        hoverBgOpacity: 0,
+        activeBgOpacity: 0,
+        activeHoverBgOpacity: 0,
+        text: "AVATAR"
     });
     avatarBtn.clicked.connect(function() {
         printd("Avatar button clicked");
@@ -221,7 +225,11 @@ function raiseBottomBar() {
     gotoBtn = bottombar.addButton({
         icon: "icons/android/goto-i.svg",
         activeIcon: "icons/android/goto-a.svg",
-        text: "GO TO",
+        bgOpacity: 0,
+        hoverBgOpacity: 0,
+        activeBgOpacity: 0,
+        activeHoverBgOpacity: 0,
+        text: "GO TO"
     });
     gotoBtn.clicked.connect(function() {
         //printd("Goto clicked");
@@ -235,7 +243,11 @@ function raiseBottomBar() {
     var bubbleBtn = bottombar.addButton({
         icon: "icons/android/bubble-i.svg",
         activeIcon: "icons/android/bubble-a.svg",
-        text: "BUBBLE",
+        bgOpacity: 0,
+        hoverBgOpacity: 0,
+        activeBgOpacity: 0,
+        activeHoverBgOpacity: 0,
+        text: "BUBBLE"
     });
     bubbleBtn.clicked.connect(function() {
         //printd("Bubble clicked");
@@ -246,7 +258,11 @@ function raiseBottomBar() {
     chatBtn = bottombar.addButton({
         icon: "icons/android/chat-i.svg",
         activeIcon: "icons/android/chat-a.svg",
-        text: "CHAT",
+        bgOpacity: 0,
+        hoverBgOpacity: 0,
+        activeBgOpacity: 0,
+        activeHoverBgOpacity: 0,
+        text: "CHAT"
     });
     chatBtn.clicked.connect(function() {
         if (!chat.isVisible()) {
@@ -260,6 +276,10 @@ function raiseBottomBar() {
     peopleBtn = bottombar.addButton({
         icon: "icons/android/people-i.svg",
         activeIcon: "icons/android/people-a.svg",
+        bgOpacity: 0,
+        hoverBgOpacity: 0,
+        activeBgOpacity: 0,
+        activeHoverBgOpacity: 0,
         text: "PEOPLE",
         isActive: connections.isVisible()
     });
@@ -273,8 +293,8 @@ function raiseBottomBar() {
     });
 
     loginBtn = bottombar.addButton({
-        icon: "icons/android/login-i.svg",
-        activeIcon: "icons/android/login-a.svg",
+        icon: "icons/android/settings-i.svg",
+        activeIcon: "icons/android/settings-a.svg",
         text: Account.isLoggedIn() ? "Log out" : "Log in"
     });
     loginBtn.clicked.connect(function() {

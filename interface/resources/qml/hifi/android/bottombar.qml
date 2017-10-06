@@ -19,8 +19,13 @@ Item {
     }
 
 	Rectangle {
+        id: background
         anchors.fill : parent
- 		color: "#9A9A9A"
+ 		color: "#9A9A9A55"
+        border.color: "#FFFFFF"
+        anchors.bottomMargin: -1
+        anchors.leftMargin: -1
+        anchors.rightMargin: -1
         Flow {
             id: flowMain
             spacing: 10
@@ -32,8 +37,8 @@ Item {
     Component.onCompleted: {
         // put on bottom
         width = Window.innerWidth/3;
-        height = 100;
-        y=Window.innerHeight / 3 - height;
+        height = 120;
+        y = Window.innerHeight / 3 - height;
     }
     
     function addButton(properties) {

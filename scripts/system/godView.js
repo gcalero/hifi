@@ -736,6 +736,7 @@ function removeAvatarData(QUuid) {
 
     var idx = avatarsIcons.indexOf(itsOverlay);
     avatarsIcons.splice(idx, 1);
+    idx = avatarsNames.indexOf(itsNameOverlay);
     avatarsNames.splice(idx, 1);
 
     delete avatarsData[QUuid];
@@ -833,7 +834,10 @@ function hideAllAvatarIcons() {
     var len = avatarsIcons.length;
     for (var i = 0; i < len; i++) {
         Overlays.editOverlay(avatarsIcons[i], {visible: false});
-        Overlays.editOverlay(avatarsNames[i], {visible: false});
+    }
+    len = avatarsNames.length;
+    for (var j = 0; j < len; j++) {
+        Overlays.editOverlay(avatarsNames[j], {visible: false});
     }
     Overlays.editOverlay(myAvatarIcon, {visible: false});
     Overlays.editOverlay(myAvatarName, {visible: false})
