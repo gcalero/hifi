@@ -58,8 +58,8 @@ Item {
 
     Rectangle {
         id: buttonBg
-        color: "#9A9A9A"
-        opacity: 0.1
+        color: bgColor
+        opacity: bgOpacity
         anchors.right: parent.right
         anchors.rightMargin: 0
         anchors.left: parent.left
