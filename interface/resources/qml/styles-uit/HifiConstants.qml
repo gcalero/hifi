@@ -86,6 +86,7 @@ Item {
         readonly property color lightGrayText80: "#ccafafaf"
         readonly property color faintGray80: "#cce3e3e3"
         readonly property color faintGray50: "#80e3e3e3"
+        readonly property color turquoise: "#2CD7FF"
 
         // Other colors
         readonly property color white: "#ffffff"

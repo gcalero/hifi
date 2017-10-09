@@ -1,4 +1,4 @@
-import QtQuick 2.3 as Original
+import QtQuick 2.5 as Original
 import "../styles"
 import "."
 

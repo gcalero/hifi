@@ -18,16 +18,20 @@ import "styles-uit" as HifiStyles
 import "controls-uit" as HifiControls
 Item {
     x: 0
-    y: 75
-    width: 853
-    height: 100
-    id: root
+    y: 0
+    width: Window.innerWidth / 3
+    height: Window.innerHeight / 3
+    id: bar
     property bool isCursorVisible: false  // Override default cursor visibility.
     property bool shown: true
 
     onShownChanged: {
-        root.visible = shown;
+        bar.visible = shown;
         sendToScript({method: 'shownChanged', params: { shown: shown }});
+    }
+
+    function hide() {
+        shown = false;
     }
 
     Component.onCompleted: {
@@ -43,59 +47,121 @@ Item {
         id: addressBarDialog
     }
 
-    Image {
-        id: backgroundImage
-        source: "../images/address-bar-856.svg"
-        width: 856
-        height: 100
-        y: 0
-        x: 0
+
+    Rectangle {
+        id: background
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#4E4E4E"  } // 
+            GradientStop { position: 1.0; color: "#242424" } // "#242424"
+        }
+        anchors.fill: parent
+        anchors.margins: 35
+
+        Image {
+            id: gotoIcon
+            source: "../icons/android/goto-i.svg"
+            x: 45
+            y: 50
+            width: 55
+            height: 55
+        }
+
+        HifiStyles.FiraSansRegular {
+            x: 120
+            anchors.verticalCenter: gotoIcon.verticalCenter
+            text: "GO TO"
+            color: "#FFFFFF"
+        }
+
+        Rectangle {
+            id: hideButton
+            height: 50
+            width: 50
+            color: "#00000000"
+            anchors {
+                top: gotoIcon.top
+                right: parent.right
+                rightMargin: 43
+            }
+            Image {
+                id: hideIcon
+                source: "../icons/android/hide.svg"
+                anchors {
+                    right: parent.right
+                    horizontalCenter: parent.horizontalCenter
+                }
+            }
+            HifiStyles.FiraSansRegular {
+                anchors {
+                    top: hideIcon.bottom
+                    horizontalCenter: hideIcon.horizontalCenter
+                    topMargin: 12
+                }
+                text: "HIDE"
+                color: "#FFFFFF"
+                font.pixelSize: hifi.fonts.pixelSize * 0.75;
+            }
+        
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    hide();
+                }
+            }
+        }
+
+
+        HifiStyles.RalewayRegular {
+            id: notice
+            text: "YOUR LOCATION"
+            font.pixelSize: hifi.fonts.pixelSize * 0.75;
+            color: "#2CD7FF"
+            anchors {
+                bottom: addressBackground.top
+                bottomMargin: 15
+                left: addressBackground.left
+                leftMargin: 20
+            }
+
+        }
+
         property int inputAreaHeight: 70
         property int inputAreaStep: (height - inputAreaHeight) / 2
 
         ToolbarButton {
             id: homeButton
-            imageURL: "../images/home.svg"
+            y: 150
+            imageURL: "../icons/android/home.svg"
             onClicked: {
                 addressBarDialog.loadHome();
-                root.shown = false;
+                bar.shown = false;
             }
             anchors {
-                left: parent.left
-                leftMargin: homeButton.width / 2
-                verticalCenter: parent.verticalCenter
+                horizontalCenter: gotoIcon.horizontalCenter
             }
         }
 
         ToolbarButton {
             id: backArrow;
-            imageURL: "../images/backward.svg";
+            imageURL: "../icons/android/backward.svg";
             onClicked: addressBarDialog.loadBack();
             anchors {
                 left: homeButton.right
-                verticalCenter: parent.verticalCenter
+                leftMargin: 20
+                verticalCenter: homeButton.verticalCenter
             }
         }
         ToolbarButton {
             id: forwardArrow;
-            imageURL: "../images/forward.svg";
+            imageURL: "../icons/android/forward.svg";
             onClicked: addressBarDialog.loadForward();
             anchors {
                 left: backArrow.right
-                verticalCenter: parent.verticalCenter
+                leftMargin: 20
+                verticalCenter: homeButton.verticalCenter
             }
         }
 
-        HifiStyles.RalewayLight {
-            id: notice;
-            font.pixelSize: hifi.fonts.pixelSize * 0.50;
-            anchors {
-                top: parent.top
-                topMargin: parent.inputAreaStep + 12
-                left: addressLine.left
-                right: addressLine.right
-            }
-        }
         HifiStyles.FiraSansRegular {
             id: location;
             font.pixelSize: addressLine.font.pixelSize;
@@ -103,22 +169,31 @@ Item {
             clip: true;
             anchors.fill: addressLine;
             visible: addressLine.text.length === 0
+            z: 1
         }
+
+        Rectangle {
+            id: addressBackground
+            x: 260
+            y: 150
+            width: 480
+            height: 50
+            color: "#FFFFFF"
+        }
+
         TextInput {
             id: addressLine
             focus: true
+            x: 290
+            y: 150
+            width: 450
+            height: 40
             inputMethodHints: Qt.ImhNoPredictiveText
+            //helperText: "Hint is here"
             anchors {
-                top: parent.top
-                bottom: parent.bottom
-                left: forwardArrow.right
-                right: parent.right
-                leftMargin: forwardArrow.width
-                rightMargin: forwardArrow.width / 2
-                topMargin: parent.inputAreaStep + (2 * hifi.layout.spacing)
-                bottomMargin: parent.inputAreaStep
+                verticalCenter: homeButton.verticalCenter                
             }
-            font.pixelSize: hifi.fonts.pixelSize * 0.75
+            font.pixelSize: hifi.fonts.pixelSize * 1.25
             onTextChanged: {
                 //filterChoicesByText();
                 updateLocationText(addressLine.text.length > 0);
@@ -127,39 +202,31 @@ Item {
                     cursorVisible = true;
                 }
             }
+
             onActiveFocusChanged: {
                 //cursorVisible = isCursorVisible && focus;
             }
-            /*MouseArea {
-                // If user clicks in address bar show cursor to indicate ability to enter address.
-                anchors.fill: parent
-                onClicked: {
-                    isCursorVisible = true;
-                    parent.cursorVisible = true;
-                    parent.forceActiveFocus();
-                }
-            }*/
         }
+        
+
 
         function toggleOrGo() {
             if (addressLine.text !== "") {
                 addressBarDialog.loadAddress(addressLine.text);
             }
-            root.shown = false;
+            bar.shown = false;
         }
 
         Keys.onPressed: {
             switch (event.key) {
                 case Qt.Key_Escape:
                 case Qt.Key_Back:
-                    console.log("[goto-android] BACK WAS PRESSED!!!");
                     clearAddressLineTimer.start();
                     event.accepted = true
-                    root.shown = false;
+                    bar.shown = false;
                     break
                 case Qt.Key_Enter:
                 case Qt.Key_Return:
-                    console.log("[goto-android] RETURN WAS PRESSED!!!");
                     toggleOrGo();
                     clearAddressLineTimer.start();
                     event.accepted = true
@@ -180,14 +247,15 @@ Item {
             isCursorVisible = false;
         }
     }
+
     function updateLocationText(enteringAddress) {
         if (enteringAddress) {
             notice.text = "Go to a place, @user, path or network address";
-            notice.color = hifiStyleConstants.colors.baseGrayHighlight;
+            notice.color = "#ffffff"; // hifiStyleConstants.colors.baseGrayHighlight;
             location.visible = false;
         } else {
-            notice.text = AddressManager.isConnected ? "Your location:" : "Not Connected";
-            notice.color = AddressManager.isConnected ? hifiStyleConstants.colors.baseGrayHighlight : hifiStyleConstants.colors.redHighlight;
+            notice.text = AddressManager.isConnected ? "YOUR LOCATION:" : "NOT CONNECTED";
+            notice.color = AddressManager.isConnected ? hifiStyleConstants.colors.turquoise : hifiStyleConstants.colors.redHighlight;
             // Display hostname, which includes ip address, localhost, and other non-placenames.
             location.text = (AddressManager.placename || AddressManager.hostname || '') + (AddressManager.pathname ? AddressManager.pathname.match(/\/[^\/]+/)[0] : '');
             location.visible = true;
