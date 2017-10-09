@@ -295,7 +295,7 @@ function raiseBottomBar() {
     loginBtn = bottombar.addButton({
         icon: "icons/android/settings-i.svg",
         activeIcon: "icons/android/settings-a.svg",
-        text: Account.isLoggedIn() ? "Log out" : "Log in"
+        text: Account.isLoggedIn() ? "LOG OUT" : "LOG IN"
     });
     loginBtn.clicked.connect(function() {
         if (!Account.isLoggedIn()) {
@@ -400,7 +400,9 @@ var setupModesBar = function() {
     var vrBtn = modesBar.addButton({
         icon: "icons/android/vr-i.svg",
         activeIcon: "icons/android/vr-a.svg",
-        bgOpacity: 0.1,
+        bgColor: "#000000",
+        bgOpacity: 0.0,
+        activeBgOpacity: 0.0,
         text: "VR"/*,
         textColor: "#b2b2b2",
         hoverTextColor: "#b2b2b2",
@@ -410,7 +412,9 @@ var setupModesBar = function() {
     var buttonGodViewMode = modesBar.addButton({
         icon: "icons/android/radar-i.svg",
         activeIcon: "icons/android/radar-a.svg",
-        bgOpacity: 0.1,
+        bgColor: "#000000",
+        bgOpacity: 0.0,
+        activeBgOpacity: 0.0,
         text: "RADAR"/*,
         textColor: "#b2b2b2",
         hoverTextColor: "#b2b2b2",
@@ -420,7 +424,9 @@ var setupModesBar = function() {
     var buttonMyViewMode = modesBar.addButton({
         icon: "icons/android/myview-i.svg",
         activeIcon: "icons/android/myview-a.svg",
-        bgOpacity: 0.1,
+        bgColor: "#000000",
+        bgOpacity: 0.0,
+        activeBgOpacity: 0.0,
         text: "MY VIEW"/*,
         textColor: "#b2b2b2",
         hoverTextColor: "#b2b2b2",
@@ -570,7 +576,8 @@ function setupAudioBar() {
         icon: "icons/android/mic-unmute-a.svg",
         activeIcon: "icons/android/mic-mute-a.svg",
         text: "",
-        bgOpacity: 0.5,
+        bgOpacity: 0.0,
+        activeBgOpacity: 0.0,
         bgColor: "#FFFFFF"
     });
 
