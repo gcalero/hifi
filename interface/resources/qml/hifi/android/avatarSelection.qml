@@ -10,6 +10,12 @@
 //
 import QtQuick 2.5
 import QtQuick.Layouts 1.3
+import Hifi 1.0
+
+import "../../styles"
+import ".."
+import "../../styles-uit" as HifiStyles
+
 
 Item {
 
@@ -26,23 +32,98 @@ Item {
 	x: 10
     y: 10
 
-    width: parent ? parent.width - 40 : 0
-	height: parent ? parent.height - 80 : 0
+    width: parent ? parent.width - 20 : 0
+	height: parent ? parent.height - 60 : 0
+
+    HifiConstants { id: hifi }
+    HifiStyles.HifiConstants { id: hifiStyleConstants }
+
+    function hide() {
+        shown = false;
+    }
 
     Rectangle {
         default property alias data: grid.data
-        implicitWidth: grid.implicitWidth + 40
-        implicitHeight: grid.implicitHeight + 40
-        color: "#E3F2FD"
+
+        //implicitWidth: grid.implicitWidth + 40
+        //implicitHeight: grid.implicitHeight + 40
+
+        width: parent ? parent.width : 0
+        height: parent ? parent.height : 0
+
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#4E4E4E"  }
+            GradientStop { position: 1.0; color: "#242424" }
+        }
         Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
         anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter }
+
+        Image {
+            id: windowIcon
+            source: "../../../icons/android/avatar-i.svg"
+            x: 20 * 19 / 16
+            y: 20 * 19 / 16
+            width: 55
+            height: 55
+        }
+
+        HifiStyles.FiraSansRegular {
+            id: windowTitle
+            x: windowIcon.x + 75
+            anchors.verticalCenter: windowIcon.verticalCenter
+            text: "AVATAR"
+            color: "#FFFFFF"
+            font.pixelSize: hifi.fonts.headerPixelSize * 0.75
+        }
+
+        Rectangle {
+            id: hideButton
+            height: 50
+            width: 50
+            color: "#00000000"
+            anchors {
+                top: windowIcon.top
+                right: parent.right
+                rightMargin: 20 * 21 / 16;
+            }
+            Image {
+                id: hideIcon
+                source: "../../../icons/android/hide.svg"
+                anchors {
+                    right: parent.right
+                    horizontalCenter: parent.horizontalCenter
+                }
+            }
+            HifiStyles.FiraSansRegular {
+                anchors {
+                    top: hideIcon.bottom
+                    horizontalCenter: hideIcon.horizontalCenter
+                    topMargin: 12
+                }
+                text: "HIDE"
+                color: "#FFFFFF"
+                font.pixelSize: hifi.fonts.pixelSize * 0.75
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    hide();
+                }
+            }
+        }
+
         GridLayout {
             id: grid
             columnSpacing: 30
             rowSpacing: 30
             columns: 3
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-            anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter }
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+                verticalCenter: parent.verticalCenter
+                top: windowIcon.bottom
+            }
         }
     }
 
