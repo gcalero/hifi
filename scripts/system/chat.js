@@ -156,6 +156,7 @@ module.exports = {
     },
     hide: function() {
         if (window) {
+            window.fromQml.disconnect(fromQml);
             window.setVisible(false);
         }
         isVisible = false;
