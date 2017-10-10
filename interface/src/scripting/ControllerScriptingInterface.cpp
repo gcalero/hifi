@@ -142,6 +142,10 @@ void ControllerScriptingInterface::updateInputControllers() {
     }
 }
 
+void ControllerScriptingInterface::setVPadEnabled(const bool enable) {
+    enableVPad(enable);
+}
+
 InputController::InputController(int deviceTrackerId, int subTrackerId, QObject* parent) :
     _deviceTrackerId(deviceTrackerId),
     _subTrackerId(subTrackerId),

@@ -148,6 +148,7 @@ module.exports = {
         });
     },
     show: function() {
+        Controller.setVPadEnabled(false);
         if (window) {
             window.fromQml.connect(fromQml);
             window.setVisible(true);
@@ -155,6 +156,7 @@ module.exports = {
         }
     },
     hide: function() {
+        Controller.setVPadEnabled(true);
         if (window) {
             window.fromQml.disconnect(fromQml);
             window.setVisible(false);

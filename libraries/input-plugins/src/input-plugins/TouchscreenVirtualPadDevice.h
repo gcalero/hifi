@@ -107,4 +107,6 @@ bool _touchVPadLeft();
 glm::vec2 _touchVPadFirstLeft();
 glm::vec2 _touchVPadCurrentLeft();
 
+void enableVPad(bool enable);
+
 #endif // hifi_TouchscreenVirtualPadDevice_h

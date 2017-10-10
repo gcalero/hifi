@@ -95,6 +95,7 @@ function update() {
     if (HMD.isVrExitRequested()) {
         Menu.setIsOptionChecked("Android", true);
         var isDesktop = Menu.isOptionChecked("Android");
+        Controller.setVPadEnabled(true);
         saveCurrentModeSetting(MODE_RADAR);
         //onHmdChanged(!isDesktop);
         HMD.resetVrExitRequested();
@@ -500,6 +501,7 @@ var setupModesBar = function() {
 
         printd("VR clicked");
         saveCurrentModeSetting(MODE_VR);
+        Controller.setVPadEnabled(false);
         onButtonClicked(vrBtn, function() {
             var isDesktop = Menu.isOptionChecked("Android");
             Menu.setIsOptionChecked(isDesktop ? "Daydream" : "Android", true);

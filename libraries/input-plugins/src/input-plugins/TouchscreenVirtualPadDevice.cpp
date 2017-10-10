@@ -38,6 +38,12 @@ glm::vec2 _touchVPadCurrentLeft() {
     return __touchVPadCurrentLeft;
 }
 
+bool _vPadEnabled = true;
+
+void enableVPad(bool enable) {
+    _vPadEnabled = enable;
+}
+
 bool TouchscreenVirtualPadDevice::isSupported() const {
     for (auto touchDevice : QTouchDevice::devices()) {
         qDebug() << "[VPAD][INIT] TouchscreenVirtualPadDevice found a touchDevice of type " << touchDevice->type();
@@ -222,8 +228,10 @@ void TouchscreenVirtualPadDevice::touchUpdateEvent(const QTouchEvent* event) {
 }
 
 void TouchscreenVirtualPadDevice::touchLeftBegin(glm::vec2 touchPoint) {
-    _firstTouchLeftPoint = touchPoint;
-    _validTouchLeft = true;
+    if (_vPadEnabled) {
+        _firstTouchLeftPoint = touchPoint;
+        _validTouchLeft = true;
+    }
 }
 
 void TouchscreenVirtualPadDevice::touchLeftUpdate(glm::vec2 touchPoint) {
@@ -239,8 +247,10 @@ void TouchscreenVirtualPadDevice::touchLeftEnd() {
 }
 
 void TouchscreenVirtualPadDevice::touchRightBegin(glm::vec2 touchPoint) {
-    _firstTouchRightPoint = touchPoint;
-    _validTouchRight = true;
+    if (_vPadEnabled) {
+        _firstTouchRightPoint = touchPoint;
+        _validTouchRight = true;
+    }
 }
 
 void TouchscreenVirtualPadDevice::touchRightUpdate(glm::vec2 touchPoint) {

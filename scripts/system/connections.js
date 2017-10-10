@@ -193,6 +193,7 @@ module.exports = {
     },
     show: function() {
         //printd("[CONNECTIONS] show");
+        Controller.setVPadEnabled(false);        
         if (window) {
             window.fromQml.connect(fromQml);
             if (!Account.isLoggedIn()) {
@@ -204,7 +205,9 @@ module.exports = {
     },
     hide: function() {
         //printd("[CONNECTIONS] hide");
+        Controller.setVPadEnabled(true);
         if (window) {
+            window.fromQml.disconnect(fromQml);   
             window.setVisible(false);
         }
         isVisible = false;
@@ -212,7 +215,6 @@ module.exports = {
     },
     destroy: function() {
         if (window) {
-            window.fromQml.disconnect(fromQml);   
             window.close();
             window = null;
         }

@@ -105,6 +105,7 @@ public slots:
     /// Factory to create an InputController
     virtual controller::InputController* createInputController(const QString& deviceName, const QString& tracker);
     virtual void releaseInputController(controller::InputController* input);
+    virtual void setVPadEnabled(bool enable);
 
 signals:
     void keyPressEvent(const KeyEvent& event);
