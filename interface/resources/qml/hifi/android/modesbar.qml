@@ -16,7 +16,7 @@ Item {
  		color: "transparent"
         Flow {
             id: flowMain
-            spacing: 10
+            spacing: 0
             flow: Flow.TopToBottom
             layoutDirection: Flow.TopToBottom
             anchors.fill: parent
