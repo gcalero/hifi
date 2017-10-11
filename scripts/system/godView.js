@@ -521,14 +521,14 @@ function Teleporter() {
     }
 
     /* 
-     * TODO: Should be enhanced with intersection with terrain instead of using current avatar y position
+     * Enhanced with intersection with terrain instead of using current avatar y position if SURFACE_DETECTION_FOR_TELEPORT is true
     */
     function computeDestination(touchEventPos, avatarPosition, cameraPosition, godViewH) {
         if (SURFACE_DETECTION_FOR_TELEPORT) {
             var pickRay = Camera.computePickRay(touchEventPos.x, touchEventPos.y);
             printd("newTeleportDetect - pickRay " + JSON.stringify(pickRay));
             var destination = Entities.findRayIntersection(pickRay, true, [], [], false, true);
-            printd("newTeleportDetect - destination " + JSON.stringify(pickRay));
+            printd("newTeleportDetect - destination " + JSON.stringify(destination));
             return destination;
         } else {
             var pickRay = Camera.computePickRay(touchEventPos.x, touchEventPos.y);
@@ -542,7 +542,9 @@ function Teleporter() {
         var overlayPosition = findLineToHeightIntersection(destination, Camera.position, Camera.position.y - GOD_VIEW_CAMERA_DISTANCE_TO_ICONS);
         printd("[newTeleport] TELEPORT ! render overlay at " + JSON.stringify(overlayPosition));
 
-        if (teleportTargetType == TELEPORT_TARGET.SURFACE) {
+        // CLD note Oct 11, 2017
+        // Version of teleport.js 3c109f294f88ba7573bd1221f907f2605893c509 doesn't allow invisible surfaces, let's allow it for now
+        if (teleportTargetType == TELEPORT_TARGET.SURFACE || teleportTargetType == TELEPORT_TARGET.INVISIBLE) {
             Overlays.editOverlay(teleportOverlay, { visible: true, position: overlayPosition });
             Overlays.editOverlay(teleportCancelOverlay, { visible: false });
             Overlays.editOverlay(teleportLine, { start: MyAvatar.position, end: destination, color: TELEPORT_COLOR, visible: true });
@@ -656,7 +658,7 @@ function Teleporter() {
             printd("[newTeleport] TELEPORT ! camera position " + JSON.stringify(Camera.position));
 
             teleportTargetType = getTeleportTargetType(destination);
-
+            printd("[newTeleport] TELEPORT ! target type " + JSON.stringify(teleportTargetType));
             renderTeleportOverlays( SURFACE_DETECTION_FOR_TELEPORT?
                                     destination.intersection:
                                     destination);
@@ -664,8 +666,9 @@ function Teleporter() {
 
         dragTeleportRelease : function (event) {
             printd("[newTeleport] TELEPORT released at " + JSON.stringify(event));
-
-            if (teleportTargetType == TELEPORT_TARGET.SURFACE) {
+            // CLD note Oct 11, 2017
+            // Version of teleport.js 3c109f294f88ba7573bd1221f907f2605893c509 doesn't allow invisible surfaces, let's allow it for now
+            if (teleportTargetType == TELEPORT_TARGET.SURFACE || teleportTargetType == TELEPORT_TARGET.INVISIBLE) {
                 moveToFromEvent(event);
             }
             teleportTargetType = TELEPORT_TARGET.NONE;
