@@ -28,6 +28,9 @@ Item {
     onShownChanged: {
         bar.visible = shown;
         sendToScript({method: 'shownChanged', params: { shown: shown }});
+        if (shown) {
+            updateLocationText(false);
+        }
     }
 
     function hide() {
@@ -54,14 +57,19 @@ Item {
             GradientStop { position: 0.0; color: "#4E4E4E"  } // 
             GradientStop { position: 1.0; color: "#242424" } // "#242424"
         }
-        anchors.fill: parent
-        anchors.margins: 35
+        anchors {
+            fill: parent
+            topMargin: 15
+            leftMargin: 35
+            rightMargin: 35
+            bottomMargin: 35
+        }
 
         Image {
             id: gotoIcon
             source: "../icons/android/goto-i.svg"
             x: 45
-            y: 50
+            y: 45
             width: 55
             height: 55
         }
@@ -130,7 +138,7 @@ Item {
 
         ToolbarButton {
             id: homeButton
-            y: 150
+            y: 135
             imageURL: "../icons/android/home.svg"
             onClicked: {
                 addressBarDialog.loadHome();
@@ -175,7 +183,7 @@ Item {
         Rectangle {
             id: addressBackground
             x: 260
-            y: 150
+            y: 135
             width: 480
             height: 50
             color: "#FFFFFF"
