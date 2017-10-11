@@ -54,7 +54,7 @@ var GOD_VIEW_HEIGHT_MAX_PLUS_AVATAR = 40;
 var GOD_VIEW_HEIGHT_MIN_PLUS_AVATAR = 2;
 var GOD_VIEW_CAMERA_DISTANCE_TO_ICONS = 0.5; // Icons are near the camera to prevent the LOD manager dismissing them
 var GOD_VIEW_ICONS_APPARENT_DISTANCE_TO_AVATAR_BASE = 1; // How much above the avatar base should the icon appear
-var AVATAR_DISPLAY_NAME_HEIGHT = 28;
+var AVATAR_DISPLAY_NAME_HEIGHT = 38;
 var lastDragAt;
 var lastDeltaDrag;
 
@@ -781,10 +781,13 @@ function saveAvatarData(QUuid) {
         var avatarName = Overlays.addOverlay("text", {
             width: textWidth,
             height: AVATAR_DISPLAY_NAME_HEIGHT,
-            //backgroundColor: { red: 255, green: 0, blue: 0},
-            color: { red: 255, green: 255, blue: 255},
-            backgroundAlpha: 0.0,
-            font: {size: 24, bold: true},
+            color: { red: 225, green: 225, blue: 225},
+            backgroundAlpha: 0.5,
+            backgroundColor: { red: 0, green: 0, blue: 0},
+            textAlignCenter: true,
+            backgroundColor: { red: 0, green: 0, blue: 0},
+            font: {size: 68, bold: true},
+            loadFont: "../../../fonts/spookynight.ttf",
             //topMargin: 8,
             visible: false,
             text: displayName
@@ -852,10 +855,12 @@ var myAvatarIcon = Overlays.addOverlay("image3d", {
 var myAvatarName = Overlays.addOverlay("text", {
     width: 40,
     height: AVATAR_DISPLAY_NAME_HEIGHT,
-    //backgroundColor: { red: 255, green: 0, blue: 0},
-    color: { red: 255, green: 255, blue: 255},
-    backgroundAlpha: 0.0,
-    font: {size: 28, bold: true},
+    textAlignCenter: true,
+    color: { red: 225, green: 225, blue: 225},
+    backgroundAlpha: 0.5,
+    backgroundColor: { red: 0, green: 0, blue: 0},
+    font: {size: 68, bold: true},
+    loadFont: "../../../fonts/spookynight.ttf",
     //topMargin: 8,
     visible: false,
     text: "Me"

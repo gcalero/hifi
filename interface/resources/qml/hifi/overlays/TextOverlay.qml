@@ -6,6 +6,10 @@ import "."
 Overlay {
     id: root
     clip: true
+    FontLoader { 
+        id: customFont;
+        onStatusChanged: if (customFont.status == FontLoader.Ready) { textField.font.family = customFont.name; console.log("[FNT] loading"); }
+    }
     Rectangle {
         id: background;
         anchors.fill: parent
@@ -45,7 +49,9 @@ Overlay {
                 case "backgroundAlpha": background.color = Qt.rgba(background.color.r, background.color.g, background.color.b, value); break;
                 case "backgroundColor": background.color = Qt.rgba(value.red / 255, value.green / 255, value.blue / 255, background.color.a); break;
                 case "font": textField.font.pixelSize = value.size; break;
+                case "loadFont": customFont.source = value; console.log("[FNT] loading"); break;
                 case "lineHeight": textField.lineHeight = value; break;
+                case "textAlignCenter": textField.anchors.fill= undefined; textField.horizontalAlignment = Text.AlignHCenter; textField.verticalAlignment = Text.AlignVCenter; break;
                 default: console.warn("OVERLAY text unhandled property " + key);
             }
         }
