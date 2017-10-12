@@ -51,7 +51,16 @@ Overlay {
                 case "font": textField.font.pixelSize = value.size; break;
                 case "loadFont": customFont.source = value; console.log("[FNT] loading"); break;
                 case "lineHeight": textField.lineHeight = value; break;
-                case "textAlignCenter": textField.anchors.fill= undefined; textField.horizontalAlignment = Text.AlignHCenter; textField.verticalAlignment = Text.AlignVCenter; break;
+                case "textAlignCenter": 
+                    if (value) {
+                        textField.horizontalAlignment = Text.AlignHCenter; 
+                        textField.verticalAlignment = Text.AlignVCenter;
+                    }
+                    break;
+                case "textRaiseColor": 
+                    textField.style = Text.Raised;
+                    textField.styleColor = Qt.rgba(value.red, value.green, value.blue, 1);
+                    break;
                 default: console.warn("OVERLAY text unhandled property " + key);
             }
         }

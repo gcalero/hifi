@@ -55,6 +55,7 @@ var GOD_VIEW_HEIGHT_MIN_PLUS_AVATAR = 2;
 var GOD_VIEW_CAMERA_DISTANCE_TO_ICONS = 0.5; // Icons are near the camera to prevent the LOD manager dismissing them
 var GOD_VIEW_ICONS_APPARENT_DISTANCE_TO_AVATAR_BASE = 1; // How much above the avatar base should the icon appear
 var AVATAR_DISPLAY_NAME_HEIGHT = 38;
+var AVATAR_DISPLAY_NAME_CHAR_WIDTH = 18;
 var lastDragAt;
 var lastDeltaDrag;
 
@@ -777,20 +778,17 @@ function saveAvatarData(QUuid) {
 
         var needRefresh = !avat || !avat.displayName;
         var displayName = avat && avat.displayName ? avat.displayName : "Unknown";
-        var textWidth = displayName.length * 13;
+        var textWidth = displayName.length * AVATAR_DISPLAY_NAME_CHAR_WIDTH;
         var avatarName = Overlays.addOverlay("text", {
             width: textWidth,
             height: AVATAR_DISPLAY_NAME_HEIGHT,
             color: { red: 225, green: 225, blue: 225},
-            backgroundAlpha: 0.5,
-            backgroundColor: { red: 0, green: 0, blue: 0},
-            textAlignCenter: true,
-            backgroundColor: { red: 0, green: 0, blue: 0},
+            backgroundAlpha: 0.0,
+            textRaiseColor: { red: 0, green: 0, blue: 0},
             font: {size: 68, bold: true},
-            loadFont: "../../../fonts/spookynight.ttf",
-            //topMargin: 8,
             visible: false,
-            text: displayName
+            text: displayName,
+            textAlignCenter: true
         });
         avatarsIcons.push(avatarIcon);
         avatarsNames.push(avatarName);
@@ -857,11 +855,9 @@ var myAvatarName = Overlays.addOverlay("text", {
     height: AVATAR_DISPLAY_NAME_HEIGHT,
     textAlignCenter: true,
     color: { red: 225, green: 225, blue: 225},
-    backgroundAlpha: 0.5,
-    backgroundColor: { red: 0, green: 0, blue: 0},
+    backgroundAlpha: 0.0,
     font: {size: 68, bold: true},
-    loadFont: "../../../fonts/spookynight.ttf",
-    //topMargin: 8,
+    textRaiseColor: { red: 0, green: 0, blue: 0},
     visible: false,
     text: "Me"
 });
@@ -958,7 +954,9 @@ function renderAllOthersAvatarIcons() {
                         var avat = AvatarList.getAvatar(QUuid);
                         if (avat && avat.displayName) {
                             Overlays.editOverlay(avatarsData[QUuid].name, {
-                                text: avat.displayName
+                                width: avat.displayName.length * AVATAR_DISPLAY_NAME_CHAR_WIDTH,
+                                text: avat.displayName,
+                                textAlignCenter: true
                             });
                             avatarsData[QUuid].needRefresh = false;
                         }
@@ -971,7 +969,7 @@ function renderAllOthersAvatarIcons() {
                     });
                     Overlays.editOverlay(avatarsData[QUuid].name, {
                         visible: true,
-                        x: x - avatarsData[QUuid].textWidth * 0.45,
+                        x: x - avatarsData[QUuid].textWidth * 0.5,
                         y: y + iconDimensions.y * 550,
                         font: {size: textSize, bold: true}
                     });
