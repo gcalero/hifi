@@ -74,12 +74,12 @@ function init() {
         thumbnailUrl: "https://hifi-metaverse.s3-us-west-1.amazonaws.com/marketplace/previews/1e57c395-612e-4acd-9561-e79dbda0bc49/thumbnail/hifi-mp-1e57c395-612e-4acd-9561-e79dbda0bc49.jpg",
         avatarUrl: "http://mpassets.highfidelity.com/1e57c395-612e-4acd-9561-e79dbda0bc49-v1/albert.fst"
     });
-    sendToQml({
+    /*sendToQml({
         type: "addTextEntry",
         str: "More choices...",
-        hspan: 2,
+        hspan: 1,
         methodNameWhenClicked: "openAvatarMarket"
-    });
+    });*/
 }
 
 module.exports = {

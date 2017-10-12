@@ -764,6 +764,9 @@ function saveAvatarData(QUuid) {
     if (QUuid == null) return;
     var avat = AvatarList.getAvatar(QUuid);
     printd("avatar added save avatar " + QUuid);
+
+    if (!avat) return;
+
     if (avatarsData[QUuid] != undefined) {
         avatarsData[QUuid].position = avat.position;
     } else {

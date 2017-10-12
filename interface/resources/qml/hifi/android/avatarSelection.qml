@@ -13,13 +13,14 @@ import QtQuick.Layouts 1.3
 import Hifi 1.0
 
 import "../../styles"
+import "."
 import ".."
 import "../../styles-uit" as HifiStyles
 
 
 Item {
 
-	id: top
+    id: top
 
     signal sendToScript(var message);
 
@@ -29,21 +30,25 @@ Item {
         top.visible = shown;
     }
     
-	x: 10
+    x: 10
     y: 10
 
     width: parent ? parent.width - 20 : 0
-	height: parent ? parent.height - 60 : 0
+    height: parent ? parent.height - 60 : 0
 
     HifiConstants { id: hifi }
     HifiStyles.HifiConstants { id: hifiStyleConstants }
+
+    property int cardWidth: 250;
+    property int cardHeight: 240;
+    property int gap: 14
 
     function hide() {
         shown = false;
     }
 
     Rectangle {
-        default property alias data: grid.data
+        //default property alias data: grid.data
 
         //implicitWidth: grid.implicitWidth + 40
         //implicitHeight: grid.implicitHeight + 40
@@ -113,18 +118,34 @@ Item {
             }
         }
 
-        GridLayout {
-            id: grid
-            columnSpacing: 30
-            rowSpacing: 30
-            columns: 3
-            Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+        ListModel { id: avatars }
+
+        ListView {
+            id: scroll
+            height: 250
+            property int stackedCardShadowHeight: 10;
+            spacing: gap;
+            clip: true;
             anchors {
-                horizontalCenter: parent.horizontalCenter
-                verticalCenter: parent.verticalCenter
+                left: parent.left
+                right: parent.right
                 top: windowIcon.bottom
+                topMargin: gap * 3
+                leftMargin: gap
+                rightMargin: gap
             }
+            model: avatars;
+            orientation: ListView.Horizontal;
+            delegate: AvatarOption {
+                thumbnailUrl: model.thumbnailUrl;
+                avatarUrl: model.avatarUrl;
+                avatarName: model.avatarName;
+                avatarSelected: model.avatarSelected;
+            }
+            highlightMoveDuration: -1;
+            highlightMoveVelocity: -1;
         }
+
     }
 
     function escapeRegExp(str) {
@@ -135,61 +156,14 @@ Item {
     }
 
     function addAvatar(name, thumbnailUrl, avatarUrl) {
-        // create object
-        var template = '
-            import QtQuick.Layouts 1.3
-            import QtQuick 2.5
-
-
-            ColumnLayout {
-                id: itemRoot
-                spacing: 4
-                signal sendToParentQml(var message);
-
-                Image {
-                    id: itemImage
-                    Layout.preferredWidth: 192
-                    Layout.preferredHeight: 108
-                    source: "##THUMBNAIL_URL##"
-                    asynchronous: true
-                    fillMode: Image.PreserveAspectFit
-
-                    MouseArea {
-                        id: itemArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        enabled: true
-                        onClicked: { sendToParentQml({ method: "selectAvatar", params: { avatarUrl: "##AVATAR_URL##" } }); }
-                    }
-
-                }
-
-                Text {
-                    id: itemName
-                    text: "##NAME##"
-                    color: "#1398BB"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    font.pointSize: 5
-                    wrapMode: Text.WordWrap
-                    width: parent
-                    MouseArea {
-                        id: itemNameArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        enabled: true
-                        onClicked: { sendToParentQml({ method: "selectAvatar", params: { avatarUrl: "##AVATAR_URL##" } }); }
-                    }
-                }
-
-                Component.onCompleted:{
-                    sendToParentQml.connect(sendToScript);
-                }
-            }';
-        var qmlStr = replaceAll(template, '##THUMBNAIL_URL##', thumbnailUrl);
-        qmlStr = replaceAll(qmlStr, '##NAME##', name);
-        qmlStr = replaceAll(qmlStr, '##AVATAR_URL##', avatarUrl);
-        var newObject = Qt.createQmlObject(qmlStr, grid, "dynamicSnippet1");
+        avatars.append(
+            {
+                thumbnailUrl: thumbnailUrl,
+                avatarUrl: avatarUrl,
+                avatarName: name,
+                avatarSelected: false
+            }
+        );
     }
 
     function addTextEntry(str, hspan, methodNameWhenClicked) {
