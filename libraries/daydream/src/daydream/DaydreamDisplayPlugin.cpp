@@ -235,51 +235,64 @@ void DaydreamDisplayPlugin::customizeContext() {
 //#endif
 }
 
-bool DaydreamDisplayPlugin::internalActivate() {
-    _container->setFullscreen(nullptr, true);
-    notifyEnterVr();
-    GvrState::init(__gvr_context);
-    GvrState *gvrState = GvrState::getInstance();
+void DaydreamDisplayPlugin::internalDeactivate() {
+    qDebug() << "[DDDP] internalDeactivate";
+    Parent::internalDeactivate();
+}
 
-    if (gvrState->_gvr_api) {
-        qDebug() << "Initialize _gvr_api GL " << gvrState;
-        gvrState->_gvr_api->InitializeGl();
+bool DaydreamDisplayPlugin::internalActivate() {
+    qDebug() << "[DDDP] internalActivate";
+    
+static int executed = 0;
+    _container->setFullscreen(nullptr, true);
+        notifyEnterVr();
+    if (!executed) {
+        executed = 1;
+
+        GvrState::init(__gvr_context);
+        GvrState *gvrState = GvrState::getInstance();
+
+        if (gvrState->_gvr_api) {
+            qDebug() << "Initialize _gvr_api GL " << gvrState;
+            gvrState->_gvr_api->InitializeGl();
+        }
+
+        std::vector<gvr::BufferSpec> specs;
+        specs.push_back(gvrState->_gvr_api->CreateBufferSpec());
+        gvrState->_framebuf_size = gvrState->_gvr_api->GetMaximumEffectiveRenderTargetSize();
+
+        //qDebug() << "_framebuf_size " << gvrState->_framebuf_size.width << ", " << gvrState->_framebuf_size.height; //  3426 ,  1770
+
+        auto window = _container->getPrimaryWidget();
+        glm::vec2 windowSize = toGlm(window->size());
+
+        // Because we are using 2X MSAA, we can render to half as many pixels and
+        // achieve similar quality. Scale each dimension by sqrt(2)/2 ~= 7/10ths.
+        gvrState->_framebuf_size.width = windowSize.x;//(7 * gvrState->_framebuf_size.width) / 10;
+        gvrState->_framebuf_size.height = windowSize.y; //(7 * gvrState->_framebuf_size.height) / 10;
+
+        specs[0].SetSize(gvrState->_framebuf_size);
+        specs[0].SetColorFormat(GVR_COLOR_FORMAT_RGBA_8888);
+        specs[0].SetDepthStencilFormat(GVR_DEPTH_STENCIL_FORMAT_DEPTH_16);
+        specs[0].SetSamples(2);
+        gvrState->_swapchain.reset(new gvr::SwapChain(gvrState->_gvr_api->CreateSwapChain(specs)));
+        gvrState->_viewport_list.SetToRecommendedBufferViewports();
+
+
+        resetEyeProjections(gvrState);
+
+        _ipd = 0.03195 * 2.0f;
+
+        _eyeOffsets[0][3] = vec4{ -0.03195, 0.0, 0.0, 1.0 };
+        _eyeOffsets[1][3] = vec4{ 0.03195, 0.0, 0.0, 1.0 };
+
+        _renderTargetSize = glm::vec2(gvrState->_framebuf_size.width ,  gvrState->_framebuf_size.height);
+
+        // This must come after the initialization, so that the values calculated
+        // above are available during the customizeContext call (when not running
+        // in threaded present mode)
     }
 
-    std::vector<gvr::BufferSpec> specs;
-    specs.push_back(gvrState->_gvr_api->CreateBufferSpec());
-    gvrState->_framebuf_size = gvrState->_gvr_api->GetMaximumEffectiveRenderTargetSize();
-
-    //qDebug() << "_framebuf_size " << gvrState->_framebuf_size.width << ", " << gvrState->_framebuf_size.height; //  3426 ,  1770
-
-    auto window = _container->getPrimaryWidget();
-    glm::vec2 windowSize = toGlm(window->size());
-
-    // Because we are using 2X MSAA, we can render to half as many pixels and
-    // achieve similar quality. Scale each dimension by sqrt(2)/2 ~= 7/10ths.
-    gvrState->_framebuf_size.width = windowSize.x;//(7 * gvrState->_framebuf_size.width) / 10;
-    gvrState->_framebuf_size.height = windowSize.y; //(7 * gvrState->_framebuf_size.height) / 10;
-
-    specs[0].SetSize(gvrState->_framebuf_size);
-    specs[0].SetColorFormat(GVR_COLOR_FORMAT_RGBA_8888);
-    specs[0].SetDepthStencilFormat(GVR_DEPTH_STENCIL_FORMAT_DEPTH_16);
-    specs[0].SetSamples(2);
-    gvrState->_swapchain.reset(new gvr::SwapChain(gvrState->_gvr_api->CreateSwapChain(specs)));
-    gvrState->_viewport_list.SetToRecommendedBufferViewports();
-
-
-    resetEyeProjections(gvrState);
-
-    _ipd = 0.03195 * 2.0f;
-
-    _eyeOffsets[0][3] = vec4{ -0.03195, 0.0, 0.0, 1.0 };
-    _eyeOffsets[1][3] = vec4{ 0.03195, 0.0, 0.0, 1.0 };
-
-    _renderTargetSize = glm::vec2(gvrState->_framebuf_size.width ,  gvrState->_framebuf_size.height);
-
-    // This must come after the initialization, so that the values calculated
-    // above are available during the customizeContext call (when not running
-    // in threaded present mode)
     return Parent::internalActivate();
 }
 
