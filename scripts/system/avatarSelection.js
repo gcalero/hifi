@@ -45,16 +45,28 @@ function sendToQml(message) {
     window.sendToQml(message);
 }
 
+function refreshSelected(currentAvatarURL) {
+    sendToQml({
+        type: "refreshSelected",
+        selectedAvatarUrl: currentAvatarURL
+    });
+
+    sendToQml({
+        type: "showAvatars"
+    });
+}
+
 function init() {
     if (!window) {
         print("[avatarSelection.js] There is no window object for init()");
         return;
     }
+    var DEFAULT_AVATAR_URL = "http://mpassets.highfidelity.com/f14bf7c9-49a1-4249-988a-0a577ed78957-v1/beingOfLight.fst";
     sendToQml({
         type: "addAvatar",
         name: "Being of Light Avatar",
         thumbnailUrl: "https://hifi-metaverse.s3-us-west-1.amazonaws.com/marketplace/previews/f14bf7c9-49a1-4249-988a-0a577ed78957/thumbnail/hifi-mp-f14bf7c9-49a1-4249-988a-0a577ed78957.jpg",
-        avatarUrl: "http://mpassets.highfidelity.com/f14bf7c9-49a1-4249-988a-0a577ed78957-v1/beingOfLight.fst"
+        avatarUrl: DEFAULT_AVATAR_URL
     });
     sendToQml({
         type: "addAvatar",
@@ -74,12 +86,17 @@ function init() {
         thumbnailUrl: "https://hifi-metaverse.s3-us-west-1.amazonaws.com/marketplace/previews/1e57c395-612e-4acd-9561-e79dbda0bc49/thumbnail/hifi-mp-1e57c395-612e-4acd-9561-e79dbda0bc49.jpg",
         avatarUrl: "http://mpassets.highfidelity.com/1e57c395-612e-4acd-9561-e79dbda0bc49-v1/albert.fst"
     });
-    /*sendToQml({
-        type: "addTextEntry",
-        str: "More choices...",
-        hspan: 1,
-        methodNameWhenClicked: "openAvatarMarket"
-    });*/
+
+    sendToQml({
+        type: "addExtraOption",
+        showName: "More choices",
+        thumbnailUrl: "../../../images/moreAvatars.png",
+        methodNameWhenClicked: "openAvatarMarket",
+        actionText: "MARKETPLACE"
+    });
+
+    var currentAvatarURL = Settings.getValue('Avatar/fullAvatarURL', DEFAULT_AVATAR_URL);
+    refreshSelected(currentAvatarURL);
 }
 
 module.exports = {
@@ -123,5 +140,8 @@ module.exports = {
     },
     position: function() {
         return window && isVisible ? window.position : null;
+    },
+    refreshSelectedAvatar: function(currentAvatarURL) {
+        refreshSelected(currentAvatarURL);
     }
 };

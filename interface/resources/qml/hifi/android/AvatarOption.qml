@@ -16,18 +16,21 @@ import "../../controls-uit" as HifiControlsUit
 ColumnLayout {
     id: itemRoot
 
+    property string type: "";
+
     property string thumbnailUrl: "";
     property string avatarUrl: "";
     property string avatarName: "";
     property bool avatarSelected: false;
+
+    property string methodName: "";
+    property string actionText: "";
 
     spacing: 4
     signal sendToParentQml(var message);
 
     Image {
         id: itemImage
-        //Layout.preferredWidth: 192
-        //Layout.preferredHeight: 108
         Layout.preferredWidth: 250
         Layout.preferredHeight: 140
         source: thumbnailUrl
@@ -39,7 +42,13 @@ ColumnLayout {
             anchors.fill: parent
             hoverEnabled: true
             enabled: true
-            onClicked: { sendToParentQml({ method: "selectAvatar", params: { avatarUrl: avatarUrl } }); }
+            onClicked: {
+                if (type=="avatar") {
+                    if (!avatarSelected) sendToParentQml({ method: "selectAvatar", params: { avatarUrl: avatarUrl } }); 
+                } else {
+                    sendToParentQml({ method: methodName, params: {  } });
+                }
+            }
         }
 
     }
@@ -59,14 +68,20 @@ ColumnLayout {
             anchors.fill: parent
             hoverEnabled: true
             enabled: true
-            onClicked: { sendToParentQml({ method: "selectAvatar", params: { avatarUrl: avatarUrl } }); }
+            onClicked: {
+                if (type=="avatar") {
+                    if (!avatarSelected) sendToParentQml({ method: "selectAvatar", params: { avatarUrl: avatarUrl } }); 
+                } else {
+                    sendToParentQml({ method: methodName, params: {  } });
+                }
+            }
         }
     }
 
     HifiControlsUit.ImageButton {
         width: 140
         height: 35
-        text: "CHOOSE"
+        text: type=="extra"? actionText: "CHOOSE"
         source: "../../../images/button.svg"
         hoverSource: "../../../images/button-a.svg"
         fontSize: 18
@@ -74,10 +89,26 @@ ColumnLayout {
         hoverFontColor: "#FFFFFF"
         anchors {
             horizontalCenter: itemName.horizontalCenter
-            leftMargin: 10
         }
         visible: !avatarSelected
-        onClicked: { sendToParentQml({ method: "selectAvatar", params: { avatarUrl: avatarUrl } }); }
+        onClicked: {
+            if (type=="avatar") {
+                if (!avatarSelected) sendToParentQml({ method: "selectAvatar", params: { avatarUrl: avatarUrl } }); 
+            } else {
+                sendToParentQml({ method: methodName, params: {  } });
+            }
+        }
+    }
+
+    Image {
+        id: tickImage
+        width: 35
+        height: 35
+        source: "../../../images/tick.svg"
+        anchors {
+            horizontalCenter: itemName.horizontalCenter
+        }
+        visible: avatarSelected
     }
 
     Component.onCompleted:{

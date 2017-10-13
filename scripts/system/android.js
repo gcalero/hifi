@@ -390,6 +390,7 @@ function hideAvatarSelection() {
 }
 
 function processedNewAvatar(url, modelName) {
+    avatarSelection.refreshSelectedAvatar(url);
     hideAvatarSelection();
 }
 

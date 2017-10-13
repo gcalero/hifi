@@ -43,15 +43,14 @@ Item {
     property int cardHeight: 240;
     property int gap: 14
 
+    property var avatarsArray: [];
+    property var extraOptionsArray: [];
+
     function hide() {
         shown = false;
     }
 
     Rectangle {
-        //default property alias data: grid.data
-
-        //implicitWidth: grid.implicitWidth + 40
-        //implicitHeight: grid.implicitHeight + 40
 
         width: parent ? parent.width : 0
         height: parent ? parent.height : 0
@@ -137,10 +136,13 @@ Item {
             model: avatars;
             orientation: ListView.Horizontal;
             delegate: AvatarOption {
+                type: model.type;
                 thumbnailUrl: model.thumbnailUrl;
                 avatarUrl: model.avatarUrl;
                 avatarName: model.avatarName;
                 avatarSelected: model.avatarSelected;
+                methodName: model.methodName;
+                actionText: model.actionText;
             }
             highlightMoveDuration: -1;
             highlightMoveVelocity: -1;
@@ -155,52 +157,48 @@ Item {
         return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
     }
 
-    function addAvatar(name, thumbnailUrl, avatarUrl) {
-        avatars.append(
-            {
-                thumbnailUrl: thumbnailUrl,
-                avatarUrl: avatarUrl,
-                avatarName: name,
-                avatarSelected: false
-            }
-        );
+    function refreshSelected(selectedAvatarUrl) {
+        // URL as ID?
+        avatarsArray.forEach(function (avatarData) {
+            avatarData.avatarSelected = (selectedAvatarUrl == avatarData.avatarUrl);
+            console.log('[avatarSelection] avatar : ',  avatarData.avatarName, ' is selected? ' , avatarData.avatarSelected);
+        });
     }
 
-    function addTextEntry(str, hspan, methodNameWhenClicked) {
-        var template = '
-            import QtQuick.Layouts 1.3
-            import QtQuick 2.5
+    function addAvatar(name, thumbnailUrl, avatarUrl) {
+        avatarsArray.push({
+            type: "avatar",
+            thumbnailUrl: thumbnailUrl,
+            avatarUrl: avatarUrl,
+            avatarName: name,
+            avatarSelected: false,
+            methodName: "",
+            actionText: ""
+        });
+    }
 
-            Text {
-                signal sendToParentQml(var message);
+    function showAvatars() {
+        avatars.clear();
+        avatarsArray.forEach(function (avatarData) {
+            avatars.append(avatarData);
+            console.log('[avatarSelection] adding avatar to model: ', JSON.stringify(avatarData));
+        });
+        extraOptionsArray.forEach(function (extraData) {
+            avatars.append(extraData);
+            console.log('[avatarSelection] adding extra option to model: ', JSON.stringify(extraData));
+        });
+    }
 
-                id: itemName
-                text: "##STR##"
-                color: "#1398BB"
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.pointSize: 7
-                wrapMode: Text.WordWrap
-                width: parent
-                Layout.columnSpan: ##H_SPAN##
-                MouseArea {
-                    id: itemNameArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    enabled: true
-                    onClicked: { sendToParentQml({ method: "##METHOD_CLICK##", params: {  } }); }
-                }
-
-                Component.onCompleted:{
-                    sendToParentQml.connect(sendToScript);
-                }
-            }
-        ';
-
-        var qmlStr = replaceAll(template, '##STR##', str);
-        qmlStr = replaceAll(qmlStr, '##H_SPAN##', hspan);
-        qmlStr = replaceAll(qmlStr, '##METHOD_CLICK##', methodNameWhenClicked);
-        var newObject = Qt.createQmlObject(qmlStr, grid, "dynamicSnippet2");
+    function addExtraOption(showName, thumbnailUrl, methodNameWhenClicked, actionText) {
+        extraOptionsArray.push({
+            type: "extra",
+            thumbnailUrl: thumbnailUrl,
+            avatarUrl: "",
+            avatarName: showName,
+            avatarSelected: false,
+            methodName: methodNameWhenClicked,
+            actionText: actionText
+        });
     }
 
     function fromScript(message) {
@@ -209,8 +207,15 @@ Item {
             case "addAvatar":
                 addAvatar(message.name, message.thumbnailUrl, message.avatarUrl);
             break;
-            case "addTextEntry":
-                addTextEntry(message.str, message.hspan, message.methodNameWhenClicked);
+            case "addExtraOption":
+                //(showName, thumbnailUrl, methodNameWhenClicked, actionText)
+                addExtraOption(message.showName, message.thumbnailUrl, message.methodNameWhenClicked, message.actionText);
+            break;
+            case "refreshSelected":
+                refreshSelected(message.selectedAvatarUrl);
+            break;
+            case "showAvatars":
+                showAvatars();
             break;
             default:
         }
