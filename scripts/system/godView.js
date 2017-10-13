@@ -785,7 +785,7 @@ function saveAvatarData(QUuid) {
         var avatarName = Overlays.addOverlay("text", {
             width: textWidth,
             height: AVATAR_DISPLAY_NAME_HEIGHT,
-            color: { red: 225, green: 225, blue: 225},
+            color: { red: 255, green: 255, blue: 255},
             backgroundAlpha: 0.0,
             textRaiseColor: { red: 0, green: 0, blue: 0},
             font: {size: 68, bold: true},
@@ -857,7 +857,7 @@ var myAvatarName = Overlays.addOverlay("text", {
     width: 40,
     height: AVATAR_DISPLAY_NAME_HEIGHT,
     textAlignCenter: true,
-    color: { red: 225, green: 225, blue: 225},
+    color: { red: 255, green: 255, blue: 255},
     backgroundAlpha: 0.0,
     font: {size: 68, bold: true},
     textRaiseColor: { red: 0, green: 0, blue: 0},

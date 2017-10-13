@@ -15,7 +15,8 @@ import QtQuick.Controls.Styles 1.4
 import QtQuick.Layouts 1.3
 import Qt.labs.settings 1.0
 import "."
-import "../../styles-uit"
+import "../../styles"
+import "../../styles-uit" as HifiStyles
 import "../../controls-uit" as HifiControlsUit
 import "../../controls" as HifiControls
 import ".."
@@ -33,83 +34,165 @@ Item {
         top.visible = shown;
     }
 
+    function hide() {
+        shown = false;
+    }
+
     x: 10
     y: 10
 
 	width: parent ? parent.width - 20 : 0
 	height: parent ? parent.height - 40 : 0
 
+    HifiConstants { id: hifi }
+    HifiStyles.HifiConstants { id: hifiStyleConstants }
+
 	ListModel {
         id: chatContent
         ListElement {
+            transmitter: ""
             content: "Connected to chat server"
+            textColor: "#00FF00"
         }
     }
 
     Rectangle {
         id: background
-        z: 0
-        anchors.fill: parent
-        color: "#004444"
-    }
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#4E4E4E"  } // 
+            GradientStop { position: 1.0; color: "#242424" } // "#242424"
+        }
+        anchors {
+            fill: parent
+            topMargin: 15
+            leftMargin: 35
+            rightMargin: 35
+            bottomMargin: 35
+        }
 
-    Rectangle {
-        id: chatBox
-        // opacity: 1
+        Image {
+            id: chatIcon
+            source: "../../../icons/android/chat-i.svg"
+            x: 45
+            y: 45
+            width: 55
+            height: 55
+        }
 
-        anchors.centerIn: top
+        HifiStyles.FiraSansRegular {
+            x: 120
+            anchors.verticalCenter: chatIcon.verticalCenter
+            text: "CHAT"
+            color: "#FFFFFF"
+        }
 
-        color: "#5d5b59"
-        border.color: "black"
-        border.width: 1
-        radius: 5
-        anchors.fill: parent
-
-        Item {
-            anchors.fill: parent
-            anchors.margins: 10
-
-            TextField {
-                id: input
-                Keys.onReturnPressed: sendMessage()
-                onTextChanged: textChangedHandler()
-                height: sendButton.height
-                width: parent.width - sendButton.width - 15
-                anchors.left: parent.left
-                font.pointSize: 6
-                font.bold: false
-				style: TextFieldStyle {
-				        textColor: "black"
-				        background: Rectangle {
-				            radius: 2
-				            implicitWidth: 100
-				            implicitHeight: 24
-				            border.color: "#333"
-				            border.width: 1
-				        }
-				    }
+        Rectangle {
+            id: hideButton
+            height: 50
+            width: 50
+            color: "#00000000"
+            anchors {
+                top: chatIcon.top
+                right: parent.right
+                rightMargin: 43
             }
-
-            Button {
-                id: sendButton
-                anchors.right: parent.right
-                width: 100
-                height: 50
-                text: "Send"
-                onClicked: sendMessage()
-                style: ButtonStyle {
-			      label: Text {
-			        renderType: Text.NativeRendering
-			        verticalAlignment: Text.AlignVCenter
-			        horizontalAlignment: Text.AlignHCenter
-			        font.family: "Helvetica"
-			        font.pointSize: 6
-			        color: "blue"
-			        text: control.text
-			      }
-			    }
+            Image {
+                id: hideIcon
+                source: "../../../icons/android/hide.svg"
+                anchors {
+                    right: parent.right
+                    horizontalCenter: parent.horizontalCenter
+                }
             }
+            HifiStyles.FiraSansRegular {
+                anchors {
+                    top: hideIcon.bottom
+                    horizontalCenter: hideIcon.horizontalCenter
+                    topMargin: 12
+                }
+                text: "HIDE"
+                color: "#FFFFFF"
+                font.pixelSize: hifi.fonts.pixelSize * 0.75;
+            }
+        
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    hide();
+                }
+            }
+        }
 
+        TextField {
+            id: input
+            Keys.onReturnPressed: sendMessage()
+            onTextChanged: textChangedHandler()
+            y: 110
+            height: 40
+            width: 500 // parent.width - sendButton.width - 15
+            anchors.left: chatIcon.left
+            font.pointSize: 6
+            font.bold: false
+            style: TextFieldStyle {
+                    textColor: "black"
+                    background: Rectangle {
+                        radius: 2
+                        implicitWidth: 100
+                        implicitHeight: 24
+                        border.color: "#333"
+                        border.width: 1
+                    }
+                }
+        }
+
+       HifiControlsUit.ImageButton {
+            width: 140
+            height: 35
+            text: "SEND"
+            source: "../../../images/button.svg"
+            hoverSource: "../../../images/button-a.svg"
+            fontSize: 18
+            fontColor: "#2CD8FF"
+            hoverFontColor: "#FFFFFF"
+            anchors {
+                verticalCenter: input.verticalCenter
+                right: hideButton.right
+                leftMargin: 10
+            }
+            onClicked: sendMessage()
+        }
+
+        ListView {
+            id: chatView
+            width: parent.width-5
+            height: parent.height-5
+            anchors {
+                top: input.bottom
+                topMargin: 5
+                horizontalCenter: parent.horizontalCenter
+                left: input.left
+            }
+            model: chatContent
+            clip: true
+            delegate: Component {
+                Row {
+                    Text {
+                        font.pointSize: 6
+                        text: transmitter
+                        color: textColor
+                    }
+                    Text {
+                        font.pointSize: 6
+                        text: content
+                        color: "#ffffff"
+                    }
+
+                }
+
+            } 
+        }
+            
+/*
             Text {
                 id: otherTyping
                 anchors.top: input.bottom
@@ -117,33 +200,41 @@ Item {
                 font.pointSize: 4
                 font.bold: false
             }
+*/
 
-            Rectangle {
-                height: parent.height - input.height - 15
-                width: parent.width;
-                color: "#d7d6d5"
-                anchors.top: otherTyping.bottom
-                border.color: "black"
-                border.width: 1
-                radius: 5
 
-                ListView {
-                    id: chatView
-                    width: parent.width-5
-                    height: parent.height-5
-                    anchors.centerIn: parent
-                    model: chatContent
-                    clip: true
-                    delegate: Component {
-                        Text {
-                            font.pointSize: 6
-                            text: modelData
-                        }
-                	}
-            	}
-            }
+    }
+
+    property var usersColors : {} 
+    property int usersCount : 0
+                                // 'red',  'orange',  'yellow',  'green',    'cyan',    'blue',   'magenta'
+    property var baseColors : [ '#EB3345', '#F0851F', '#FFCD29', '#94C338', '#11A6C5', '#294C9F', '#C01D84' ];
+
+    function getNextColor(n) {
+        var N = baseColors.length;
+        if (n < baseColors.length) {
+            return baseColors[n];
+        } else {
+            var baseColor = baseColors[n % N];
+            var d = (n / N) % 10;
+            var c2 = "" + Qt.lighter(baseColor, 1 + d / 10);
+            console.log("Base color " + c2);
+            return c2;
         }
-	}
+    }
+
+    function getColorForUser(uuid) {
+        if (usersColors == undefined) {
+            console.log("init color stuff");
+            usersColors = {};
+        }
+        if (!usersColors.hasOwnProperty(uuid)) {
+            usersColors[uuid] = getNextColor(usersCount);
+            usersCount = usersCount + 1;
+        }
+        return usersColors[uuid];
+    }
+
 
     Timer {
         id: typingTimer
@@ -192,14 +283,12 @@ Item {
     }
 
     function showMessage(avatarID, displayName, message, data) {
-        //console.log("[CHAT] show message (qml)");
-        var c = displayName + ": " + message;
-        chatContent.append({content: c});
+        chatContent.append({ transmitter: displayName+": ", content: message, textColor: getColorForUser(avatarID) });
     }
 
     // Append a log message
     function logMessage(message) {
-        chatContent.append({content: message});
+        chatContent.append({content: message, textColor: "#EEEEEEFF"});
     }
 
     function sendMessage()
@@ -262,11 +351,11 @@ Item {
         }
 
         if (displayNamesTyping.length <= 0) {
-            otherTyping.text="";
+            //otherTyping.text="";
         } else if (displayNamesTyping.length == 1) {
-            otherTyping.text = str + " is typing";
+            //otherTyping.text = str + " is typing";
         } else {
-            otherTyping.text = str + " are typing";
+            //otherTyping.text = str + " are typing";
         }
 
     }
