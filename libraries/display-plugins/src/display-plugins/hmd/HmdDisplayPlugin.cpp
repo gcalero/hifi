@@ -615,8 +615,9 @@ void HmdDisplayPlugin::compositeOverlay(gpu::Batch& batch) {
     if (!_currentFrame || !_currentFrame->overlay) {
         return;
     }
-
+#ifndef ANDROID
     _overlayRenderer.render(*this, batch);
+#endif
 }
 
 void HmdDisplayPlugin::OverlayRenderer::render(HmdDisplayPlugin& plugin, gpu::Batch& batch) {

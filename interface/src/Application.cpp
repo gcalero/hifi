@@ -2192,6 +2192,8 @@ void Application::paintGL() {
         batch.resetStages();
     });
     #if 1 //ndef ANDROID
+    bool isHMD = qApp->isHMDMode();
+    if (!isAndroid() || !isHMD) 
         {
             PerformanceTimer perfTimer("renderOverlay");
             // NOTE: There is no batch associated with this renderArgs
