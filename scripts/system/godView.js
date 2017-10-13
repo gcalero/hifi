@@ -32,7 +32,7 @@ cleanupGodViewModeObject();
 
 (function() { // BEGIN LOCAL_SCOPE
 //var friends = Script.require('./friends.js');
-var logEnabled = true;
+var logEnabled = false;
 function printd(str) {
     if (logEnabled)
         print("[godView.js] " + str);

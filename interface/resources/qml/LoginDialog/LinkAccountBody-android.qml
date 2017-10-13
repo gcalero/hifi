@@ -248,7 +248,10 @@ Item {
             text: qsTr(loginDialog.isSteamRunning() ? "Link Account" : "Login")
             color: hifi.buttons.blue
 
-            onClicked: linkAccountBody.login()
+            onClicked: {
+                linkAccountBody.login();
+                Qt.inputMethod.hide();
+            }
         }
 
         Button {

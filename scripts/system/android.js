@@ -596,13 +596,13 @@ function handleLogin() {
         }
     }, 2000);
     if (loginBtn) {
-        loginBtn.editProperties({text: "Logout"});
+        loginBtn.editProperties({text: "LOG OUT"});
     }
 }
 function handleLogout() {
     MyAvatar.displayName="";
     if (loginBtn) {
-        loginBtn.editProperties({text: "Login"});
+        loginBtn.editProperties({text: "LOG IN"});
     }
 }
 
