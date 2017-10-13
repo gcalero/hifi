@@ -51,7 +51,7 @@ Item {
         id: chatContent
         ListElement {
             transmitter: ""
-            content: "Connected to chat server"
+            content: "Type /? or /help for help with chat."
             textColor: "#00FF00"
         }
     }
@@ -67,7 +67,7 @@ Item {
             topMargin: 15
             leftMargin: 35
             rightMargin: 35
-            bottomMargin: 35
+            bottomMargin: 5
         }
 
         Image {
@@ -145,7 +145,7 @@ Item {
                 }
         }
 
-       HifiControlsUit.ImageButton {
+        HifiControlsUit.ImageButton {
             width: 140
             height: 35
             text: "SEND"
@@ -165,7 +165,7 @@ Item {
         ListView {
             id: chatView
             width: parent.width-5
-            height: parent.height-5
+            height: parent.height - y - 5
             anchors {
                 top: input.bottom
                 topMargin: 5
@@ -178,7 +178,7 @@ Item {
                 Row {
                     Text {
                         font.pointSize: 6
-                        text: transmitter
+                        text: transmitter?transmitter:""
                         color: textColor
                     }
                     Text {
@@ -189,7 +189,8 @@ Item {
 
                 }
 
-            } 
+            
+            }
         }
             
 /*
@@ -218,14 +219,12 @@ Item {
             var baseColor = baseColors[n % N];
             var d = (n / N) % 10;
             var c2 = "" + Qt.lighter(baseColor, 1 + d / 10);
-            console.log("Base color " + c2);
             return c2;
         }
     }
 
     function getColorForUser(uuid) {
         if (usersColors == undefined) {
-            console.log("init color stuff");
             usersColors = {};
         }
         if (!usersColors.hasOwnProperty(uuid)) {
@@ -307,8 +306,8 @@ Item {
         }
 
         
-        input.focus = hasFocus;
-
+        //input.focus = hasFocus;
+        Qt.inputMethod.hide();
     }
 
     // The user entered an empty chat message.

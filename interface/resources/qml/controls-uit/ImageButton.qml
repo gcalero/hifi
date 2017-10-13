@@ -46,11 +46,9 @@ Item {
             anchors.fill: parent
             onClicked: button.clicked();
             onEntered: {
-                console.log("Entered");
                 button.state = "hover state";
             }
             onExited: {
-                console.log("Exited");
                 button.state = "base state";
             }
         }
