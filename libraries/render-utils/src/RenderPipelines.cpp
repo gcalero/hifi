@@ -54,6 +54,7 @@
 #include "overlay3D_model_frag.h"
 #include "overlay3D_model_translucent_frag.h"
 #include "overlay3D_translucent_frag.h"
+#include "overlay3D_forward_translucent_frag.h"
 #include "overlay3D_unlit_frag.h"
 #include "overlay3D_translucent_unlit_frag.h"
 #include "overlay3D_model_unlit_frag.h"
@@ -64,6 +65,7 @@ using namespace render;
 using namespace std::placeholders;
 
 void initOverlay3DPipelines(ShapePlumber& plumber);
+void initForwardOverlay3DPipelines(ShapePlumber& plumber);
 void initDeferredPipelines(ShapePlumber& plumber);
 void initForwardPipelines(ShapePlumber& plumber);
 
@@ -78,6 +80,67 @@ void initOverlay3DPipelines(ShapePlumber& plumber) {
     auto vertexModel = gpu::Shader::createVertex(std::string(model_vert));
     auto pixel = gpu::Shader::createPixel(std::string(overlay3D_frag));
     auto pixelTranslucent = gpu::Shader::createPixel(std::string(overlay3D_translucent_frag));
+    auto pixelUnlit = gpu::Shader::createPixel(std::string(overlay3D_unlit_frag));
+    auto pixelTranslucentUnlit = gpu::Shader::createPixel(std::string(overlay3D_translucent_unlit_frag));
+    auto pixelModel = gpu::Shader::createPixel(std::string(overlay3D_model_frag));
+    auto pixelModelTranslucent = gpu::Shader::createPixel(std::string(overlay3D_model_translucent_frag));
+    auto pixelModelUnlit = gpu::Shader::createPixel(std::string(overlay3D_model_unlit_frag));
+    auto pixelModelTranslucentUnlit = gpu::Shader::createPixel(std::string(overlay3D_model_translucent_unlit_frag));
+
+    auto opaqueProgram = gpu::Shader::createProgram(vertex, pixel);
+    auto translucentProgram = gpu::Shader::createProgram(vertex, pixelTranslucent);
+    auto unlitOpaqueProgram = gpu::Shader::createProgram(vertex, pixelUnlit);
+    auto unlitTranslucentProgram = gpu::Shader::createProgram(vertex, pixelTranslucentUnlit);
+    auto materialOpaqueProgram = gpu::Shader::createProgram(vertexModel, pixelModel);
+    auto materialTranslucentProgram = gpu::Shader::createProgram(vertexModel, pixelModelTranslucent);
+    auto materialUnlitOpaqueProgram = gpu::Shader::createProgram(vertexModel, pixelModel);
+    auto materialUnlitTranslucentProgram = gpu::Shader::createProgram(vertexModel, pixelModelTranslucent);
+
+    for (int i = 0; i < 8; i++) {
+        bool isCulled = (i & 1);
+        bool isBiased = (i & 2);
+        bool isOpaque = (i & 4);
+
+        auto state = std::make_shared<gpu::State>();
+        state->setDepthTest(false);
+        state->setCullMode(isCulled ? gpu::State::CULL_BACK : gpu::State::CULL_NONE);
+        if (isBiased) {
+            state->setDepthBias(1.0f);
+            state->setDepthBiasSlopeScale(1.0f);
+        }
+        if (isOpaque) {
+            // Soft edges
+            state->setBlendFunction(true,
+                                    gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::INV_SRC_ALPHA);
+        } else {
+            state->setBlendFunction(true,
+                                    gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::INV_SRC_ALPHA,
+                                    gpu::State::FACTOR_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::ONE);
+        }
+
+        ShapeKey::Filter::Builder builder;
+
+        isCulled ? builder.withCullFace() : builder.withoutCullFace();
+        isBiased ? builder.withDepthBias() : builder.withoutDepthBias();
+        isOpaque ? builder.withOpaque() : builder.withTranslucent();
+
+        auto simpleProgram = isOpaque ? opaqueProgram : translucentProgram;
+        auto unlitProgram = isOpaque ? unlitOpaqueProgram : unlitTranslucentProgram;
+        auto materialProgram = isOpaque ? materialOpaqueProgram : materialTranslucentProgram;
+        auto materialUnlitProgram = isOpaque ? materialUnlitOpaqueProgram : materialUnlitTranslucentProgram;
+
+        plumber.addPipeline(builder.withMaterial().build().key(), materialProgram, state, &lightBatchSetter);
+        plumber.addPipeline(builder.withMaterial().withUnlit().build().key(), materialUnlitProgram, state, &batchSetter);
+        plumber.addPipeline(builder.withoutUnlit().withoutMaterial().build().key(), simpleProgram, state, &lightBatchSetter);
+        plumber.addPipeline(builder.withUnlit().withoutMaterial().build().key(), unlitProgram, state, &batchSetter);
+    }
+}
+
+void initForwardOverlay3DPipelines(ShapePlumber& plumber) {
+    auto vertex = gpu::Shader::createVertex(std::string(overlay3D_vert));
+    auto vertexModel = gpu::Shader::createVertex(std::string(model_vert));
+    auto pixel = gpu::Shader::createPixel(std::string(overlay3D_frag));
+    auto pixelTranslucent = gpu::Shader::createPixel(std::string(overlay3D_forward_translucent_frag));
     auto pixelUnlit = gpu::Shader::createPixel(std::string(overlay3D_unlit_frag));
     auto pixelTranslucentUnlit = gpu::Shader::createPixel(std::string(overlay3D_translucent_unlit_frag));
     auto pixelModel = gpu::Shader::createPixel(std::string(overlay3D_model_frag));

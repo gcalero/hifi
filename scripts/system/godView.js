@@ -731,8 +731,8 @@ var avatarsData = {};
 var avatarsIcons = []; // a parallel list of icons (overlays) to easily run through
 var avatarsNames = []; // a parallel list of names (overlays) to easily run through
 
-var ICON_MY_AVATAR_MODEL_URL = Script.resolvePath("assets/images/avatar.png"); // FIXME - use correct model&texture
-var ICON_AVATAR_MODEL_URL = Script.resolvePath("assets/images/avatar.png"); // FIXME - use correct model&texture
+var ICON_MY_AVATAR_MODEL_URL = Script.resolvePath("assets/images/circle-cyan.svg");
+var ICON_AVATAR_MODEL_URL = Script.resolvePath("assets/images/circle-orange.svg");
 
 var avatarIconDimensionsVal = { x: 0, y: 0, z: 0.00001};
 function avatarIconPlaneDimensions() {
@@ -1009,7 +1009,7 @@ var entitiesData = {}; // by entityID
 var entitiesByOverlayID = {}; // by overlayID
 var entitiesIcons = []; // a parallel list of icons (overlays) to easily run through
 
-var ICON_ENTITY_WEB_MODEL_URL = Script.resolvePath("assets/images/web.png");
+var ICON_ENTITY_WEB_MODEL_URL = Script.resolvePath("assets/images/web.svg");
 var ICON_ENTITY_IMG_MODEL_URL = Script.resolvePath("assets/models/teleport-cancel.fbx"); // FIXME - use correct model&texture
 var ICON_ENTITY_DEFAULT_DIMENSIONS = {
     x: 0.10,

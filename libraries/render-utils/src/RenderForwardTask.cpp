@@ -27,13 +27,13 @@
 
 using namespace render;
 extern void initForwardPipelines(ShapePlumber& plumber);
-extern void initOverlay3DPipelines(ShapePlumber& plumber);
+extern void initForwardOverlay3DPipelines(ShapePlumber& plumber);
 
 RenderForwardTask::RenderForwardTask(RenderFetchCullSortTask::Output items) {
     // Prepare the ShapePipelines
     ShapePlumberPointer shapePlumber = std::make_shared<ShapePlumber>();
     initForwardPipelines(*shapePlumber);
-    initOverlay3DPipelines(*shapePlumber);
+    initForwardOverlay3DPipelines(*shapePlumber);
 
     // Extract opaques / transparents / lights / metas / overlays / background
     const auto opaques = items[RenderFetchCullSortTask::OPAQUE_SHAPE];
