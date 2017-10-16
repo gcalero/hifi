@@ -222,6 +222,11 @@ function raiseBottomBar() {
             hideAvatarSelection();
         }
     });
+    avatarSelection.onHidden = function() {
+        if (avatarBtn) {
+            avatarBtn.isActive = false;
+        }
+    };
     
     gotoBtn = bottombar.addButton({
         icon: "icons/android/goto-i.svg",
@@ -241,6 +246,12 @@ function raiseBottomBar() {
             hideAddressBar();
         }
     });
+    gotoScript.onHidden = function() {
+        if (gotoBtn) {
+            gotoBtn.isActive = false;
+        }
+    };
+    
     var bubbleBtn = bottombar.addButton({
         icon: "icons/android/bubble-i.svg",
         activeIcon: "icons/android/bubble-a.svg",
@@ -273,6 +284,12 @@ function raiseBottomBar() {
         }
 
     });
+
+    chat.onHidden = function() {
+        if (chatBtn) {
+            chatBtn.isActive = false;
+        }
+    };
 
     peopleBtn = bottombar.addButton({
         icon: "icons/android/people-i.svg",

@@ -127,6 +127,9 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
         break;
     case 'EmptyChatMessage':
         break;
+    case 'hide':
+        module.exports.onHidden();
+        break;
     default:
         print('[chat.js] Unrecognized message from chat.qml:', JSON.stringify(message));
         break;
@@ -185,7 +188,8 @@ module.exports = {
     },
     position: function() {
         return window && isVisible ? window.position : null;
-    }
+    },
+    onHidden: function() { }
 };
 
 function onChatMessageReceived(channel, message, senderID) {

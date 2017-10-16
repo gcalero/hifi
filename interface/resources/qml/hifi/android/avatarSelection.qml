@@ -48,6 +48,7 @@ Item {
 
     function hide() {
         shown = false;
+        sendToScript ({ method: "hide" });
     }
 
     Rectangle {

@@ -36,6 +36,7 @@ Item {
 
     function hide() {
         shown = false;
+        sendToScript ({ type: "hide" });
     }
 
     x: 10

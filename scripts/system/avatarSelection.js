@@ -32,6 +32,9 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
         // good
         App.openUrl("https://metaverse.highfidelity.com/marketplace?category=avatars");
         break;
+    case 'hide':
+        module.exports.onHidden();
+        break;
     default:
         print('[avatarSelection.js] Unrecognized message from avatarSelection.qml:', JSON.stringify(message));
     }
@@ -143,5 +146,6 @@ module.exports = {
     },
     refreshSelectedAvatar: function(currentAvatarURL) {
         refreshSelected(currentAvatarURL);
-    }
+    },
+    onHidden: function() { }
 };

@@ -29,6 +29,9 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
             notifyShownChange(message.params.shown);
         } ;
         break;
+    case 'hide':
+        module.exports.onHidden();
+        break;
     default:
         print('[goto-android.js] Unrecognized message from AddressBarDialog-android.qml:', JSON.stringify(message));
     }
@@ -83,7 +86,8 @@ module.exports = {
     },
     setOnShownChange: function(f) {
         notifyShownChange = f;
-    }
+    },
+    onHidden: function() { }
 
 
 };
