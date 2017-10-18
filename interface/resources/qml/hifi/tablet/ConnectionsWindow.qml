@@ -1,5 +1,5 @@
 //
-//  Connections.qml
+//  ConnectionsWindow.qml
 //  interface/resources/qml/tablet
 //
 //  Created by Gabriel Calero & Cristian Duarte on 24 Jul 2017
@@ -15,7 +15,8 @@ import QtQuick.Controls.Styles 1.4
 import QtQuick.Layouts 1.3
 import Qt.labs.settings 1.0
 import "."
-import "../../styles-uit"
+import "../../styles" as HifiStyles
+import "../../styles-uit"// as HifiStylesUit
 import "../../controls-uit" as HifiControlsUit
 import "../../controls" as HifiControls
 import ".."
@@ -24,8 +25,12 @@ Rectangle {
     id: connections
 
     //size
-    width: Window.innerWidth * 0.3;
-    height: Window.innerHeight / 3 - 100;
+    //width: 300//Window.innerWidth * 0.3;
+    //height: 300//Window.innerHeight / 3 - 100;
+    //x: 10
+    //y: 10
+    width: parent ? parent.width - 42.5 : 0
+    height: parent ? parent.height - 21.25 : 0
 
     property int rowHeight: 60;
 
@@ -35,9 +40,19 @@ Rectangle {
         connections.visible = shown;
     }
 
-    HifiConstants { id: hifi; }
+    /*HifiStylesUit.*/HifiConstants { id: hifi }
+
+    HifiStyles.HifiConstants { id: hifiStylesConstants }
 
     z:100
+
+    //Layout.alignment: /*Qt.AlignVCenter | */Qt.AlignHCenter | Qt.AlignBottom
+    anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom }
+
+    function hide() {
+        shown = false;
+        sendToScript ({ method: "hide" });
+    }
 
     Settings {
         id: settings
@@ -45,15 +60,39 @@ Rectangle {
         property int nearDistance: 30
     }
 
+    gradient: Gradient {
+        GradientStop { position: 0.0; color: "#4E4E4E"  }
+        GradientStop { position: 1.0; color: "#242424" }
+    }
+
     // header
     Rectangle {
         id: header
-        color: "#A0A0A0"
+        color: "#00000000"
+        //color: "#55FF0000"
         width: parent.width
         height: parent.height * 0.2
         anchors.top : parent.top
-        
+
         Image {
+            id: windowIcon
+            source: "../../../icons/android/people-i.svg"
+            x: 30.44//20 * 19 / 16
+            y: 36.54//20 * 19 / 16
+            width: 37
+            height: 37
+        }
+
+        /*HifiStylesUit.*/FiraSansRegular {
+            id: windowTitle
+            x: windowIcon.x + 57.78
+            anchors.verticalCenter: windowIcon.verticalCenter
+            text: "PEOPLE"
+            color: "#FFFFFF"
+            font.pixelSize: hifiStylesConstants.fonts.headerPixelSize * 0.75 //32 * 0.75//
+        }
+
+        /*Image {
             id: connectionsImage;
             source: "../../../icons/android/people-i.svg"
             height: parent.height * 0.8
@@ -73,14 +112,14 @@ Rectangle {
             anchors.leftMargin: 30
             anchors.left: connectionsImage.right
             anchors.verticalCenter: parent.verticalCenter
-        }
+        }*/
 
         Rectangle {
             id: tabs
-            color: "#A0A0A0"
+            color: "#00000000"
             width: parent.width * 0.55
             height: parent.height
-            anchors.right: parent.right
+            anchors.left: windowTitle.right
             y: 0
 
             Item {
@@ -190,9 +229,48 @@ Rectangle {
                     refreshClicked();
                 }
             }
+        }
+    }
 
+    Rectangle {
+        id: hideButton
+        height: 50
+        width: 50
+        color: "#00000000"
+        //color: "#CC00FF00"
+        anchors {
+            top: header.top
+            right: parent.right
+            rightMargin: 20 * 21 / 16;
+            topMargin: 37.04
+        }
+        Image {
+            id: hideIcon
+            source: "../../../icons/android/hide.svg"
+            width: 23.67//29
+            height: 13.06//16
+            anchors {
+                //right: parent.right
+                horizontalCenter: parent.horizontalCenter
+            }
+        }
+        /*HifiStyles.*/FiraSansRegular {
+            anchors {
+                top: hideIcon.bottom
+                horizontalCenter: hideIcon.horizontalCenter
+                topMargin: 12
+            }
+            text: "HIDE"
+            color: "#FFFFFF"
+            font.pixelSize: hifiStylesConstants.fonts.pixelSize * 0.75
         }
 
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                hide();
+            }
+        }
     }
 
     // content
@@ -201,6 +279,7 @@ Rectangle {
         width: parent.width
         anchors.top : header.bottom
         anchors.bottom: parent.bottom
+        color: "#00000000"
         //anchors.topMargin: 10
         Connections {
             id: nearbyConnections

@@ -22,11 +22,54 @@ import ".."
 Rectangle {
     property var modelData: []; // This simple list is essentially a mirror of the connectionModel without all the extra complexities.
     anchors.fill : parent
+
+
+    property int gap: 14
+
+    color: "#00000000"
+
+    /*
+    ListModel { id: connectionModel }
+    ListView {
+        id: table
+        height: 250
+        property int stackedCardShadowHeight: 10;
+        spacing: gap;
+        clip: true;
+        anchors.fill: parent
+        model: connectionModel;
+        orientation: ListView.Vertical;
+        delegate: Item {
+            id: itemCell;
+            // This NameCard refers to the cell that contains an avatar's
+            // DisplayName and UserName
+            SimpleNameCard {
+                objectName: (model && model.sessionId) || "";
+                uuid: (model && model.sessionId) || "";
+                // Properties
+                visible: true
+                profileUrl: (model && model.profileUrl) || "";
+                displayName: "";
+                userName: model ? model.userName : "";
+                placeName: "Placename here"; // model ? model.placeName : ""
+                connectionStatus : model ? model.connection : "";
+                selected: false;//styleData.selected;
+                // Size
+                width: table.width
+                height: parent.height
+                // Anchors
+                anchors.left: parent.left
+            }
+        }
+        highlightMoveDuration: -1;
+        highlightMoveVelocity: -1;
+    }*/
+
     HifiControlsUit.Table {
         id: table;
         flickableItem.interactive: true;
-        customBackgroundColor: "#A0A0A0"
-        customBorderColor : "#A0A0A0"
+        customBackgroundColor: "#00000000"//"#7fff0000"
+        customBorderColor : "#00000000"
         customRadius : 0
         height: 900
         width: 400;
@@ -52,7 +95,7 @@ Rectangle {
         rowDelegate: Rectangle { // The only way I know to specify a row height.
             // Size
             height: rowHeight ;
-            color: "#A0A0A0" // hifi.colors.tableRowLightEven
+            color: "#00000000" // hifi.colors.tableRowLightEven
         }
 
         // This Item refers to the contents of each Cell
@@ -88,5 +131,5 @@ Rectangle {
             datum.userIndex = userIndex++;
             connectionModel.append(datum);
         });
-	}
+    }
 }

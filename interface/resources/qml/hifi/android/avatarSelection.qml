@@ -93,9 +93,11 @@ Item {
             }
             Image {
                 id: hideIcon
+                width: 29
+                height: 16
                 source: "../../../icons/android/hide.svg"
                 anchors {
-                    right: parent.right
+                    //right: parent.right
                     horizontalCenter: parent.horizontalCenter
                 }
             }

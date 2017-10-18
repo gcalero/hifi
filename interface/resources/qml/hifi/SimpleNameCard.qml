@@ -83,14 +83,14 @@ Item {
             anchors.fill: parent;
             visible: userImage.status != Image.Ready;
         }
-        StateImage {
+        /*StateImage {
             id: infoHoverImage;
             visible: false;
             imageURL: "../../images/info-icon-2-state.svg";
             size: 32;
             buttonState: 1;
             anchors.centerIn: parent;
-        }
+        }*/
         MouseArea {
             anchors.fill: parent
             enabled: true
@@ -98,13 +98,13 @@ Item {
             onClicked: {
                 locate(thisNameCard.userName);
             }
-            onEntered: infoHoverImage.visible = true;
-            onExited: infoHoverImage.visible = false;
+            //onEntered: infoHoverImage.visible = true;
+            //onExited: infoHoverImage.visible = false;
         }
     }
 
     // Colored border around avatarImage
-    Rectangle {
+    /*Rectangle {
         id: avatarImageBorder;
         visible: avatarImage.visible;
         anchors.verticalCenter: avatarImage.verticalCenter;
@@ -115,7 +115,7 @@ Item {
         radius: avatarImage.height;
         border.color: profilePicBorderColor;
         border.width: 4;
-    }
+    }*/
 
     // DisplayName container for others' cards
     Item {
@@ -158,7 +158,7 @@ Item {
 
     Rectangle {
         id: buttonsContainer
-        color: "#A0A0A0"
+        color: "#00000000"
         width: parent.width * 0.25
         height: parent.height
         anchors.right: parent.right
