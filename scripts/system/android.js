@@ -59,6 +59,8 @@ function init() {
     gotoScript.init();
     chat.init();
     chat.setUniqueColor(uniqueColor);
+    GODVIEWMODE.setUniqueColor(uniqueColor);
+    GODVIEWMODE.init();
     avatarSelection.init();
     gotoScript.setOnShownChange(function (shown) {
         if (shown) {

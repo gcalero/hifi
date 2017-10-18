@@ -16,22 +16,6 @@ print("[godView.js] outside scope");
 
 var GODVIEWMODE = {};
 
-function cleanupGodViewModeObject() {
-    GODVIEWMODE.startGodViewMode = function () {
-        print("[godView.js] start god view mode not implemented");
-    }
-    GODVIEWMODE.endGodViewMode = function () {
-        print("[godView.js] end god view mode not implemented");
-    }
-    GODVIEWMODE.isTouchValid = function () {
-        print("[godView.js] isTouchValid not implemented (considers always valid)");
-        return true;
-    }
-}
-cleanupGodViewModeObject();
-
-(function() { // BEGIN LOCAL_SCOPE
-//var friends = Script.require('./friends.js');
 var logEnabled = false;
 function printd(str) {
     if (logEnabled)
@@ -42,6 +26,7 @@ printd("local scope");
 
 var godView = false;
 var godViewHeight = 10; // camera position meters above the avatar
+var tablet;
 
 var GOD_CAMERA_OFFSET = -1; // 1 meter below the avatar
 var ABOVE_GROUND_DROP = 2;
@@ -879,7 +864,7 @@ function renderMyAvatarIcon() {
     var x = (p1.x - borderPoints[0].x) * (Window.innerWidth) / (borderPoints[1].x - borderPoints[0].x) / 3;
     var y = (p1.z - borderPoints[0].z) * (Window.innerHeight) / (borderPoints[1].z - borderPoints[0].z) / 3;
 
-    if (!myAvatarIcon) {
+    if (!myAvatarIcon && MyAvatar.sessionUUID) {
         myAvatarIcon = Overlays.addOverlay("image3d", {
                           subImage: { x: 0, y: 0, width: 150, height: 142},
                           url: getAvatarIconForUser(MyAvatar.sessionUUID),
@@ -904,11 +889,14 @@ function renderMyAvatarIcon() {
                        });
     }
 
-    Overlays.editOverlay(myAvatarIcon, {
+    if (myAvatarIcon) {
+        Overlays.editOverlay(myAvatarIcon, {
             visible: true,
             dimensions: iconDimensions,
             position: iconPos
-    });
+        });
+
+    }
     var textSize = (14 + (iconDimensions.y - 0.03) * 15 / 0.06);
     
     Overlays.editOverlay(myAvatarName, {
@@ -930,7 +918,9 @@ function hideAllAvatarIcons() {
     for (var j = 0; j < len; j++) {
         Overlays.editOverlay(avatarsNames[j], {visible: false});
     }
-    Overlays.editOverlay(myAvatarIcon, {visible: false});
+    if (myAvatarIcon) {
+        Overlays.editOverlay(myAvatarIcon, {visible: false});        
+    }
     Overlays.editOverlay(myAvatarName, {visible: false})
 }
 
@@ -1157,8 +1147,6 @@ function startGodView() {
     godView = true;
 
     connectGodModeEvents();
-    //friends.init();
-    //friends.show();
 }
 
 function endGodView() {
@@ -1169,30 +1157,6 @@ function endGodView() {
     disconnectGodModeEvents();
     hideAllEntitiesIcons();
     hideAllAvatarIcons();
-    //friends.hide();
-    //friends.destroy();
-}
-
-function onHmdChanged(isHmd) {
-    // if we are going to hmd, end god view if it's already on it
-    if (isHmd && godView) {
-        endGodView();
-    }
-}
-
-//var buttonMyViewMode;
-//var buttonGodViewMode; // buttonRadar ¬¬
-var buttonsContainer;
-var tablet;
-if (!App.isAndroid()) {
-    buttonsContainer = Tablet.getTablet("com.highfidelity.interface.tablet.system");
-    tablet = buttonsContainer;
-} else {
-    // TODO Not so much needed?
-    buttonsContainer = new QmlFragment({
-        menuId: "hifi/android/modesbar"
-    });
-    tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
 }
 
 function onGodViewModeClicked() {
@@ -1210,6 +1174,10 @@ GODVIEWMODE.startGodViewMode = function () {
 GODVIEWMODE.endGodViewMode = function () {
     endGodView();
 };
+
+GODVIEWMODE.init = function() {
+    init();
+}
 
 GODVIEWMODE.setUniqueColor = function(c) {
     uniqueColor = c;
@@ -1255,17 +1223,6 @@ function entitiesAnalysis() {
     //printd("ALL ENTITIES: " + JSON.stringify(entities));
 }
 
-/*buttonGodViewMode = buttonsContainer.addButton({
-    icon: "icons/tablet-icons/goto-i.svg", // FIXME - use correct icon
-    text: "Radar"
-    //,sortOrder: 2
-});
-
-buttonMyViewMode = buttonsContainer.addButton({
-    icon: "icons/tablet-icons/switch-desk-i.svg",
-    text: "My View",
-});*/
-
 function connectGodModeEvents() {
     Script.update.connect(updateGodView); // 60Hz loop
     Controller.keyPressEvent.connect(keyPressEvent);
@@ -1280,49 +1237,20 @@ function disconnectGodModeEvents() {
     Controller.touchUpdateEvent.disconnect(touchUpdate);
 }
 
-//buttonGodViewMode.clicked.connect(onGodViewModeClicked); // god view button
-//buttonMyViewMode.clicked.connect(onMyViewModeClicked); // my view button
+function init() {
+    tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
 
-Controller.touchBeginEvent.connect(touchBegin);
-Controller.touchEndEvent.connect(touchEnd);
+    Controller.touchBeginEvent.connect(touchBegin);
+    Controller.touchEndEvent.connect(touchEnd);
 
-AvatarList.avatarAddedEvent.connect(avatarAdded);
-AvatarList.avatarRemovedEvent.connect(avatarRemoved);
+    AvatarList.avatarAddedEvent.connect(avatarAdded);
+    AvatarList.avatarRemovedEvent.connect(avatarRemoved);
 
-//LODManager.LODDecreased.connect(function() {printd("LOD DECREASED --");});
-//LODManager.LODIncreased.connect(function() {printd("LOD INCREASED ++");});
+    //LODManager.LODDecreased.connect(function() {printd("LOD DECREASED --");});
+    //LODManager.LODIncreased.connect(function() {printd("LOD INCREASED ++");});
 
-Entities.addingEntity.connect(entityAdded);
-Entities.deletingEntity.connect(entityRemoved);
+    Entities.addingEntity.connect(entityAdded);
+    Entities.deletingEntity.connect(entityRemoved);
+}  
 
-HMD.displayModeChanged.connect(onHmdChanged);
 
-Script.scriptEnding.connect(function () {
-    if (godView) {
-        endGodView();
-    }
-    //buttonGodViewMode.clicked.disconnect(onGodViewModeClicked);
-    //buttonMyViewMode.clicked.disconnect(onMyViewModeClicked);
-    if (buttonsContainer) {
-        //buttonsContainer.removeButton(buttonGodViewMode);
-        //buttonsContainer.removeButton(buttonMyViewMode);
-    }
-    Controller.touchBeginEvent.disconnect(touchBegin);
-    Controller.touchEndEvent.disconnect(touchEnd);
-
-    AvatarList.avatarAddedEvent.disconnect(avatarAdded);
-    AvatarList.avatarRemovedEvent.disconnect(avatarRemoved);
-
-    //LODManager.LODDecreased.disconnect(function() {printd("LOD DECREASED --");});
-    //LODManager.LODIncreased.disconnect(function() {printd("LOD INCREASED ++");});
-
-    Entities.addingEntity.disconnect(entityAdded);
-    Entities.deletingEntity.disconnect(entityRemoved);
-
-    HMD.displayModeChanged.disconnect(onHmdChanged);
-
-    // Cleanup GODVIEWMODE object
-    cleanupGodViewModeObject();
-});
-
-}()); // END LOCAL_SCOPE
