@@ -59,6 +59,8 @@ var AVATAR_DISPLAY_NAME_CHAR_WIDTH = 18;
 var lastDragAt;
 var lastDeltaDrag;
 
+var uniqueColor;
+
 function moveTo(position) {
     if (godView) {
         MyAvatar.position = position;
@@ -731,8 +733,14 @@ var avatarsData = {};
 var avatarsIcons = []; // a parallel list of icons (overlays) to easily run through
 var avatarsNames = []; // a parallel list of names (overlays) to easily run through
 
-var ICON_MY_AVATAR_MODEL_URL = Script.resolvePath("assets/images/circle-cyan.svg");
-var ICON_AVATAR_MODEL_URL = Script.resolvePath("assets/images/circle-orange.svg");
+function getAvatarIconForUser(uid) {
+    var color = uniqueColor.getColor(uid);
+    if (color.charAt(0) == '#' ) {
+        color = color.substring(1, color.length);
+    }
+    // FIXME: this is a temporary solution until we can use circle3d with lineWidth
+    return Script.resolvePath("assets/images/circle-"+color+".svg");
+}
 
 var avatarIconDimensionsVal = { x: 0, y: 0, z: 0.00001};
 function avatarIconPlaneDimensions() {
@@ -772,7 +780,7 @@ function saveAvatarData(QUuid) {
     } else {
         var avatarIcon = Overlays.addOverlay("image3d", {
                                           subImage: { x: 0, y: 0, width: 150, height: 142},
-                                          url: ICON_AVATAR_MODEL_URL,
+                                          url: getAvatarIconForUser(QUuid),
                                           dimensions: ICON_ENTITY_DEFAULT_DIMENSIONS,
                                           visible: false,
                                           ignoreRayIntersection: false,
@@ -844,27 +852,8 @@ function avatarRemoved(QUuid) {
 /********************************************************************************************************
  * Avatar Icon/Markers rendering
  ********************************************************************************************************/
-
-var myAvatarIcon = Overlays.addOverlay("image3d", {
-                      subImage: { x: 0, y: 0, width: 150, height: 142},
-                      url: ICON_MY_AVATAR_MODEL_URL,
-                      dimensions: ICON_ENTITY_DEFAULT_DIMENSIONS,
-                      visible: false,
-                      ignoreRayIntersection: false,
-                      orientation: Quat.fromPitchYawRollDegrees(-90,0,0)
-                      });
-var myAvatarName = Overlays.addOverlay("text", {
-    width: 40,
-    height: AVATAR_DISPLAY_NAME_HEIGHT,
-    textAlignCenter: true,
-    color: { red: 255, green: 255, blue: 255},
-    backgroundAlpha: 0.0,
-    font: {size: 68, bold: true},
-    textRaiseColor: { red: 0, green: 0, blue: 0},
-    visible: false,
-    text: "Me"
-});
-
+var myAvatarIcon;
+var myAvatarName;
 
 function renderMyAvatarIcon() {
     var iconPos = findLineToHeightIntersectionCoords(   MyAvatar.position.x,
@@ -890,6 +879,30 @@ function renderMyAvatarIcon() {
     var x = (p1.x - borderPoints[0].x) * (Window.innerWidth) / (borderPoints[1].x - borderPoints[0].x) / 3;
     var y = (p1.z - borderPoints[0].z) * (Window.innerHeight) / (borderPoints[1].z - borderPoints[0].z) / 3;
 
+    if (!myAvatarIcon) {
+        myAvatarIcon = Overlays.addOverlay("image3d", {
+                          subImage: { x: 0, y: 0, width: 150, height: 142},
+                          url: getAvatarIconForUser(MyAvatar.sessionUUID),
+                          dimensions: ICON_ENTITY_DEFAULT_DIMENSIONS,
+                          visible: false,
+                          ignoreRayIntersection: false,
+                          orientation: Quat.fromPitchYawRollDegrees(-90,0,0)
+                       });
+    }
+
+    if (!myAvatarName) {
+        myAvatarName = Overlays.addOverlay("text", {
+                        width: 40,
+                        height: AVATAR_DISPLAY_NAME_HEIGHT,
+                        textAlignCenter: true,
+                        color: { red: 255, green: 255, blue: 255},
+                        backgroundAlpha: 0.0,
+                        font: {size: 68, bold: true},
+                        textRaiseColor: { red: 0, green: 0, blue: 0},
+                        visible: false,
+                        text: "Me"
+                       });
+    }
 
     Overlays.editOverlay(myAvatarIcon, {
             visible: true,
@@ -1196,6 +1209,10 @@ GODVIEWMODE.startGodViewMode = function () {
 
 GODVIEWMODE.endGodViewMode = function () {
     endGodView();
+};
+
+GODVIEWMODE.setUniqueColor = function(c) {
+    uniqueColor = c;
 };
 
 module.exports = GODVIEWMODE;

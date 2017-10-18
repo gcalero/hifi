@@ -21,6 +21,7 @@ var channelName = "Chat"; // Unique name for channel that we listen to.
 var chatName = ''; // The user's name shown in chat.
 
 var typingAvatars = []; // Associative array typingAvatars[avatarId]=displayName
+var uniqueColor;
 
 function printd(str) {
     if (logEnabled)
@@ -189,7 +190,10 @@ module.exports = {
     position: function() {
         return window && isVisible ? window.position : null;
     },
-    onHidden: function() { }
+    onHidden: function() { },
+    setUniqueColor: function(c) {
+        uniqueColor = c;
+    }
 };
 
 function onChatMessageReceived(channel, message, senderID) {
@@ -237,6 +241,7 @@ function handleTransmitChatMessage(avatarID, displayName, message, data) {
     sendToQml({ type: "ReceiveChatMessage", 
                 avatarID: avatarID,
                 displayName: displayName,
+                color: uniqueColor.getColor(avatarID),
                 message: message,
                 data: data}
              );

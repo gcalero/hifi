@@ -31,11 +31,13 @@ var touchInProgress=false;
 // vars for swipe up / down
 var swipingUp=false, swipingDown=false, swipeLastTouchY=0, initialTouchY=0;
 var swipingLeft=false, swipingRight=false, swipeLastTouchX=0, initialTouchX=0;
+var touchOnBottom=false;
 
 var connections = Script.require('./connections.js');
 var gotoScript = Script.require('./goto-android.js');
 var chat = Script.require('./chat.js');
 var avatarSelection = Script.require('./avatarSelection.js');
+var uniqueColor = Script.require('./libraries/uniqueColor.js');
 
 var modesBar;
 var audiobar;
@@ -56,6 +58,7 @@ function init() {
     connections.init();
     gotoScript.init();
     chat.init();
+    chat.setUniqueColor(uniqueColor);
     avatarSelection.init();
     gotoScript.setOnShownChange(function (shown) {
         if (shown) {
@@ -78,6 +81,7 @@ function init() {
     setupAudioBar();
 
     GODVIEWMODE.isTouchValid = isGodViewModeValidTouch;
+    GODVIEWMODE.setUniqueColor(uniqueColor);
 
 }
 
@@ -136,6 +140,7 @@ function touchBegin(event) {
     swipingDown = false;
     swipingLeft = false;
     swipingRight = false;
+    touchOnBottom = false;
 	touchInProgress = true;
     swipeLastTouchY = 0;
     swipeLastTouchX = 0;
@@ -155,6 +160,9 @@ function touchBegin(event) {
         printd("Swipe down started");
     }
 
+    if ((!bottombar || !bottombar.isVisible()) && coords.y > SCREEN_HEIGHT - 300 ) {
+        touchOnBottom = true;
+    } 
 
     if (!swipingDown && !swipingUp) {
         if (!connections.isVisible() && coords.x > SCREEN_WIDTH - RIGHT_ZONE_WIDTH) {
@@ -176,10 +184,10 @@ function touchBegin(event) {
 
 function touchEnd(event) {
     var coords = { x: event.x, y: event.y };
-    if (swipingUp && swipeLastTouchX < initialTouchY - MIN_SWIPE_VERT) {
+    if (swipingUp && (swipeLastTouchX == initialTouchY || swipeLastTouchY < initialTouchY - MIN_SWIPE_VERT) ) {
         raiseBottomBar();
     	printd("Swipe Up finished!");
-    } else if (swipingDown && swipeLastTouchY > initialTouchY + MIN_SWIPE_VERT) {
+    } else if (swipingDown && (swipeLastTouchX == initialTouchY || swipeLastTouchY > initialTouchY + MIN_SWIPE_VERT)) {
         lowerBottomBar();
         printd("Swipe Down finished!");
     } else if (swipingLeft && !connections.isVisible() && swipeLastTouchX < initialTouchX - MIN_SWIPE_HORIZ) {
@@ -188,6 +196,11 @@ function touchEnd(event) {
     } else if (swipingRight && connections.isVisible() && swipeLastTouchX > initialTouchX + MIN_SWIPE_HORIZ) {
         // no action
         printd("Swipe Right finished!");
+    } else if (touchOnBottom) {
+        if (!bottombar || !bottombar.isVisible()) {
+            raiseBottomBar();
+            touchOnBottom = false;
+        }
     }
     touchInProgress=false;
     swipeLastTouchY = 0;
