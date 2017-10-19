@@ -11,7 +11,7 @@ import android.app.AlertDialog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import android.util.Log;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -120,7 +120,7 @@ public class PermissionChecker extends Activity {
         }
         if ((grantResults.length > 0) && permissionCheck == PackageManager.PERMISSION_GRANTED) {
             launchActivityWithPermissions();
-        } else {
+        } else if (grantResults.length > 0) {
             System.out.println("User has deliberately denied Permissions. Launching anyways");
             launchActivityWithPermissions();
         }
