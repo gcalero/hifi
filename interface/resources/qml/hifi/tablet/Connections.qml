@@ -28,43 +28,6 @@ Rectangle {
 
     color: "#00000000"
 
-    /*
-    ListModel { id: connectionModel }
-    ListView {
-        id: table
-        height: 250
-        property int stackedCardShadowHeight: 10;
-        spacing: gap;
-        clip: true;
-        anchors.fill: parent
-        model: connectionModel;
-        orientation: ListView.Vertical;
-        delegate: Item {
-            id: itemCell;
-            // This NameCard refers to the cell that contains an avatar's
-            // DisplayName and UserName
-            SimpleNameCard {
-                objectName: (model && model.sessionId) || "";
-                uuid: (model && model.sessionId) || "";
-                // Properties
-                visible: true
-                profileUrl: (model && model.profileUrl) || "";
-                displayName: "";
-                userName: model ? model.userName : "";
-                placeName: "Placename here"; // model ? model.placeName : ""
-                connectionStatus : model ? model.connection : "";
-                selected: false;//styleData.selected;
-                // Size
-                width: table.width
-                height: parent.height
-                // Anchors
-                anchors.left: parent.left
-            }
-        }
-        highlightMoveDuration: -1;
-        highlightMoveVelocity: -1;
-    }*/
-
     HifiControlsUit.Table {
         id: table;
         flickableItem.interactive: true;
@@ -94,8 +57,9 @@ Rectangle {
         // This Rectangle refers to each Row in the table.
         rowDelegate: Rectangle { // The only way I know to specify a row height.
             // Size
-            height: rowHeight ;
+            height: 91//rowHeight ;
             color: "#00000000" // hifi.colors.tableRowLightEven
+            //color: "#55558800"
         }
 
         // This Item refers to the contents of each Cell

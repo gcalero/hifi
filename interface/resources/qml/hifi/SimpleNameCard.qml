@@ -23,7 +23,7 @@ Item {
     id: thisNameCard
     // Size
     width: parent.width
-    height: 60
+    height: 91
 
     // Properties
     property string profileUrl: "";
@@ -44,6 +44,16 @@ Item {
     property string placeName: ""
     property string profilePicBorderColor: (connectionStatus == "connection" ? hifi.colors.indigoAccent : (connectionStatus == "friend" ? hifi.colors.greenHighlight : "transparent"))
     property alias avImage: avatarImage
+
+    Rectangle {
+        height: 1
+        color: "#FF5E5D5E"
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
+    }
     Item {
         id: avatarImage
         visible: profileUrl !== "" && userName !== "";
@@ -51,12 +61,12 @@ Item {
         height: parent.height
         width: visible ? height : 0;
         anchors.left: parent.left
-        anchors.leftMargin: 150
+        anchors.leftMargin: 27.552//150
         anchors.verticalCenter: parent.verticalCenter
         clip: true
         Image {
-            height: 42
-            width: 42
+            height: 62
+            width: 62 
             id: userImage
             source: profileUrl !== "" ? ((0 === profileUrl.indexOf("http")) ? profileUrl : (defaultBaseUrl + profileUrl)) : "";
             mipmap: true;
@@ -126,7 +136,7 @@ Item {
         height: displayNameTextPixelSize + 4
         // Anchors
         anchors.left: avatarImage.right
-        anchors.leftMargin: avatarImage.visible ? 5 : 0;
+        anchors.leftMargin: avatarImage.visible ? 20 : 0;
         anchors.verticalCenter: avatarImage.verticalCenter;
         // DisplayName Text for others' cards
         FiraSansRegular {
@@ -159,6 +169,7 @@ Item {
     Rectangle {
         id: buttonsContainer
         color: "#00000000"
+        //color: "#55330099"
         width: parent.width * 0.25
         height: parent.height
         anchors.right: parent.right
@@ -174,8 +185,10 @@ Item {
                 Image {
                     id: chatIcon;
                     source: "../../icons/android/chat-i.svg";
-                    height: parent.height * 0.7
-                    width: parent.width * 0.7
+                    //height: parent.height * 0.7
+                    //width: parent.width * 0.7
+                    height: 33
+                    width: 33
                     anchors.verticalCenter: parent.verticalCenter;
                 }
                 MouseArea {
@@ -220,8 +233,10 @@ Item {
                 Image {
                     id: goIcon;
                     source: "../../icons/android/go-i.svg"
-                    height: parent.height * 0.7
-                    width: parent.width * 0.7
+                    //height: parent.height * 0.7
+                    //width: parent.width * 0.7
+                    height: 33
+                    width: 33
                     anchors.verticalCenter: parent.verticalCenter;
                 }
                 MouseArea {

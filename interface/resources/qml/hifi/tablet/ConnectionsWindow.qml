@@ -83,12 +83,13 @@ Rectangle {
             height: 37
         }
 
-        /*HifiStylesUit.*/FiraSansRegular {
+        /*HifiStylesUit.*/FiraSansSemiBold {
             id: windowTitle
             x: windowIcon.x + 57.78
             anchors.verticalCenter: windowIcon.verticalCenter
             text: "PEOPLE"
             color: "#FFFFFF"
+            font.letterSpacing: 2
             font.pixelSize: hifiStylesConstants.fonts.headerPixelSize * 0.75 //32 * 0.75//
         }
 
@@ -117,73 +118,33 @@ Rectangle {
         Rectangle {
             id: tabs
             color: "#00000000"
-            width: parent.width * 0.55
-            height: parent.height
-            anchors.left: windowTitle.right
+            //color: "#550022aa"
+            //width: parent.width * 0.55
+            //width: 295
+            width: 342
+            height: 40
+            anchors.right: hideButton.left
+            anchors.rightMargin: 76.7
+            anchors.verticalCenter: windowIcon.verticalCenter
             y: 0
-
-            Item {
-                id: allTabItem
-                property bool isActive: false
-
-                width: parent.width * 0.45
-                height: parent.height
-
-                Text {
-                        id: allTabText
-                        text: "ALL"
-                        color: "#ffffff"
-                        font.family: "Helvetica"
-                        font.pointSize: 6
-                        anchors.fill: parent
-                        verticalAlignment: Text.AlignVCenter
-                        horizontalAlignment: Text.AlignHCenter
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    enabled: true
-                    onClicked: {
-                        showAllConnections();
-                    }
-                }
-
-                states: [
-                    State {
-                        name: "active"
-                        PropertyChanges {
-                            target: allTabText
-                            font.underline: true
-                            font.bold: true
-                        }
-                    }, 
-                    State {
-                        name: "inactive"
-                        PropertyChanges {
-                            target: allTabText
-                            font.underline: false
-                            font.bold: false
-                        }
-                    }
-                ]
-            }
-
 
             Item {
                 id: nearbyTabItem
 
-                width: parent.width * 0.45
+                //width: parent.width * 0.45
+                implicitWidth: nearbyTabText.width
                 height: parent.height
-                anchors.right: parent.right
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
 
-                Text {
+                FiraSansRegular {
                         id: nearbyTabText
                         text: "NEARBY"
-                        color: "#ffffff"
-                        font.family: "Helvetica"
-                        font.pointSize: 6
-                        anchors.fill: parent
+                        color: "#2CD8FF"
+                        font.pixelSize: hifiStylesConstants.fonts.headerPixelSize * 0.6
+                        font.letterSpacing: 1
+                        //anchors.fill: parent
+                        anchors.verticalCenter: parent.verticalCenter
                         verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignLeft
                 }
@@ -203,7 +164,8 @@ Rectangle {
                         PropertyChanges {
                             target: nearbyTabText
                             font.underline: true
-                            font.bold: true
+                            //font.bold: true
+                            color: "#FFFFFF"
                         }
                     }, 
                     State {
@@ -211,74 +173,139 @@ Rectangle {
                         PropertyChanges {
                             target: nearbyTabText
                             font.underline: false
-                            font.bold: false
+                            //font.bold: false
+                            color: "#2CD8FF"
                         }
                     }
                 ]
 
             }
 
-            HifiControlsUit.GlyphButton {
-                id: reloadNearby;
-                anchors.right: parent.right;
-                anchors.rightMargin: 5
-                width: reloadNearby.height;
-                glyph: hifi.glyphs.reload;
+            Item {
+                id: allTabItem
+                property bool isActive: false
+
+                //width: parent.width * 0.45
+                implicitWidth: allTabText.width
+                height: parent.height
+
+                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+
+                FiraSansRegular {
+                        id: allTabText
+                        text: "MY CONNECTIONS"
+                        color: "#2CD8FF"
+                        font.pixelSize: hifiStylesConstants.fonts.headerPixelSize * 0.6
+                        font.letterSpacing: 1
+                        //anchors.fill: parent
+                        anchors.verticalCenter: parent.verticalCenter
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    enabled: true
+                    onClicked: {
+                        showAllConnections();
+                    }
+                }
+
+                states: [
+                    State {
+                        name: "active"
+                        PropertyChanges {
+                            target: allTabText
+                            font.underline: true
+                            //font.bold: true
+                            color: "#FFFFFF"
+                        }
+                    }, 
+                    State {
+                        name: "inactive"
+                        PropertyChanges {
+                            target: allTabText
+                            font.underline: false
+                            //font.bold: false
+                            color: "#2CD8FF"
+                        }
+                    }
+                ]
+            }
+        }
+
+        Rectangle {
+            id: hideButton
+            height: 50
+            width: 50
+            color: "#00000000"
+            //color: "#CC00FF00"
+            anchors {
+                top: parent.top
+                right: parent.right
+                rightMargin: 20 * 21 / 16;
+                topMargin: 37.04
+            }
+            Image {
+                id: hideIcon
+                source: "../../../icons/android/hide.svg"
+                width: 23.67//29
+                height: 13.06//16
+                anchors {
+                    //right: parent.right
+                    horizontalCenter: parent.horizontalCenter
+                }
+            }
+            /*HifiStyles.*/FiraSansRegular {
+                anchors {
+                    top: hideIcon.bottom
+                    horizontalCenter: hideIcon.horizontalCenter
+                    topMargin: 12
+                }
+                text: "HIDE"
+                color: "#FFFFFF"
+                font.pixelSize: hifiStylesConstants.fonts.pixelSize * 0.75
+            }
+
+            MouseArea {
+                anchors.fill: parent
                 onClicked: {
-                    refreshClicked();
+                    hide();
                 }
             }
         }
     }
 
-    Rectangle {
-        id: hideButton
-        height: 50
-        width: 50
-        color: "#00000000"
-        //color: "#CC00FF00"
-        anchors {
-            top: header.top
-            right: parent.right
-            rightMargin: 20 * 21 / 16;
-            topMargin: 37.04
-        }
-        Image {
-            id: hideIcon
-            source: "../../../icons/android/hide.svg"
-            width: 23.67//29
-            height: 13.06//16
-            anchors {
-                //right: parent.right
-                horizontalCenter: parent.horizontalCenter
-            }
-        }
-        /*HifiStyles.*/FiraSansRegular {
-            anchors {
-                top: hideIcon.bottom
-                horizontalCenter: hideIcon.horizontalCenter
-                topMargin: 12
-            }
-            text: "HIDE"
-            color: "#FFFFFF"
-            font.pixelSize: hifiStylesConstants.fonts.pixelSize * 0.75
-        }
+    
 
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                hide();
-            }
+    HifiControlsUit.GlyphButton {
+        id: reloadNearby;
+        //anchors.right: parent.right;
+        //anchors.rightMargin: 5
+        width: reloadNearby.height;
+        glyph: hifi.glyphs.reload;
+        //anchors.verticalCenter: parent.verticalCenter
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        onClicked: {
+            refreshClicked();
         }
     }
 
     // content
     Rectangle {
         id: content
-        width: parent.width
+        //width: parent.width
         anchors.top : header.bottom
         anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.topMargin: 27
+        anchors.leftMargin: 42
+        anchors.rightMargin: 42
+        //color: "#44005566"
         color: "#00000000"
         //anchors.topMargin: 10
         Connections {
