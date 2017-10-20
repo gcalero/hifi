@@ -295,8 +295,8 @@ Rectangle {
         case "updateUsername":
             var userIndex = findNearbySessionIndex(message.params.sessionId);
             // console.log("[NEARBY] update username " + message.params.userName + "(" + 
-                                                      message.params.sessionId + ") index " + 
-                                                      userIndex);
+            //                                          message.params.sessionId + ") index " + 
+            //                                          userIndex);
             
             if (userIndex !== -1) {
                 ['userName', 'connection', 'profileUrl', 'placeName'].forEach(function (name) {
