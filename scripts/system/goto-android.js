@@ -30,6 +30,7 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
         } ;
         break;
     case 'hide':
+        module.exports.hide();
         module.exports.onHidden();
         break;
     default:

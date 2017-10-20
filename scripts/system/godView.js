@@ -309,7 +309,9 @@ function computePointAtPlaneY(x,y,py) {
 
 function isTouchValid(coords) {
     // TODO: Extend to the detection of touches on new menu bars
-    return !tablet.getItemAtPoint(coords) && GODVIEWMODE.isTouchValid(coords);
+    var godViewModeTouchValid = GODVIEWMODE.isTouchValid(coords);
+    printd("godViewModeTouchValid? " + godViewModeTouchValid);
+    return !tablet.getItemAtPoint(coords) && godViewModeTouchValid;
 }
 
 /********************************************************************************************************

@@ -50,7 +50,7 @@ Rectangle {
     anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom }
 
     function hide() {
-        shown = false;
+        //shown = false;
         sendToScript ({ method: "hide" });
     }
 
@@ -77,8 +77,8 @@ Rectangle {
         Image {
             id: windowIcon
             source: "../../../icons/android/people-i.svg"
-            x: 30.44//20 * 19 / 16
-            y: 36.54//20 * 19 / 16
+            x: 30.44
+            y: 36.54
             width: 37
             height: 37
         }
@@ -90,37 +90,13 @@ Rectangle {
             text: "PEOPLE"
             color: "#FFFFFF"
             font.letterSpacing: 2
-            font.pixelSize: hifiStylesConstants.fonts.headerPixelSize * 0.75 //32 * 0.75//
+            font.pixelSize: hifiStylesConstants.fonts.headerPixelSize * 0.75
         }
-
-        /*Image {
-            id: connectionsImage;
-            source: "../../../icons/android/people-i.svg"
-            height: parent.height * 0.8
-            width: height
-            mipmap: true
-            // Anchors
-            x: 50
-            anchors.topMargin: parent.height * 0.1
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        Text {
-            text: "Connections:"
-            color: "#ffffff"
-            font.family: "Helvetica"
-            font.pointSize: 8
-            anchors.leftMargin: 30
-            anchors.left: connectionsImage.right
-            anchors.verticalCenter: parent.verticalCenter
-        }*/
 
         Rectangle {
             id: tabs
             color: "#00000000"
             //color: "#550022aa"
-            //width: parent.width * 0.55
-            //width: 295
             width: 342
             height: 40
             anchors.right: hideButton.left
@@ -130,8 +106,6 @@ Rectangle {
 
             Item {
                 id: nearbyTabItem
-
-                //width: parent.width * 0.45
                 implicitWidth: nearbyTabText.width
                 height: parent.height
                 anchors.left: parent.left
@@ -143,7 +117,6 @@ Rectangle {
                         color: "#2CD8FF"
                         font.pixelSize: hifiStylesConstants.fonts.headerPixelSize * 0.6
                         font.letterSpacing: 1
-                        //anchors.fill: parent
                         anchors.verticalCenter: parent.verticalCenter
                         verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignLeft
@@ -164,7 +137,6 @@ Rectangle {
                         PropertyChanges {
                             target: nearbyTabText
                             font.underline: true
-                            //font.bold: true
                             color: "#FFFFFF"
                         }
                     }, 
@@ -173,7 +145,6 @@ Rectangle {
                         PropertyChanges {
                             target: nearbyTabText
                             font.underline: false
-                            //font.bold: false
                             color: "#2CD8FF"
                         }
                     }
@@ -184,11 +155,8 @@ Rectangle {
             Item {
                 id: allTabItem
                 property bool isActive: false
-
-                //width: parent.width * 0.45
                 implicitWidth: allTabText.width
                 height: parent.height
-
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -198,7 +166,6 @@ Rectangle {
                         color: "#2CD8FF"
                         font.pixelSize: hifiStylesConstants.fonts.headerPixelSize * 0.6
                         font.letterSpacing: 1
-                        //anchors.fill: parent
                         anchors.verticalCenter: parent.verticalCenter
                         verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignHCenter
@@ -219,7 +186,6 @@ Rectangle {
                         PropertyChanges {
                             target: allTabText
                             font.underline: true
-                            //font.bold: true
                             color: "#FFFFFF"
                         }
                     }, 
@@ -228,7 +194,6 @@ Rectangle {
                         PropertyChanges {
                             target: allTabText
                             font.underline: false
-                            //font.bold: false
                             color: "#2CD8FF"
                         }
                     }
@@ -251,10 +216,9 @@ Rectangle {
             Image {
                 id: hideIcon
                 source: "../../../icons/android/hide.svg"
-                width: 23.67//29
-                height: 13.06//16
+                width: 23.67
+                height: 13.06
                 anchors {
-                    //right: parent.right
                     horizontalCenter: parent.horizontalCenter
                 }
             }

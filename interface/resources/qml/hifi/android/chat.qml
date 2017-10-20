@@ -35,12 +35,13 @@ Item {
     }
 
     function hide() {
-        shown = false;
+        //shown = false;
         sendToScript ({ type: "hide" });
     }
 
     x: 10
     y: 10
+    z:100
 
 	width: parent ? parent.width - 20 : 0
 	height: parent ? parent.height - 40 : 0

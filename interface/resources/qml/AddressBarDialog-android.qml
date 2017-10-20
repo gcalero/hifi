@@ -19,6 +19,8 @@ import "controls-uit" as HifiControls
 Item {
     x: 0
     y: 0
+    z:100
+
     width: Window.innerWidth / 3
     height: Window.innerHeight / 3
     id: bar

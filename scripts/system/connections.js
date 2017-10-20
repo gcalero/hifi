@@ -30,7 +30,7 @@ function init() {
 
 function fromQml(message) { // messages are {method, params}, like json-rpc. See also sendToQml.
     var data;
-    //printd("[CONNECTIONS] fromQml " + message.method);
+    //printd("[connections.js] fromQml " + message.method);
     switch (message.method) {
     case 'refreshAll': 
         // all & nearby connections
@@ -43,6 +43,10 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
         break;
     case 'locateFriend':
         locateFriend(message.params.username);
+        break;
+    case 'hide':
+        module.exports.hide();
+        module.exports.onHidden();
         break;
     default:
         print('[connections.js] Unrecognized message from Connections.qml:', JSON.stringify(message));
@@ -230,7 +234,8 @@ module.exports = {
     },
     position: function() {
         return window && isVisible ? window.position : null;
-    }
+    },
+    onHidden: function() { }
 };
 
 init();

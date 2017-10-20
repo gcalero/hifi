@@ -170,11 +170,12 @@ Item {
         id: buttonsContainer
         color: "#00000000"
         //color: "#55330099"
-        width: parent.width * 0.25
+        width: 120
         height: parent.height
         anchors.right: parent.right
+        anchors.rightMargin: 86
         Row {
-            spacing: 20
+            spacing: 0//10
             anchors.fill: parent
             anchors.margins: 2
             anchors.verticalCenter: parent.verticalCenter
@@ -185,8 +186,6 @@ Item {
                 Image {
                     id: chatIcon;
                     source: "../../icons/android/chat-i.svg";
-                    //height: parent.height * 0.7
-                    //width: parent.width * 0.7
                     height: 33
                     width: 33
                     anchors.verticalCenter: parent.verticalCenter;
@@ -233,8 +232,6 @@ Item {
                 Image {
                     id: goIcon;
                     source: "../../icons/android/go-i.svg"
-                    //height: parent.height * 0.7
-                    //width: parent.width * 0.7
                     height: 33
                     width: 33
                     anchors.verticalCenter: parent.verticalCenter;

@@ -32,6 +32,7 @@ Item {
     
     x: 10
     y: 10
+    z:100
 
     width: parent ? parent.width - 20 : 0
     height: parent ? parent.height - 60 : 0

@@ -120,6 +120,7 @@ function isGodViewModeValidTouch(coords) {
             coords.x >= aQmlFrag.position.x * 3 && coords.x <= aQmlFrag.position.x * 3 + aQmlFrag.size.x * 3 &&
             coords.y >= aQmlFrag.position.y * 3 && coords.y <= aQmlFrag.position.y * 3 + aQmlFrag.size.y * 3
            ) {
+            printd("godViewModeTouchValid- false because of qmlFragments!?");
             return false;
         }
     }
@@ -130,9 +131,11 @@ function isGodViewModeValidTouch(coords) {
             coords.x >= aWin.position().x * 3 && coords.x <= aWin.position().x * 3 + aWin.width() * 3 &&
             coords.y >= aWin.position().y * 3 && coords.y <= aWin.position().y * 3 + aWin.height() * 3
         ) {
+            printd("godViewModeTouchValid- false because of windows!?");
             return false;
         }
     }
+    printd("godViewModeTouchValid- true by default ");
     return true;
 }
 
@@ -162,7 +165,7 @@ function touchBegin(event) {
         printd("Swipe down started");
     }
 
-    if ((!bottombar || !bottombar.isVisible()) && coords.y > SCREEN_HEIGHT - 300 ) {
+    if ((!bottombar || !bottombar.isVisible()) && coords.y > SCREEN_HEIGHT - 300 && coords.x < SCREEN_WIDTH - 300) {
         touchOnBottom = true;
     } 
 
@@ -324,6 +327,11 @@ function raiseBottomBar() {
             hideConnections();
         }
     });
+    connections.onHidden = function() {
+        if (peopleBtn) {
+            peopleBtn.isActive = false;
+        }
+    };
 
     loginBtn = bottombar.addButton({
         icon: "icons/android/settings-i.svg",
