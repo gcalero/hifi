@@ -24,11 +24,6 @@ import ".."
 Rectangle {
     id: connections
 
-    //size
-    //width: 300//Window.innerWidth * 0.3;
-    //height: 300//Window.innerHeight / 3 - 100;
-    //x: 10
-    //y: 10
     width: parent ? parent.width - 42.5 : 0
     height: parent ? parent.height - 21.25 : 0
 
@@ -243,7 +238,7 @@ Rectangle {
     }
 
     
-
+/*
     HifiControlsUit.GlyphButton {
         id: reloadNearby;
         //anchors.right: parent.right;
@@ -257,7 +252,7 @@ Rectangle {
             refreshClicked();
         }
     }
-
+*/
     // content
     Rectangle {
         id: content
@@ -300,12 +295,12 @@ Rectangle {
     }
 
     signal sendToScript(var message);
-
+/*
     function refreshClicked() {
         console.log("[CONNECTIONS] refresh clicked");
         sendToScript({method: 'refreshAll', params: {}});
     }
-
+*/
     function showAllConnections() {
         allConnections.visible = true;
         nearbyConnections.visible = false;

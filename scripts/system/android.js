@@ -1,5 +1,4 @@
 "use strict";
-"use strict";
 //
 //  android.js
 //  scripts/system/
@@ -332,7 +331,11 @@ function raiseBottomBar() {
             peopleBtn.isActive = false;
         }
     };
-
+    connections.openChat = function (username) {
+        if (!chat.isVisible()) {
+            showChat();
+        }
+    }
     loginBtn = bottombar.addButton({
         icon: "icons/android/settings-i.svg",
         activeIcon: "icons/android/settings-a.svg",

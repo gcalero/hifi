@@ -15,7 +15,7 @@ var window;
 var request = Script.require('request').request;
 var METAVERSE_BASE = location.metaverseServerUrl;
 
-var logEnabled = false;
+var logEnabled = true;
 function printd(str) {
     if (logEnabled)
         print("[connections.js] " + str);
@@ -47,6 +47,11 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
     case 'hide':
         module.exports.hide();
         module.exports.onHidden();
+        break;
+    case 'chat':
+        module.exports.hide();
+        module.exports.onHidden();
+        module.exports.openChat(message.params.username);
         break;
     default:
         print('[connections.js] Unrecognized message from Connections.qml:', JSON.stringify(message));
@@ -187,6 +192,8 @@ function refreshConnections(filterParams) { // Update all the usernames that I a
 
 var isVisible = false;
 
+var refresh_timer = false;
+
 module.exports = {
     init: function() {
         init();
@@ -205,6 +212,9 @@ module.exports = {
             }
             window.setVisible(true);
             isVisible = true;
+            refreshConnectionsList();
+            refresh_timer = Script.setInterval(refreshConnectionsList, 10000);
+            printd("refresh set");
         }
     },
     hide: function() {
@@ -215,6 +225,11 @@ module.exports = {
             window.setVisible(false);
         }
         isVisible = false;
+        if (refresh_timer) {
+            Script.clearInterval(refresh_timer);
+            refresh_timer = false;
+            printd("refresh cleared");
+        }
         //tablet.gotoHomeScreen();
     },
     destroy: function() {
@@ -235,7 +250,25 @@ module.exports = {
     position: function() {
         return window && isVisible ? window.position : null;
     },
-    onHidden: function() { }
+    onHidden: function() {},
+    openChat: function(username) {}
 };
+
+function refreshConnectionsList() {
+    printd("refresh kicked");
+    if (!Account.isLoggedIn()) return;
+    printd("refresh kicked (was logged in)");
+    var allFilter = function(c) { return true; };
+    refreshConnections([
+                        {filter: allFilter, sendToQmlMethod: 'allConnections'}
+                       ]);
+}
+Script.scriptEnding.connect(function() {
+    if (refresh_timer) {
+        Script.clearInterval(refresh_timer);
+        refresh_timer = false;
+        printd("refresh cleared");
+    }
+});
 
 init();

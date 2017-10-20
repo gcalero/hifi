@@ -108,24 +108,8 @@ Item {
             onClicked: {
                 locate(thisNameCard.userName);
             }
-            //onEntered: infoHoverImage.visible = true;
-            //onExited: infoHoverImage.visible = false;
         }
     }
-
-    // Colored border around avatarImage
-    /*Rectangle {
-        id: avatarImageBorder;
-        visible: avatarImage.visible;
-        anchors.verticalCenter: avatarImage.verticalCenter;
-        anchors.horizontalCenter: avatarImage.horizontalCenter;
-        width: 46;
-        height: 46;
-        color: "transparent"
-        radius: avatarImage.height;
-        border.color: profilePicBorderColor;
-        border.width: 4;
-    }*/
 
     // DisplayName container for others' cards
     Item {
@@ -196,6 +180,7 @@ Item {
                         enabled: true
                         onClicked: {
                             console.log("[FRIEND] CHAT CLICKED");
+                            chat(thisNameCard.userName);
                         }
                         onEntered: {
                             chatButton.state = "hover";
@@ -272,6 +257,10 @@ Item {
                 ]
             }
         }
+    }
+
+    function chat(username) {
+        sendToScript({method: 'chat', params: { username: username }});
     }
 
     function locate(username) {
