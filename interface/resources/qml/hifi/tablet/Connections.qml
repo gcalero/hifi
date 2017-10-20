@@ -76,7 +76,7 @@ Rectangle {
                 displayName: "";
                 userName: model ? model.userName : "";
                 placeName: "Placename here"; // model ? model.placeName : ""
-                connectionStatus : model ? model.connection : "";
+                connectionStatus : model && model.connection ? model.connection : "";
                 selected: styleData.selected;
                 // Size
                 width: table.width
@@ -93,7 +93,16 @@ Rectangle {
         var userIndex = 0;
         modelData.forEach(function (datum) {
             datum.userIndex = userIndex++;
+            // console.log("[NEARBY] load " + datum.userIndex + " " + datum.userName);
             connectionModel.append(datum);
         });
+    }
+
+    function updateProperty(index, name, value) {
+        //console.log("[NEARBY] updated property " + index + " ["+name+"] ="+value);
+        var datum = modelData[index];
+        datum[name] = value;
+        connectionModel.setProperty(index, name, value);
+        //console.log("[NEARBY] updated property " + index + " ["+name+"] ="+value + " (DONE)");
     }
 }

@@ -31,6 +31,8 @@ Rectangle {
 
     property bool shown: true
 
+    property var nearbyUserModelData: []; // This simple list is essentially a mirror of the nearbyUserModel listModel without all the extra complexities.
+
     onShownChanged: {
         connections.visible = shown;
     }
@@ -276,29 +278,63 @@ Rectangle {
     }
 
     function fromScript(message) {
-        console.log("[CONNECTIONS] message from script " + message.method);
+        //console.log("[CONNECTIONS] message from script " + message.method);
         switch (message.method) {
         case "allConnections":
             var data = message.params;
             allConnections.modelData = data;
             allConnections.loadConnections();
             break;
-        case "nearbyConnections":
+        case "nearbyUsers":
             var data = message.params;
+            nearbyUserModelData = data;
+            //console.log("[NEARBY] load " + data.length);
             nearbyConnections.modelData = data;
             nearbyConnections.loadConnections();
             break;
-        
+        case "updateUsername":
+            var userIndex = findNearbySessionIndex(message.params.sessionId);
+            // console.log("[NEARBY] update username " + message.params.userName + "(" + 
+                                                      message.params.sessionId + ") index " + 
+                                                      userIndex);
+            
+            if (userIndex !== -1) {
+                ['userName', 'connection', 'profileUrl', 'placeName'].forEach(function (name) {
+                    var value = message.params[name];
+                    // console.log("[NEARBY] upd [" + name + "]="+value);
+                    if (value === undefined) {
+                        // console.log("[NEARBY] value is undefined " + name);
+                        return;
+                    }
+                    nearbyConnections.updateProperty(userIndex, name, value);
+                    nearbyUserModelData[userIndex][name] = value;
+                });
+
+            }
+            break;
         default:
             console.log('[CONNECTIONS] Unrecognized message:', JSON.stringify(message));
         }
     }
 
     signal sendToScript(var message);
+
+    function findNearbySessionIndex(sessionId) {
+        var data = nearbyUserModelData, length = data.length;
+        for (var i = 0; i < length; i++) {
+            // console.log("[NEARBY] " + data[i].sessionId + " ? " + sessionId ); 
+            if (data[i].sessionId === sessionId) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
 /*
     function refreshClicked() {
         console.log("[CONNECTIONS] refresh clicked");
         sendToScript({method: 'refreshAll', params: {}});
+        sendToScript({method: 'refreshNearby', params: {}});
     }
 */
     function showAllConnections() {

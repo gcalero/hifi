@@ -21,11 +21,17 @@ function printd(str) {
         print("[connections.js] " + str);
 }
 
-function init() {    
-   
-    
-    //&&tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
-    //tablet.fromQml.connect(fromQml);
+function init() {
+    AvatarList.avatarAddedEvent.connect(avatarAdded);
+    AvatarList.avatarRemovedEvent.connect(avatarRemoved);
+}
+
+function avatarAdded(avatarID) {
+    populateNearbyUserList();
+}
+
+function avatarRemoved(avatarID) {
+    populateNearbyUserList();
 }
 
 function fromQml(message) { // messages are {method, params}, like json-rpc. See also sendToQml.
@@ -35,11 +41,12 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
     case 'refreshAll': 
         // all & nearby connections
         var allFilter = function(c) { return true; };
-        var nearbyFilter = isNearbyConnectionFunction(MyAvatar.position, Window.location.domainId);
         refreshConnections([
-                            {filter: allFilter, sendToQmlMethod: 'allConnections'},
-                            {filter: nearbyFilter, sendToQmlMethod: 'nearbyConnections'}
+                            {filter: allFilter, sendToQmlMethod: 'allConnections'}
                            ]);
+        break;
+    case 'refreshNearby':
+        populateNearbyUserList();
         break;
     case 'locateFriend':
         locateFriend(message.params.username);
@@ -105,26 +112,6 @@ function getAvailableConnections(callback) { // callback([{usename, location}...
     });
 }
 
-/*
-function isFriend (c) {
-    return c.connection === "friend";
-};
-*/
-/*
-function isOnline (c) {
-    return c.online;
-}
-*/
-// Window.location.domainId returns a domain like {4840a904-5a71-41c0-b7ca-945d1674be2b}
-// while other APIs return the id without the curly brackets
-function normalizeDomainId(domainId) {
-    if (domainId.substring( 0, domainId.length) !== "{" || 
-        domainId.substring( domainId.length - 1, domainId.length) !== "}") {
-        return "{" + domainId + "}";
-    }
-    return domainId;
-}
-
 function parseLocationFromPath(path) {
     if (!path) return;
     var path = path.replace(/\//g, ",");
@@ -142,52 +129,120 @@ function parseOrientationFromPath(path) {
     return { x: x, y: y, z: z, w: w };
 }
 
-function isNearbyConnectionFunction(myPosition, myDomainId) {
-    return function (c) {
-        if (!(c && c.location && c.location.root && c.location.root.domain)) {
-            return false;
-        }
-        if (myDomainId === normalizeDomainId(c.location.root.domain.id)) {
-            var path = c.location.path;
-            var cPosition = parseLocationFromPath(path);
-            var distance = Vec3.distance(cPosition, myPosition);
-            return distance <= Settings.getValue('connections/nearDistance');
-        }
-        return false;
+function formatConnection(conn) { // get into the right format
+    var formattedSessionId = conn.location.node_id || '';
+    //print("[NODE_ID] formatConnection location=" + JSON.stringify(conn.location));
+    if (formattedSessionId !== '' && formattedSessionId.indexOf("{") != 0) {
+        formattedSessionId = "{" + formattedSessionId + "}";
     }
+    
+    var path = conn.location? conn.location.path : "";
+    var location = parseLocationFromPath(path);
+    var orientation = parseOrientationFromPath(path);
+    return {
+        sessionId: formattedSessionId,
+        userName: conn.username,
+        location: JSON.stringify(location),
+        orientation: JSON.stringify(orientation),
+        domain: conn.location.domain,
+        connection: conn.connection,
+        profileUrl: conn.images.thumbnail,
+        placeName: (conn.location.root || conn.location.domain || {}).name || ''
+    };
 }
 
-function formatConnection(conn) { // get into the right format
-        var formattedSessionId = conn.location.node_id || '';
-        if (formattedSessionId !== '' && formattedSessionId.indexOf("{") != 0) {
-            formattedSessionId = "{" + formattedSessionId + "}";
-        }
+function formatAvatarData(o) {
+    //print("[AVATAR-ID] " + o.id);
+    return {
+        sessionId: o.id || '',
+        profileUrl: '',
+        userName: o.avatar.sessionDisplayName,
+        displayName: o.avatar.sessionDisplayName,
+        location: JSON.stringify(o.avatar.position),
+        orientation: JSON.stringify(o.avatar.orientation)
+        //profileUrl: conn.images.thumbnail,
         
-        var path = conn.location? conn.location.path : "";
-        var location = parseLocationFromPath(path);
-        var orientation = parseOrientationFromPath(path);
-        return {
-            sessionId: formattedSessionId,
-            userName: conn.username,
-            location: JSON.stringify(location),
-            orientation: JSON.stringify(orientation),
-            domain: conn.location.domain,
-            connection: conn.connection,
-            profileUrl: conn.images.thumbnail,
-            placeName: (conn.location.root || conn.location.domain || {}).name || ''
-        };
-    }
+    };
+
+}
+
+function getConnectionDataForDomain(domain, callback) {
+    url = METAVERSE_BASE + '/api/v1/users?'
+    url += 'status=' + domain.slice(1, -1); // without curly braces
+    requestJSON(url, function (connectionsData) {
+        callback(connectionsData.users);
+    });
+}
 
 function refreshConnections(filterParams) { // Update all the usernames that I am entitled to see, using my login but not dependent on canKick.
     getAvailableConnections(function (conns) {
-    var avatars = AvatarList.getAvatarIdentifiers();
-        for (var i=0; i < filterParams.length; i++) {
-            var x = filterParams[i];
-            var filtered = conns.filter(x.filter);
-            //filtered = conns;
-            sendToQml({ method: x.sendToQmlMethod, params: filtered.map(formatConnection)});            
+            for (var i=0; i < filterParams.length; i++) {
+                var x = filterParams[i];
+                var filtered = conns.filter(x.filter);
+                //filtered = conns;
+                sendToQml({ method: x.sendToQmlMethod, params: filtered.map(formatConnection)});            
+            }
+        });
+}
+
+function populateNearbyUserList() {
+    var avatarIds = AvatarList.getAvatarIdentifiers();
+    var avatars = avatarIds.map(function(x) { return {id: x, avatar: AvatarList.getAvatar(x)}; });
+    var nearbyFilter = isNearbyAvatarFunction(MyAvatar.position);
+
+    var filtered = avatars.filter(nearbyFilter);
+    
+
+    sendToQml({ method: 'nearbyUsers', params: filtered.map(formatAvatarData)});
+
+    //print("[NEARBY] getting connection data for domain: " + location.domainId)
+    getConnectionDataForDomain(location.domainId, function (users) {
+            //print("[NEARBY] callback connection data " + users.length);
+            users.forEach(function (user) {
+                //print("[FORMAT-UPD] callback connection data " + JSON.stringify(user));
+                //print("[FORMAT-UPD] callback connection data " + JSON.stringify(formatConnection(user)));
+                updateUser(formatConnection(user));
+
+            });
+        });
+}
+
+function updateUser(data) {
+    print('[NEARBY] PAL update:' +  data.userName + "(" + data.sessionId + ")");
+    sendToQml({ method: 'updateUsername', params: data });
+}
+
+function isNearbyAvatarFunction(myPosition) {
+    return function (o) {
+        if (!o.id) return false;
+        var avatar = o.avatar;
+        var name = avatar.sessionDisplayName;
+        var maxDistance = Settings.getValue('connections/nearDistance');
+        if (!name) {
+            // Either we got a data packet but no identity yet, or something is really messed up. In any case,
+            // we won't be able to do anything with this user, so don't include them.
+            // In normal circumstances, a refresh will bring in the new user, but if we're very heavily loaded,
+            // we could be losing and gaining people randomly.
+            print('No avatar identity data for', o.id);
+            return false;
         }
-    });
+
+        if (o.id && myPosition && (Vec3.distance(avatar.position, myPosition) > maxDistance)) {
+            return false;
+        }
+
+        return true;
+    }
+}
+
+function projectVectorOntoPlane(normalizedVector, planeNormal) {
+    return Vec3.cross(planeNormal, Vec3.cross(normalizedVector, planeNormal));
+}
+
+function angleBetweenVectorsInPlane(from, to, normal) {
+    var projectedFrom = projectVectorOntoPlane(from, normal);
+    var projectedTo = projectVectorOntoPlane(to, normal);
+    return Vec3.orientedAngle(projectedFrom, projectedTo, normal);
 }
 
 var isVisible = false;
@@ -233,6 +288,8 @@ module.exports = {
         //tablet.gotoHomeScreen();
     },
     destroy: function() {
+        AvatarList.avatarAddedEvent.disconnect(avatarAdded);
+        AvatarList.avatarRemovedEvent.disconnect(avatarRemoved);
         if (window) {
             window.close();
             window = null;
@@ -255,9 +312,9 @@ module.exports = {
 };
 
 function refreshConnectionsList() {
-    printd("refresh kicked");
+    //printd("refresh kicked");
     if (!Account.isLoggedIn()) return;
-    printd("refresh kicked (was logged in)");
+    //printd("refresh kicked (was logged in)");
     var allFilter = function(c) { return true; };
     refreshConnections([
                         {filter: allFilter, sendToQmlMethod: 'allConnections'}
@@ -267,8 +324,7 @@ Script.scriptEnding.connect(function() {
     if (refresh_timer) {
         Script.clearInterval(refresh_timer);
         refresh_timer = false;
-        printd("refresh cleared");
+        //printd("refresh cleared");
     }
 });
 
-init();
