@@ -36,14 +36,6 @@ vec4 evalGlobalColor(float shadowAttenuation, vec3 position, vec3 normal, vec3 a
     <$transformEyeToWorldDir(cam, fragEyeVectorView, fragEyeDir)$>
 
     vec3 color = opacity * albedo * getLightAmbientIntensity(ambient);
-
-    // Directional
-    vec3 directionalDiffuse;
-    vec3 directionalSpecular;
-    evalLightingDirectional(directionalDiffuse, directionalSpecular, lightDirection, lightIrradiance, fragEyeDir, fragNormal, roughness, metallic, fresnel, albedo, shadowAttenuation);
-    color += directionalDiffuse;
-    color += directionalSpecular / opacity;
-
     return vec4(color, opacity);
 }
 
