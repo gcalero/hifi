@@ -16,13 +16,21 @@ import "hifi"
 import "hifi/toolbars"
 import "styles-uit" as HifiStyles
 import "controls-uit" as HifiControls
-Item {
-    x: 0
-    y: 0
-    z:100
+import "hifi/android"
 
-    width: Window.innerWidth / 3
-    height: Window.innerHeight / 3
+Item {
+    //x: 0
+    //y: 0
+    //z:100
+    HifiAndroidConstants { id: android }
+
+    width: parent ? parent.width - android.dimen.windowLessWidth : 0
+    height: parent ? parent.height - android.dimen.windowLessHeight : 0
+    z: android.dimen.windowZ
+    anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom }
+
+    //width: Window.innerWidth / 3
+    //height: Window.innerHeight / 3
     id: bar
     property bool isCursorVisible: false  // Override default cursor visibility.
     property bool shown: true
@@ -57,70 +65,18 @@ Item {
     Rectangle {
         id: background
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#4E4E4E"  } // 
-            GradientStop { position: 1.0; color: "#242424" } // "#242424"
+            GradientStop { position: 0.0; color: android.color.gradientTop }
+            GradientStop { position: 1.0; color: android.color.gradientBottom }
         }
         anchors {
             fill: parent
-            topMargin: 15
-            leftMargin: 35
-            rightMargin: 35
-            bottomMargin: 35
         }
 
-        Image {
-            id: gotoIcon
-            source: "../icons/android/goto-i.svg"
-            x: 45
-            y: 45
-            width: 55
-            height: 55
+        WindowHeader {
+            id: header
+            iconSource: "../../../icons/android/goto-i.svg"
+            titleText: "GO TO"
         }
-
-        HifiStyles.FiraSansRegular {
-            x: 120
-            anchors.verticalCenter: gotoIcon.verticalCenter
-            text: "GO TO"
-            color: "#FFFFFF"
-        }
-
-        Rectangle {
-            id: hideButton
-            height: 50
-            width: 50
-            color: "#00000000"
-            anchors {
-                top: gotoIcon.top
-                right: parent.right
-                rightMargin: 43
-            }
-            Image {
-                id: hideIcon
-                source: "../icons/android/hide.svg"
-                anchors {
-                    right: parent.right
-                    horizontalCenter: parent.horizontalCenter
-                }
-            }
-            HifiStyles.FiraSansRegular {
-                anchors {
-                    top: hideIcon.bottom
-                    horizontalCenter: hideIcon.horizontalCenter
-                    topMargin: 12
-                }
-                text: "HIDE"
-                color: "#FFFFFF"
-                font.pixelSize: hifi.fonts.pixelSize * 0.75;
-            }
-        
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    hide();
-                }
-            }
-        }
-
 
         HifiStyles.RalewayRegular {
             id: notice
@@ -148,7 +104,9 @@ Item {
                 bar.shown = false;
             }
             anchors {
-                horizontalCenter: gotoIcon.horizontalCenter
+                leftMargin: 25
+                left: parent.left
+                //horizontalCenter: gotoIcon.horizontalCenter
             }
         }
 

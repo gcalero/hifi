@@ -22,6 +22,12 @@ Item {
 
     id: top
 
+    HifiAndroidConstants { id: android }
+    width: parent ? parent.width - android.dimen.windowLessWidth : 0
+    height: parent ? parent.height - android.dimen.windowLessHeight : 0
+    z: android.dimen.windowZ
+    anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom }
+
     signal sendToScript(var message);
 
     property bool shown: true
@@ -30,12 +36,6 @@ Item {
         top.visible = shown;
     }
     
-    x: 10
-    y: 10
-    z:100
-
-    width: parent ? parent.width - 20 : 0
-    height: parent ? parent.height - 60 : 0
 
     HifiConstants { id: hifi }
     HifiStyles.HifiConstants { id: hifiStyleConstants }
@@ -58,67 +58,14 @@ Item {
         height: parent ? parent.height : 0
 
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#4E4E4E"  }
-            GradientStop { position: 1.0; color: "#242424" }
-        }
-        Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-        anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter }
-
-        Image {
-            id: windowIcon
-            source: "../../../icons/android/avatar-i.svg"
-            x: 20 * 19 / 16
-            y: 20 * 19 / 16
-            width: 55
-            height: 55
+            GradientStop { position: 0.0; color: android.color.gradientTop }
+            GradientStop { position: 1.0; color: android.color.gradientBottom }
         }
 
-        HifiStyles.FiraSansRegular {
-            id: windowTitle
-            x: windowIcon.x + 75
-            anchors.verticalCenter: windowIcon.verticalCenter
-            text: "AVATAR"
-            color: "#FFFFFF"
-            font.pixelSize: hifi.fonts.headerPixelSize * 0.75
-        }
-
-        Rectangle {
-            id: hideButton
-            height: 50
-            width: 50
-            color: "#00000000"
-            anchors {
-                top: windowIcon.top
-                right: parent.right
-                rightMargin: 20 * 21 / 16;
-            }
-            Image {
-                id: hideIcon
-                width: 29
-                height: 16
-                source: "../../../icons/android/hide.svg"
-                anchors {
-                    //right: parent.right
-                    horizontalCenter: parent.horizontalCenter
-                }
-            }
-            HifiStyles.FiraSansRegular {
-                anchors {
-                    top: hideIcon.bottom
-                    horizontalCenter: hideIcon.horizontalCenter
-                    topMargin: 12
-                }
-                text: "HIDE"
-                color: "#FFFFFF"
-                font.pixelSize: hifi.fonts.pixelSize * 0.75
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    hide();
-                }
-            }
+        WindowHeader {
+            id: header
+            iconSource: "../../../icons/android/avatar-i.svg"
+            titleText: "AVATAR"
         }
 
         ListModel { id: avatars }
@@ -132,7 +79,7 @@ Item {
             anchors {
                 left: parent.left
                 right: parent.right
-                top: windowIcon.bottom
+                top: header.bottom
                 topMargin: gap * 3
                 leftMargin: gap
                 rightMargin: gap

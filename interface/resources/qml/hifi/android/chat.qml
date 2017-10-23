@@ -39,12 +39,12 @@ Item {
         sendToScript ({ type: "hide" });
     }
 
-    x: 10
-    y: 10
-    z:100
+    HifiAndroidConstants { id: android }
 
-	width: parent ? parent.width - 20 : 0
-	height: parent ? parent.height - 40 : 0
+    width: parent ? parent.width - android.dimen.windowLessWidth : 0
+    height: parent ? parent.height - android.dimen.windowLessHeight : 0
+    z: android.dimen.windowZ
+    anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom }
 
     HifiConstants { id: hifi }
     HifiStyles.HifiConstants { id: hifiStyleConstants }
@@ -61,68 +61,17 @@ Item {
     Rectangle {
         id: background
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#4E4E4E"  } // 
-            GradientStop { position: 1.0; color: "#242424" } // "#242424"
+            GradientStop { position: 0.0; color: android.color.gradientTop }
+            GradientStop { position: 1.0; color: android.color.gradientBottom }
         }
         anchors {
             fill: parent
-            topMargin: 15
-            leftMargin: 35
-            rightMargin: 35
-            bottomMargin: 5
         }
 
-        Image {
-            id: chatIcon
-            source: "../../../icons/android/chat-i.svg"
-            x: 45
-            y: 45
-            width: 55
-            height: 55
-        }
-
-        HifiStyles.FiraSansRegular {
-            x: 120
-            anchors.verticalCenter: chatIcon.verticalCenter
-            text: "CHAT"
-            color: "#FFFFFF"
-        }
-
-        Rectangle {
-            id: hideButton
-            height: 50
-            width: 50
-            color: "#00000000"
-            anchors {
-                top: chatIcon.top
-                right: parent.right
-                rightMargin: 43
-            }
-            Image {
-                id: hideIcon
-                source: "../../../icons/android/hide.svg"
-                anchors {
-                    right: parent.right
-                    horizontalCenter: parent.horizontalCenter
-                }
-            }
-            HifiStyles.FiraSansRegular {
-                anchors {
-                    top: hideIcon.bottom
-                    horizontalCenter: hideIcon.horizontalCenter
-                    topMargin: 12
-                }
-                text: "HIDE"
-                color: "#FFFFFF"
-                font.pixelSize: hifi.fonts.pixelSize * 0.75;
-            }
-        
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    hide();
-                }
-            }
+        WindowHeader {
+            id: header
+            iconSource: "../../../icons/android/chat-i.svg"
+            titleText: "CHAT"
         }
 
         TextField {
@@ -131,8 +80,9 @@ Item {
             onTextChanged: textChangedHandler()
             y: 110
             height: 40
-            width: 500 // parent.width - sendButton.width - 15
-            anchors.left: chatIcon.left
+            width: 600
+            anchors.left: parent.left
+            anchors.leftMargin: 25
             font.pointSize: 6
             font.bold: false
             style: TextFieldStyle {
@@ -158,7 +108,8 @@ Item {
             hoverFontColor: "#FFFFFF"
             anchors {
                 verticalCenter: input.verticalCenter
-                right: hideButton.right
+                right: parent.right
+                rightMargin: android.dimen.headerHideRightMargin
                 leftMargin: 10
             }
             onClicked: sendMessage()

@@ -9,6 +9,7 @@ import "../../styles-uit"
 import "../../controls-uit" as HifiControlsUit
 import "../../controls" as HifiControls
 import ".."
+import "."
 
 Item {
     id: bar
@@ -25,6 +26,7 @@ Item {
     }
 
     Styles.HifiConstants { id: hifi }
+    HifiAndroidConstants { id: android }
 
 	Rectangle {
         id: background
@@ -44,8 +46,8 @@ Item {
 
         Rectangle {
             id: hideButton
-            width: 50
-            height: 50
+            height: android.dimen.headerHideWidth
+            width: android.dimen.headerHideHeight
             color: "#00000000"
             anchors {
                 right: parent.right
@@ -57,8 +59,8 @@ Item {
             Image {
                 id: hideIcon
                 source: "../../../icons/android/hide.svg"
-                width: 50
-                height: 25
+                width: android.dimen.headerHideIconWidth
+                height: android.dimen.headerHideIconHeight
                 anchors {
                     right: parent.right
                     top: parent.top
@@ -72,7 +74,7 @@ Item {
                 }
                 text: "HIDE"
                 color: "#FFFFFF"
-                font.pixelSize: hifi.fonts.pixelSize;
+                font.pixelSize: hifi.fonts.pixelSize * 0.75;
             }
         
             MouseArea {

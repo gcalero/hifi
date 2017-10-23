@@ -16,18 +16,21 @@ import QtQuick.Layouts 1.3
 import Qt.labs.settings 1.0
 import "."
 import "../../styles" as HifiStyles
-import "../../styles-uit"// as HifiStylesUit
+import "../../styles-uit"
 import "../../controls-uit" as HifiControlsUit
 import "../../controls" as HifiControls
+import "../android"
 import ".."
 
 Rectangle {
     id: connections
 
-    width: parent ? parent.width - 42.5 : 0
-    height: parent ? parent.height - 21.25 : 0
+    HifiAndroidConstants { id: android }
 
-    property int rowHeight: 60;
+    width: parent ? parent.width - android.dimen.windowLessWidth : 0
+    height: parent ? parent.height - android.dimen.windowLessHeight : 0
+    z: android.dimen.windowZ
+    anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom }
 
     property bool shown: true
 
@@ -41,11 +44,6 @@ Rectangle {
 
     HifiStyles.HifiConstants { id: hifiStylesConstants }
 
-    z:100
-
-    //Layout.alignment: /*Qt.AlignVCenter | */Qt.AlignHCenter | Qt.AlignBottom
-    anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom }
-
     function hide() {
         //shown = false;
         sendToScript ({ method: "hide" });
@@ -58,48 +56,23 @@ Rectangle {
     }
 
     gradient: Gradient {
-        GradientStop { position: 0.0; color: "#4E4E4E"  }
-        GradientStop { position: 1.0; color: "#242424" }
+        GradientStop { position: 0.0; color: android.color.gradientTop }
+        GradientStop { position: 1.0; color: android.color.gradientBottom }
     }
 
-    // header
-    Rectangle {
+    WindowHeader {
         id: header
-        color: "#00000000"
-        //color: "#55FF0000"
-        width: parent.width
-        height: parent.height * 0.2
-        anchors.top : parent.top
-
-        Image {
-            id: windowIcon
-            source: "../../../icons/android/people-i.svg"
-            x: 30.44
-            y: 36.54
-            width: 37
-            height: 37
-        }
-
-        /*HifiStylesUit.*/FiraSansSemiBold {
-            id: windowTitle
-            x: windowIcon.x + 57.78
-            anchors.verticalCenter: windowIcon.verticalCenter
-            text: "PEOPLE"
-            color: "#FFFFFF"
-            font.letterSpacing: 2
-            font.pixelSize: hifiStylesConstants.fonts.headerPixelSize * 0.75
-        }
-
-        Rectangle {
+        iconSource: "../../../icons/android/people-i.svg"
+        titleText: "PEOPLE"
+        extraItemInCenter: Rectangle {
             id: tabs
             color: "#00000000"
             //color: "#550022aa"
             width: 342
             height: 40
-            anchors.right: hideButton.left
+            anchors.right: parent.right
             anchors.rightMargin: 76.7
-            anchors.verticalCenter: windowIcon.verticalCenter
-            y: 0
+            anchors.verticalCenter: parent.verticalCenter
 
             Item {
                 id: nearbyTabItem
@@ -197,49 +170,8 @@ Rectangle {
                 ]
             }
         }
-
-        Rectangle {
-            id: hideButton
-            height: 50
-            width: 50
-            color: "#00000000"
-            //color: "#CC00FF00"
-            anchors {
-                top: parent.top
-                right: parent.right
-                rightMargin: 20 * 21 / 16;
-                topMargin: 37.04
-            }
-            Image {
-                id: hideIcon
-                source: "../../../icons/android/hide.svg"
-                width: 23.67
-                height: 13.06
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                }
-            }
-            /*HifiStyles.*/FiraSansRegular {
-                anchors {
-                    top: hideIcon.bottom
-                    horizontalCenter: hideIcon.horizontalCenter
-                    topMargin: 12
-                }
-                text: "HIDE"
-                color: "#FFFFFF"
-                font.pixelSize: hifiStylesConstants.fonts.pixelSize * 0.75
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    hide();
-                }
-            }
-        }
     }
 
-    
 /*
     HifiControlsUit.GlyphButton {
         id: reloadNearby;
