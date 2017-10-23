@@ -1230,6 +1230,11 @@ function connectGodModeEvents() {
     Controller.keyPressEvent.connect(keyPressEvent);
     Controller.mousePressEvent.connect(mousePress); // single click/touch
     Controller.touchUpdateEvent.connect(touchUpdate);
+    MyAvatar.positionGoneTo.connect(positionGoneTo);
+}
+
+function positionGoneTo() {
+    Camera.position = Vec3.sum(MyAvatar.position, {x:0, y: godViewHeight, z: 0});
 }
 
 function disconnectGodModeEvents() {
@@ -1237,6 +1242,7 @@ function disconnectGodModeEvents() {
     Controller.keyPressEvent.disconnect(keyPressEvent);
     Controller.mousePressEvent.disconnect(mousePress);
     Controller.touchUpdateEvent.disconnect(touchUpdate);
+    MyAvatar.positionGoneTo.disconnect(positionGoneTo);
 }
 
 function init() {
