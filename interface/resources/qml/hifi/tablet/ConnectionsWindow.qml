@@ -334,7 +334,6 @@ Rectangle {
     function refreshClicked() {
         console.log("[CONNECTIONS] refresh clicked");
         sendToScript({method: 'refreshAll', params: {}});
-        sendToScript({method: 'refreshNearby', params: {}});
     }
 */
     function showAllConnections() {

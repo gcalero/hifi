@@ -44,9 +44,7 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
         refreshConnections([
                             {filter: allFilter, sendToQmlMethod: 'allConnections'}
                            ]);
-        break;
-    case 'refreshNearby':
-        populateNearbyUserList();
+        refreshNearbyUserList();
         break;
     case 'locateFriend':
         locateFriend(message.params.username);
@@ -185,7 +183,7 @@ function refreshConnections(filterParams) { // Update all the usernames that I a
         });
 }
 
-function populateNearbyUserList() {
+function refreshNearbyUserList() {
     var avatarIds = AvatarList.getAvatarIdentifiers();
     var avatars = avatarIds.map(function(x) { return {id: x, avatar: AvatarList.getAvatar(x)}; });
     var nearbyFilter = isNearbyAvatarFunction(MyAvatar.position);
@@ -313,6 +311,7 @@ module.exports = {
 
 function refreshConnectionsList() {
     //printd("refresh kicked");
+    refreshNearbyUserList();
     if (!Account.isLoggedIn()) return;
     //printd("refresh kicked (was logged in)");
     var allFilter = function(c) { return true; };
