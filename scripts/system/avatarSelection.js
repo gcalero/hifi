@@ -26,6 +26,7 @@ function fromQml(message) { // messages are {method, params}, like json-rpc. See
     switch (message.method) {
     case 'selectAvatar':
         // use this message.params.avatarUrl
+        printd("Selected Avatar: [" + message.params.avatarUrl + "]");
         App.askBeforeSetAvatarUrl(message.params.avatarUrl);
         break;
     case 'openAvatarMarket':
@@ -99,6 +100,11 @@ function init() {
     });
 
     var currentAvatarURL = Settings.getValue('Avatar/fullAvatarURL', DEFAULT_AVATAR_URL);
+    printd("Default Avatar: [" + DEFAULT_AVATAR_URL + "]");
+    printd("Current Avatar: [" + currentAvatarURL + "]");
+    if (!currentAvatarURL || 0 === currentAvatarURL.length) {
+        currentAvatarURL = DEFAULT_AVATAR_URL;
+    }
     refreshSelected(currentAvatarURL);
 }
 
