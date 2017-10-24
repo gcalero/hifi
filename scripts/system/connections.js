@@ -27,11 +27,11 @@ function init() {
 }
 
 function avatarAdded(avatarID) {
-    populateNearbyUserList();
+    refreshNearbyUserList();
 }
 
 function avatarRemoved(avatarID) {
-    populateNearbyUserList();
+    refreshNearbyUserList();
 }
 
 function fromQml(message) { // messages are {method, params}, like json-rpc. See also sendToQml.
