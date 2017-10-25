@@ -310,6 +310,11 @@ public:
     OverlayID getTabletHomeButtonID() const;
     QUuid getTabletFrameID() const; // may be an entity or an overlay
 
+#ifdef ANDROID
+    void enterBackground();
+    void enterForeground();
+#endif
+
 signals:
     void svoImportRequested(const QString& url);
 

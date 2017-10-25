@@ -2134,6 +2134,7 @@ void Application::initializeUi() {
 
 void Application::paintGL() {
     // Some plugins process message events, allowing paintGL to be called reentrantly.
+    qDebug() <<"[STOP] paintGL";
     if (_inPaint || _aboutToQuit) {
         return;
     }
@@ -7035,3 +7036,47 @@ QUuid Application::getTabletFrameID() const {
     auto HMD = DependencyManager::get<HMDScriptingInterface>();
     return HMD->getCurrentTabletFrameID();
 }
+
+void Application::enterBackground() {
+    qDebug() << "[Background] enterBackground begin";
+    QMetaObject::invokeMethod(DependencyManager::get<AudioClient>().data(),
+                              "stop", Qt::BlockingQueuedConnection);
+    qDebug() << "[Background] enterBackground end";
+}
+
+void Application::enterForeground() {
+    qDebug() << "[Background] enterForeground qApp?" << (qApp?"yeah":"false");
+    if (qApp && DependencyManager::isSet<AudioClient>()) {
+        qDebug() << "[Background] audioclient.start()";
+
+        QMetaObject::invokeMethod(DependencyManager::get<AudioClient>().data(),
+                                  "start", Qt::BlockingQueuedConnection);
+
+    } else {
+        qDebug() << "[Background] audioclient.start() not done";
+    }
+}
+
+#ifdef ANDROID
+extern "C" {
+
+JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnStop(JNIEnv* env, jobject obj) {
+    qDebug() << "[Background] nativeOnStop begin";
+    if (qApp) {
+        qDebug() << "[Background] nativeOnStop begin (qApp)";
+        qApp->enterBackground();
+    }
+}
+
+JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnStart(JNIEnv* env, jobject obj) {
+    qDebug() << "[Background] nativeOnStart begin";
+    if (qApp) {
+        qApp->enterForeground();
+    } else {
+        qDebug() << "[Background] nativeOnStart qApp was not there yet";
+    }
+}
+
+}
+
+#endif

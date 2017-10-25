@@ -34,6 +34,7 @@ public class InterfaceActivity extends QtActivity {
     private native void nativeOnPause();
     private native void nativeOnResume();
     private native void nativeOnStop();
+    private native void nativeOnStart();
     private native void saveRealScreenSize(int width, int height);
     private native long nativeOnExitVr();
 
@@ -103,12 +104,14 @@ public class InterfaceActivity extends QtActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        nativeOnStart();
     }
 
     @Override
     protected void onStop() {
-        super.onStop();
+        Log.d("[Background]","Calling nativeOnStop from InterfaceActivity");
         nativeOnStop();
+        super.onStop();
     }
 
     @Override
