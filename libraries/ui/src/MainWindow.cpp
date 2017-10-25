@@ -39,6 +39,11 @@ JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_saveRealScre
     _screenGeometryHeight = height;
 }
 
+JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnStop(JNIEnv* env, jobject obj) {
+    QApplication::instance()->quit();
+}
+
+
 }
 #endif
 

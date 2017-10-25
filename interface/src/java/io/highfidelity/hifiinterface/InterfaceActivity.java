@@ -33,6 +33,7 @@ public class InterfaceActivity extends QtActivity {
     private native long nativeOnCreate(InterfaceActivity instance, AssetManager assetManager, long gvrContextPtr);
     private native void nativeOnPause();
     private native void nativeOnResume();
+    private native void nativeOnStop();
     private native void saveRealScreenSize(int width, int height);
     private native long nativeOnExitVr();
 
@@ -97,6 +98,17 @@ public class InterfaceActivity extends QtActivity {
         super.onPause();
         nativeOnPause();
         gvrApi.pauseTracking();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        nativeOnStop();
     }
 
     @Override
