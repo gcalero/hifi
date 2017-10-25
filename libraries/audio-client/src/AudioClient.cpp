@@ -587,11 +587,9 @@ void AudioClient::start() {
 }
 
 void AudioClient::stop() {
-    qDebug() << "[Background] AudioClient::stop begin";
     // "switch" to invalid devices in order to shut down the state
     switchInputToAudioDevice(QAudioDeviceInfo());
     switchOutputToAudioDevice(QAudioDeviceInfo());
-    qDebug() << "[Background] AudioClient::stop end";
 }
 
 void AudioClient::handleAudioEnvironmentDataPacket(QSharedPointer<ReceivedMessage> message) {
