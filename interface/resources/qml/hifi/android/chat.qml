@@ -76,7 +76,7 @@ Item {
 
         TextField {
             id: input
-            Keys.onReturnPressed: sendMessage()
+            Keys.onReturnPressed:{ Qt.inputMethod.hide(); } // sendMessage()
             onTextChanged: textChangedHandler()
             y: 110
             height: 40
