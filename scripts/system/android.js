@@ -488,12 +488,14 @@ var setupModesBar = function() {
     var currentSelected;
 
     var buttonsRevealed = false;
+    modesBar.sendToQml({type: "inactiveButtonsHidden"});
 
     function showAllButtons() {
         for (var i=0; i<modesButtons.length; i++) {
             modesButtons[i].visible = true;
         }
         buttonsRevealed = true;
+        modesBar.sendToQml({type: "allButtonsShown"});
     }
 
     function hideAllButtons() {
@@ -514,6 +516,7 @@ var setupModesBar = function() {
             }
         }
         buttonsRevealed = false;
+        modesBar.sendToQml({type: "inactiveButtonsHidden"});
     }
 
     function switchModeButtons(clickedButton, hideAllAfter) {

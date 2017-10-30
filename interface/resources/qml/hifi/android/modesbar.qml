@@ -28,8 +28,8 @@ Item {
 	}
 
     Component.onCompleted: {
-        width = 110;
-        height = Window.innerHeight/3
+        width = 100+10;
+        height = 100+10;
         x=Window.innerWidth / 3 - width;
     }
     
@@ -59,11 +59,25 @@ Item {
     }
 
     function urlHelper(src) {
-            if (src.match(/\bhttp/)) {
-                return src;
-            } else {
-                return "../../../" + src;
-            }
+        if (src.match(/\bhttp/)) {
+            return src;
+        } else {
+            return "../../../" + src;
         }
+    }
+
+    function fromScript(message) {
+        //console.log("[CHAT] fromScript " + JSON.stringify(message));
+        switch (message.type) {
+            case "allButtonsShown":
+                modesbar.height = flowMain.children.length * 100 + 10;
+            break;
+            case "inactiveButtonsHidden":
+                modesbar.height = 100 + 10;
+            break;
+            default:
+            break;
+        }
+    }
 
 }
