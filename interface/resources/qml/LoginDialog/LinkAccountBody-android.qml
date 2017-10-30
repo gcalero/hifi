@@ -249,8 +249,8 @@ Item {
             color: hifi.buttons.blue
 
             onClicked: {
-                linkAccountBody.login();
                 Qt.inputMethod.hide();
+                linkAccountBody.login();
             }
         }
 
@@ -260,7 +260,7 @@ Item {
             text: qsTr("Cancel")
 
             onClicked: {
-                linkAccountBody.forceActiveFocus();
+                Qt.inputMethod.hide();
                 root.destroy();
             }
         }
@@ -277,7 +277,7 @@ Item {
             mainTextContainer.visible = true
         }
 
-        usernameField.forceActiveFocus();
+        //usernameField.forceActiveFocus();
     }
 
     Connections {
