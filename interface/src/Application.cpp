@@ -189,6 +189,8 @@
 
 #ifdef ANDROID
 #include <DaydreamPlugin.h>
+#include <jni.h>
+QString _version;
 #endif
 
 // On Windows PC, NVidia Optimus laptop, we want to enable NVIDIA GPU
@@ -5616,6 +5618,8 @@ void Application::registerScriptEngineWithApplicationServices(ScriptEngine* scri
 
     scriptEngine->registerGlobalObject("App", this);
     scriptEngine->registerFunction("App", "isAndroid", Application::isAndroid, 0);
+    scriptEngine->registerFunction("App", "getVersion", Application::getVersion, 0);
+    
 
 #ifndef ANDROID
     if (auto steamClient = PluginManager::getInstance()->getSteamClientPlugin()) {
@@ -7007,6 +7011,12 @@ bool Application::isAndroid() {
 #endif
 }
 
+#ifdef ANDROID
+QScriptValue Application::getVersion(QScriptContext* context, QScriptEngine* engine) {
+    return qScriptValueFromValue<QString>(engine, _version);
+}
+#endif
+
 void Application::updateSystemTabletMode() {
     if (isHMDMode()) {
         DependencyManager::get<TabletScriptingInterface>()->setToolbarMode(getHmdTabletBecomesToolbarSetting());
@@ -7075,6 +7085,11 @@ JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnStar
       //  qDebug() << "[Background] nativeOnStart qApp was not there yet";
     //}
 }
+
+JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_setAppVersion(JNIEnv* env, jobject obj, jstring version) {
+    _version = QAndroidJniObject(version).toString();
+}
+
 
 }
 

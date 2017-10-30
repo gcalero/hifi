@@ -25,6 +25,8 @@ import com.google.vr.ndk.base.GvrApi;
 import android.graphics.Point;
 import android.content.res.Configuration;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.view.View;
 
 public class InterfaceActivity extends QtActivity {
@@ -36,6 +38,7 @@ public class InterfaceActivity extends QtActivity {
     private native void nativeOnStop();
     private native void nativeOnStart();
     private native void saveRealScreenSize(int width, int height);
+    private native void setAppVersion(String version);
     private native long nativeOnExitVr();
 
     private AssetManager assetManager;
@@ -79,6 +82,14 @@ public class InterfaceActivity extends QtActivity {
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getRealSize(size);
         saveRealScreenSize(size.x, size.y);
+
+        try {
+            PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
+            String version = pInfo.versionName;
+            setAppVersion(version);
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e("GVR", "Error getting application version", e);
+        }
 
         final View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
 

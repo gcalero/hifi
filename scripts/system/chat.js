@@ -437,6 +437,9 @@ function handleChatCommand(message, data) {
             updateSettings();
             break;
 */
+        case 'version':
+            showVersion();
+            break;
         default:
             logMessage('Unknown chat command. Type "/help" or "/?" for help.', null);
             break;
@@ -481,6 +484,13 @@ function clearChatLog() {
     printd("[CHAT] clearChatLog command");
     sendToQml( {type: "clearChat"} );
 }
+
+function showVersion() {
+    if (App.isAndroid()) {
+        logMessage("Application version: " + App.getVersion());
+    }
+}
+            
 
 // Notification that we began typing. 
 // Notify everyone that we started typing.

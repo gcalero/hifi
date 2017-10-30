@@ -311,6 +311,7 @@ public:
     QUuid getTabletFrameID() const; // may be an entity or an overlay
 
 #ifdef ANDROID
+    static QScriptValue getVersion(QScriptContext* context, QScriptEngine* engine);
     void enterBackground();
     void enterForeground();
 #endif
