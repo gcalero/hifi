@@ -10,7 +10,7 @@ import ".."
 
 Item {
     id: modesbar
-    y:0
+    y:20
 	Rectangle {
         anchors.fill : parent
  		color: "transparent"
