@@ -40,7 +40,10 @@ Item {
             id: flowMain
             spacing: 10
             anchors.fill: parent
-            anchors.margins: 4
+            anchors.topMargin: 4
+            anchors.bottomMargin: 4
+            anchors.rightMargin: 4
+            anchors.leftMargin: 24
         }
 
 
@@ -51,9 +54,9 @@ Item {
             color: "#00000000"
             anchors {
                 right: parent.right
-                rightMargin: 43
+                rightMargin: 50
                 top: parent.top
-                topMargin: 40
+                topMargin: 30
             }
 
             Image {
@@ -92,7 +95,7 @@ Item {
     Component.onCompleted: {
         // put on bottom
         width = Window.innerWidth/3;
-        height = 120;
+        height = 85;
         y = Window.innerHeight / 3 - height;
     }
     

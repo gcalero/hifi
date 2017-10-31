@@ -226,9 +226,13 @@ function raiseBottomBar() {
         icon: "icons/android/avatar-i.svg",
         activeIcon: "icons/android/avatar-a.svg",
         bgOpacity: 0,
+        height: 80,
+        width: 98,
         hoverBgOpacity: 0,
         activeBgOpacity: 0,
         activeHoverBgOpacity: 0,
+        iconSize: 36,
+        textSize: 15,
         text: "AVATAR"
     });
     avatarBtn.clicked.connect(function() {
@@ -252,6 +256,10 @@ function raiseBottomBar() {
         hoverBgOpacity: 0,
         activeBgOpacity: 0,
         activeHoverBgOpacity: 0,
+        height: 80,
+        width: 98,
+        iconSize: 36,
+        textSize: 15,
         text: "GO TO"
     });
     gotoBtn.clicked.connect(function() {
@@ -269,28 +277,17 @@ function raiseBottomBar() {
         }
     };
     
-    var bubbleBtn = bottombar.addButton({
-        icon: "icons/android/bubble-i.svg",
-        activeIcon: "icons/android/bubble-a.svg",
-        bgOpacity: 0,
-        hoverBgOpacity: 0,
-        activeBgOpacity: 0,
-        activeHoverBgOpacity: 0,
-        text: "BUBBLE"
-    });
-    bubbleBtn.clicked.connect(function() {
-        //printd("Bubble clicked");
-        Users.toggleIgnoreRadius();
-        bubbleBtn.editProperties({isActive: Users.getIgnoreRadiusEnabled()});
-    });
-
-    chatBtn = bottombar.addButton({
+        chatBtn = bottombar.addButton({
         icon: "icons/android/chat-i.svg",
         activeIcon: "icons/android/chat-a.svg",
         bgOpacity: 0,
         hoverBgOpacity: 0,
         activeBgOpacity: 0,
         activeHoverBgOpacity: 0,
+        height: 80,
+        width: 98,
+        iconSize: 36,
+        textSize: 15,
         text: "CHAT"
     });
     chatBtn.clicked.connect(function() {
@@ -315,6 +312,10 @@ function raiseBottomBar() {
         hoverBgOpacity: 0,
         activeBgOpacity: 0,
         activeHoverBgOpacity: 0,
+        height: 80,
+        width: 98,
+        iconSize: 36,
+        textSize: 15,
         text: "PEOPLE",
         isActive: connections.isVisible()
     });
@@ -326,6 +327,26 @@ function raiseBottomBar() {
             hideConnections();
         }
     });
+
+    var bubbleBtn = bottombar.addButton({
+        icon: "icons/android/bubble-i.svg",
+        activeIcon: "icons/android/bubble-a.svg",
+        bgOpacity: 0,
+        hoverBgOpacity: 0,
+        activeBgOpacity: 0,
+        activeHoverBgOpacity: 0,
+        height: 80,
+        width: 98,
+        iconSize: 36,
+        textSize: 15,
+        text: "BUBBLE"
+    });
+    bubbleBtn.clicked.connect(function() {
+        //printd("Bubble clicked");
+        Users.toggleIgnoreRadius();
+        bubbleBtn.editProperties({isActive: Users.getIgnoreRadiusEnabled()});
+    });
+
     connections.onHidden = function() {
         if (peopleBtn) {
             peopleBtn.isActive = false;
@@ -339,6 +360,10 @@ function raiseBottomBar() {
     loginBtn = bottombar.addButton({
         icon: "icons/android/settings-i.svg",
         activeIcon: "icons/android/settings-a.svg",
+        height: 80,
+        width: 98,
+        iconSize: 36,
+        textSize: 15,
         text: Account.isLoggedIn() ? "LOG OUT" : "LOG IN"
     });
     loginBtn.clicked.connect(function() {
@@ -442,19 +467,6 @@ var setupModesBar = function() {
     var modesBar = new QmlFragment({
         menuId: "hifi/android/modesbar"
     });
-    var vrBtn = modesBar.addButton({
-        icon: "icons/android/vr-i.svg",
-        activeIcon: "icons/android/vr-a.svg",
-        hoverIcon: "icons/android/vr-a.svg",
-        activeBgOpacity: 0.0,
-        hoverBgOpacity: 0.0,
-        activeHoverBgOpacity: 0.0,
-        text: "VR"/*,
-        textColor: "#b2b2b2",
-        hoverTextColor: "#b2b2b2",
-        activeTextColor: "#b2b2b2",
-        activeHoverTextColor: "#b2b2b2"*/
-    });
     var buttonGodViewMode = modesBar.addButton({
         icon: "icons/android/radar-i.svg",
         activeIcon: "icons/android/radar-a.svg",
@@ -462,7 +474,9 @@ var setupModesBar = function() {
         activeBgOpacity: 0.0,
         hoverBgOpacity: 0.0,
         activeHoverBgOpacity: 0.0,
-        text: "RADAR"/*,
+        text: "RADAR",
+        bottomMargin: 18,
+        textSize: 15 /*,
         textColor: "#b2b2b2",
         hoverTextColor: "#b2b2b2",
         activeTextColor: "#b2b2b2",
@@ -475,13 +489,30 @@ var setupModesBar = function() {
         activeBgOpacity: 0.0,
         hoverBgOpacity: 0.0,
         activeHoverBgOpacity: 0.0,
-        text: "MY VIEW"/*,
+        text: "MY VIEW",
+        bottomMargin: 18,
+        textSize: 15 /*,
+
         textColor: "#b2b2b2",
         hoverTextColor: "#b2b2b2",
         activeTextColor: "#b2b2b2",
         activeHoverTextColor: "#b2b2b2"*/
     });
-
+    var vrBtn = modesBar.addButton({
+        icon: "icons/android/vr-i.svg",
+        activeIcon: "icons/android/vr-a.svg",
+        hoverIcon: "icons/android/vr-a.svg",
+        activeBgOpacity: 0.0,
+        hoverBgOpacity: 0.0,
+        activeHoverBgOpacity: 0.0,
+        text: "VR",
+        bottomMargin: 18,
+        textSize: 15 /*,
+        textColor: "#b2b2b2",
+        hoverTextColor: "#b2b2b2",
+        activeTextColor: "#b2b2b2",
+        activeHoverTextColor: "#b2b2b2"*/
+    });
     var modesButtons = [vrBtn, buttonGodViewMode, buttonMyViewMode];
 
     var mode = getCurrentModeSetting();

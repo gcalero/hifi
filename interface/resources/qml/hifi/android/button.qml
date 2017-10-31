@@ -11,6 +11,7 @@ Item {
     property string activeHoverIcon: button.activeIcon
     property int stableOrder: 0
 
+    property int iconSize: 55
     property string text: "."
     property string hoverText: button.text
     property string activeText: button.text
@@ -27,10 +28,12 @@ Item {
     property real activeHoverBgOpacity: 1
 
     property string textColor: "#ffffff"
+    property int textSize: 18
     property string hoverTextColor: "#ffffff"
     property string activeTextColor: "#ffffff"
     property string activeHoverTextColor: "#ffffff"
-
+    property int bottomMargin: 10
+    
     property bool isEntered: false
     property double sortOrder: 100
 
@@ -71,10 +74,10 @@ Item {
     }
     Image {
         id: icon
-        width: 55
-        height: 55
+        width: iconSize
+        height: iconSize
         anchors.bottom: text.top
-        anchors.bottomMargin: 5
+        anchors.bottomMargin: 6
         anchors.horizontalCenter: parent.horizontalCenter
         fillMode: Image.Stretch
         source: urlHelper(button.icon)
@@ -89,9 +92,9 @@ Item {
         text: button.text
         font.family: "FiraSans"
         //font.bold: true
-        font.pixelSize: 18
+        font.pixelSize: textSize
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 3
+        anchors.bottomMargin: bottomMargin
         anchors.horizontalCenter: parent.horizontalCenter
         horizontalAlignment: Text.AlignHCenter
     }
