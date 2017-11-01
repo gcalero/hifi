@@ -1548,9 +1548,12 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
     //DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/3000.00,1.03495,3000.00"); // boxes and architecture (stress test?)
     //DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/1979,0.43495,-955"); // office
     //DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/0.0,0.0,0.0"); // apt working
-    //if (firstRun.get()) { TODO For the moment, use the default, even with goto working, then use settings to use last used address.
-        DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/200.0,1.0,200.0"); // es web
-    //}
+    if (firstRun.get()) {// TODO For the moment, use the default, even with goto working, then use settings to use last used address.
+        DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/200.0,1.0,200.0"); // dev-mobile
+        //DependencyManager::get<AddressManager>()->handleLookupString("huawei.highfidelity.io/194,-2,191"); // server for huawei
+    } else {
+        DependencyManager::get<AddressManager>()->loadSettings(addressLookupString);
+    }
     //DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/192,-5000,-198"); // apt
     //DependencyManager::get<AddressManager>()->handleLookupString("dev-mobile.highfidelity.io/-500,0,-600"); // no material apt
 
