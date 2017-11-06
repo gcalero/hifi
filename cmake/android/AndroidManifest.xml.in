@@ -13,7 +13,7 @@
     >
     
     <!-- VR MODE -->
-    <meta-data android:name="com.samsung.android.vr.application.mode" android:value="vr_only"/>
+    <!--<meta-data android:name="com.samsung.android.vr.application.mode" android:value="vr_only"/>-->
 
      <activity android:name="io.highfidelity.hifiinterface.PermissionChecker">
         <intent-filter>
