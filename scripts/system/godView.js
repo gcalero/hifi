@@ -121,21 +121,23 @@ function toggleGodViewMode() {
     }
 }
 
-function fakeDoubleTap() {
+function fakeDoubleTap(event) {
     // CLD - temporarily disable toggling mode through double tap
     // * As we have a new UI for toggling between modes, it may be discarded completely in the future.
     // toggleGodViewMode();
+    teleporter.dragTeleportUpdate(event);
+    teleporter.dragTeleportRelease(event);
 }
 
 var currentTouchIsValid = false; // Currently used to know if touch hasn't started on a UI overlay
 
-var DOUBLE_TAP_TIME = 200;
+var DOUBLE_TAP_TIME = 300;
 var fakeDoubleTapStart = Date.now();
 var touchEndCount = 0;
 
 /* Counts touchEnds and if there were 2 in the DOUBLE_TAP_TIME lapse, it triggers a fakeDoubleTap and returns true.
    Otherwise, returns false (no double tap yet) */
-function analyzeDoubleTap() {
+function analyzeDoubleTap(event) {
     printd("-- touchEndEvent ... touchEndCount:" + touchEndCount);
     var fakeDoubleTapEnd = Date.now();
     printd("-- fakeDoubleTapEnd:" + fakeDoubleTapEnd);
@@ -163,7 +165,7 @@ function analyzeDoubleTap() {
             printd("-- FAKE double tap event!!!  elapsed:" + elapsed);
 
             touchEndCount = 0;
-            fakeDoubleTap();
+            fakeDoubleTap(event);
             return true; // don't do the normal touch end processing
         } else {
             printd("-- too slow.... not a double tap elapsed:" + elapsed);
@@ -206,7 +208,7 @@ function touchEnd(event) {
     // if touch is invalid, cancel
     if (!currentTouchIsValid)  { printd("touchEnd fail because !currentTouchIsValid");return;}
 
-    if (analyzeDoubleTap()) return; // double tap detected, finish
+    if (analyzeDoubleTap(event)) return; // double tap detected, finish
 
     if (godView) {
         mousePressOrTouchEnd(event);
