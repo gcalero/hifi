@@ -258,8 +258,10 @@ Q_LOGGING_CATEGORY(offscreenFocus, "hifi.offscreen.focus")
 void OffscreenQmlSurface::cleanup() {
     _canvas->makeCurrent();
 
-    _renderControl->invalidate();
-    delete _renderControl; // and invalidate
+    if (_renderControl) {
+        _renderControl->invalidate();
+        delete _renderControl; // and invalidate
+    }
 
     if (_depthStencil) {
         glDeleteRenderbuffers(1, &_depthStencil);
