@@ -108,6 +108,9 @@ macro(qt_create_apk)
 
   string(REPLACE ";" "," _DEPS "${_DEPS_LIST}")
   
+  file(GLOB PLUGINS_LIBS "${ANDROID_APK_BUILD_DIR}/../plugins")
+  string(REPLACE ";" "," _PLUGINS "${PLUGINS_LIBS}")
+
   # restore temporarily for json config
   set(ANDROID_NDK "${ANDROID_NDK_BAK}")
   configure_file("${ANDROID_THIS_DIRECTORY}/deployment-file.json.in" "${TARGET_NAME}-deployment.json")
