@@ -107,7 +107,9 @@ void AccountManager::logout() {
 
 QString accountFileDir() {
 #ifdef ANDROID
-    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    // CLD: Qt 5.6.1 there is a bug that makes QStandardPaths::AppDataLocation return '/' on Android.
+    // That's why the following hack.
+    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/../files";
 #else
     return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 #endif
