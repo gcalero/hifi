@@ -48,7 +48,11 @@
 
 #include "AudioClient.h"
 
+#ifndef ANDROID
 const int AudioClient::MIN_BUFFER_FRAMES = 1;
+#else
+const int AudioClient::MIN_BUFFER_FRAMES = 20;
+#endif
 const int AudioClient::MAX_BUFFER_FRAMES = 20;
 
 static const int RECEIVED_AUDIO_STREAM_CAPACITY_FRAMES = 100;
@@ -185,6 +189,9 @@ AudioClient::AudioClient() :
     _audioOutputIODevice(_localInjectorsStream, _receivedAudioStream, this),
     _stats(&_receivedAudioStream),
     _positionGetter(DEFAULT_POSITION_GETTER),
+#ifdef ANDROID
+    _checkInputTimer(this),
+#endif
     _orientationGetter(DEFAULT_ORIENTATION_GETTER) {
     // avoid putting a lock in the device callback
     assert(_localSamplesAvailable.is_lock_free());
@@ -584,16 +591,25 @@ void AudioClient::start() {
         qCDebug(audioclient) << "Unable to set up audio output because of a problem with output format.";
         qCDebug(audioclient) << "The closest format available is" << outputDeviceInfo.nearestFormat(_desiredOutputFormat);
     }
+#ifdef ANDROID
+    connect(&_checkInputTimer, SIGNAL(timeout()), this, SLOT(checkInputTimeout()));
+    _checkInputTimer.start(2000);
+#endif
 }
 
 void AudioClient::stop() {
     // "switch" to invalid devices in order to shut down the state
     switchInputToAudioDevice(QAudioDeviceInfo());
     switchOutputToAudioDevice(QAudioDeviceInfo());
+#ifdef ANDROID
+    _checkInputTimer.stop();
+#endif
 }
 
 void AudioClient::handleAudioEnvironmentDataPacket(QSharedPointer<ReceivedMessage> message) {
-
+#ifdef ANDROID
+    _inputReadsInLastSec++;
+#endif
     char bitset;
     message->readPrimitive(&bitset);
 
@@ -1449,6 +1465,18 @@ void AudioClient::audioInputStateChanged(QAudio::State state) {
             break;
         default:
             break;
+    }
+}
+
+void AudioClient::checkInputTimeout() {
+    if (_audioInput && _inputReadsInLastSec < 100) {
+        qDebug() << "[AUDIO-WA] No input in last second";
+        // this is a weird issue happening at low level in android
+        // it simply stops sending us mic data
+        _audioInput->stop();
+    } else {
+        //qDebug() << "[AUDIO-WA] ok";
+        _inputReadsInLastSec = 0;
     }
 }
 #endif

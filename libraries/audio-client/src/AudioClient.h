@@ -26,6 +26,7 @@
 #include <QtMultimedia/QAudio>
 #include <QtMultimedia/QAudioFormat>
 #include <QtMultimedia/QAudioInput>
+#include <QTimer>
 
 #include <AbstractAudioInterface.h>
 #include <AudioEffectOptions.h>
@@ -183,6 +184,7 @@ public slots:
     void handleMicAudioInput();
 #ifdef ANDROID
     void audioInputStateChanged(QAudio::State state);
+    void checkInputTimeout();
 #endif
     void handleRecordedAudioInput(const QByteArray& audio);
     void reset();
@@ -257,6 +259,10 @@ private:
     bool mixLocalAudioInjectors(float* mixBuffer);
     float azimuthForSource(const glm::vec3& relativePosition);
     float gainForSource(float distance, float volume);
+#ifdef ANDROID
+    QTimer _checkInputTimer;
+    long _inputReadsInLastSec;
+#endif
 
     class Gate {
     public:
