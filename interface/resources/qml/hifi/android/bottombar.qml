@@ -17,12 +17,15 @@ Item {
 
     property bool shown: true
 
+    signal sendToScript(var message);
+
     onShownChanged: {
         bar.visible = shown;
     }
 
     function hide() {
-        shown = false;
+        //shown = false;
+        sendToScript({ method: "hide" });
     }
 
     Styles.HifiConstants { id: hifi }
@@ -54,7 +57,7 @@ Item {
             color: "#00000000"
             anchors {
                 right: parent.right
-                rightMargin: 50
+                rightMargin: 38
                 top: parent.top
                 topMargin: 30
             }
@@ -65,7 +68,7 @@ Item {
                 width: android.dimen.headerHideIconWidth
                 height: android.dimen.headerHideIconHeight
                 anchors {
-                    right: parent.right
+                    horizontalCenter: parent.horizontalCenter
                     top: parent.top
                 }
             }

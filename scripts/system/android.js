@@ -47,6 +47,8 @@ var chatBtn;
 var avatarBtn;
 var loginBtn;
 
+var bottomHudOptionsBar;
+
 function printd(str) {
     if (logEnabled)
         print("[android.js] " + str);
@@ -81,6 +83,8 @@ function init() {
 
     setupAudioBar();
 
+    bottomHudOptionsBar = setupBottomHudOptionsBar();
+
     GODVIEWMODE.isTouchValid = isGodViewModeValidTouch;
     GODVIEWMODE.setUniqueColor(uniqueColor);
 
@@ -111,15 +115,15 @@ function update() {
 }
 
 function isGodViewModeValidTouch(coords) {
-    var qmlFragments = [modesBar.qmlFragment, bottombar, audiobar];
+    var qmlFragments = [modesBar.qmlFragment, bottombar, audiobar, bottomHudOptionsBar.qmlFragment];
     var windows = [connections, gotoScript, chat];
     for (var i=0; i < qmlFragments.length; i++) {
         var aQmlFrag = qmlFragments[i];
-        if (aQmlFrag != null &&
+        if (aQmlFrag != null && aQmlFrag.isVisible() &&
             coords.x >= aQmlFrag.position.x * 3 && coords.x <= aQmlFrag.position.x * 3 + aQmlFrag.size.x * 3 &&
             coords.y >= aQmlFrag.position.y * 3 && coords.y <= aQmlFrag.position.y * 3 + aQmlFrag.size.y * 3
            ) {
-            printd("godViewModeTouchValid- false because of qmlFragments!?");
+            printd("godViewModeTouchValid- false because of qmlFragments!? idx " + i);
             return false;
         }
     }
@@ -185,10 +189,11 @@ function touchBegin(event) {
 
 }
 
+var raiseBottomBarOnTouchesOnBottomZone = false;
 
 function touchEnd(event) {
     var coords = { x: event.x, y: event.y };
-    if (swipingUp && (swipeLastTouchX == initialTouchY || swipeLastTouchY < initialTouchY - MIN_SWIPE_VERT) ) {
+    if (raiseBottomBarOnTouchesOnBottomZone && swipingUp && (swipeLastTouchX == initialTouchY || swipeLastTouchY < initialTouchY - MIN_SWIPE_VERT) ) {
         raiseBottomBar();
     	printd("Swipe Up finished!");
     } else if (swipingDown && (swipeLastTouchX == initialTouchY || swipeLastTouchY > initialTouchY + MIN_SWIPE_VERT)) {
@@ -200,7 +205,7 @@ function touchEnd(event) {
     } else if (swipingRight && connections.isVisible() && swipeLastTouchX > initialTouchX + MIN_SWIPE_HORIZ) {
         // no action
         printd("Swipe Right finished!");
-    } else if (touchOnBottom) {
+    } else if (raiseBottomBarOnTouchesOnBottomZone && touchOnBottom) {
         if (!bottombar || !bottombar.isVisible()) {
             raiseBottomBar();
             touchOnBottom = false;
@@ -374,6 +379,16 @@ function raiseBottomBar() {
         }
     });
 
+    bottombar.fromQml.connect(function(message) {
+        switch (message.method) {
+        case 'hide':
+            lowerBottomBar();
+            break;
+        default:
+            print('[android.js] Unrecognized message from bottomHud.qml:', JSON.stringify(message));
+        }
+    });
+
     bottombar.setVisible(true);
     bottombar.raise();
 }
@@ -383,6 +398,9 @@ function lowerBottomBar() {
         //printd("[MENU] hiding bottom bar");
         bottombar.setVisible(false);
         //bottombar = null;
+    }
+    if (bottomHudOptionsBar) {
+        bottomHudOptionsBar.show();
     }
 }
 
@@ -460,6 +478,40 @@ function hideAvatarSelection() {
 function processedNewAvatar(url, modelName) {
     avatarSelection.refreshSelectedAvatar(url);
     hideAvatarSelection();
+}
+
+var setupBottomHudOptionsBar = function() {
+    var bottomHud = new QmlFragment({
+        menuId: "hifi/android/bottomHudOptions"
+    });
+
+    var toReturn = {
+        show: function() {
+            printd("showing bottomHud? " + JSON.stringify(bottomHud));
+            bottomHud.setVisible(true);
+            printd("showing bottomHud result? " + JSON.stringify(bottomHud));
+        },
+        hide: function() {
+            printd("hiding bottomHud? " + JSON.stringify(bottomHud));
+            bottomHud.setVisible(false);
+            printd("hiding bottomHud result? " + JSON.stringify(bottomHud));
+        },
+        qmlFragment: bottomHud
+    };
+    bottomHud.fromQml.connect(
+        function(message) {
+            switch (message.method) {
+                case 'showUpBar':
+                print('[android.js] showUpBar message from bottomHudOptions.qml: ', JSON.stringify(message));
+                    raiseBottomBar();
+                    toReturn.hide();
+                    break;
+                default:
+                    print('[android.js] Unrecognized message from bottomHudOptions.qml:', JSON.stringify(message));
+            }
+        }
+    );
+    return toReturn;
 }
 
 var setupModesBar = function() {
