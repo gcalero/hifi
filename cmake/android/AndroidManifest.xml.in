@@ -13,7 +13,7 @@
     >
     
     <!-- VR MODE -->
-    <!--<meta-data android:name="com.samsung.android.vr.application.mode" android:value="vr_only"/>-->
+    <!--<meta-data android:name="com.samsung.android.vr.application.mode" android:value="vr_only"/> Support Samsung through Daydream only -->
 
      <activity android:name="io.highfidelity.hifiinterface.PermissionChecker">
         <intent-filter>
@@ -91,7 +91,7 @@
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
   
   <!-- camera permission required for GEAR VR passthrough camera -->
-  <uses-permission android:name="android.permission.CAMERA" />
+  <!-- <uses-permission android:name="android.permission.CAMERA" /> Support Samsung through Daydream only -->
 
   <!-- The following comment will be replaced upon deployment with default features based on the dependencies of the application.
     Remove the comment if you do not require these default features. -->
