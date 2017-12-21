@@ -281,6 +281,9 @@ public:
     QUrl getAvatarOverrideUrl() { return _avatarOverrideUrl; }
     bool getSaveAvatarOverrideUrl() { return _saveAvatarOverrideUrl; }
 
+    static Q_INVOKABLE QScriptValue isAndroid(QScriptContext* context, QScriptEngine* engine);
+    static bool isAndroid();
+
 signals:
     void svoImportRequested(const QString& url);
 
