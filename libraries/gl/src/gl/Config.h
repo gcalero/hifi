@@ -35,7 +35,9 @@
 #define MINIMUM_GL_VERSION ((GL_MIN_VERSION_MAJOR << 8) | GL_MIN_VERSION_MINOR)
 
 #if defined(HIFI_GLES)
+#if !defined(Q_OS_ANDROID)
 #define GL_GLEXT_PROTOTYPES
+#endif
 #include <GLES3/gl32.h>
 #include <EGL/egl.h>
 
