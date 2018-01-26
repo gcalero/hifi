@@ -127,7 +127,9 @@ set_packaging_parameters()
 
 # FIXME hack to work on the proper Android toolchain
 if (ANDROID)
+    set(GVR_ROOT "${HIFI_ANDROID_PRECOMPILED}/gvr/gvr-android-sdk-1.101.0/")
     add_subdirectory(android/app)
+    add_subdirectory(plugins/daydream)
     return()
 endif()
 
@@ -145,10 +147,6 @@ endif()
 if (BUILD_CLIENT)
     add_subdirectory(interface)
     set_target_properties(interface PROPERTIES FOLDER "Apps")
-    if (ANDROID)
-        add_subdirectory(gvr-interface)
-        set_target_properties(gvr-interface PROPERTIES FOLDER "Apps")
-    endif()
 endif()
 
 if (BUILD_CLIENT OR BUILD_SERVER)

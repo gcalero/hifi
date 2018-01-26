@@ -7,8 +7,7 @@
 # 
 macro(TARGET_GOOGLEVR)
     if (ANDROID)
-        set(GVR_ROOT "${HIFI_ANDROID_PRECOMPILED}/gvr/gvr-android-sdk-1.101.0/")
-    	target_include_directories(native-lib PRIVATE  "${GVR_ROOT}/libraries/headers")
-        target_link_libraries(native-lib "${GVR_ROOT}/libraries/libgvr.so")
+    	target_include_directories(${TARGET_NAME} PRIVATE  "${GVR_ROOT}/libraries/headers")
+        target_link_libraries(${TARGET_NAME} "${GVR_ROOT}/libraries/libgvr.so")
     endif()
 endmacro()

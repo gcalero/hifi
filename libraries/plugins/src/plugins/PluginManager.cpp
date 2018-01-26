@@ -98,6 +98,8 @@ const LoaderList& getLoadedPlugins() {
     std::call_once(once, [&] {
 #ifdef Q_OS_MAC
         QString pluginPath = QCoreApplication::applicationDirPath() + "/../PlugIns/";
+#elif defined(Q_OS_ANDROID)
+        QString pluginPath = QCoreApplication::applicationDirPath() + "/";
 #else
         QString pluginPath = QCoreApplication::applicationDirPath() + "/plugins/";
 #endif
@@ -106,6 +108,29 @@ const LoaderList& getLoadedPlugins() {
         pluginDir.setFilter(QDir::Files);
         if (pluginDir.exists()) {
             qInfo() << "Loading runtime plugins from " << pluginPath;
+#if defined(Q_OS_ANDROID)
+            // ABSOLUTLY TEMPORARY, just to avoid loading all the libraries as plugins in android
+            // MAKE THE SAME HACK USED FOR QML LIBS ... plugins_libdaydream.so
+            qCDebug(plugins) << "Attempting plugin libdaydream.so";
+            QSharedPointer<QPluginLoader> loader(new QPluginLoader(pluginPath + "libdaydream.so"));
+
+            if (isDisabled(loader->metaData())) {
+                qWarning() << "Plugin libdaydream.so is disabled";
+                // Skip this one, it's disabled
+                //continue;
+            } else {
+                if (loader->load()) {
+                    qCDebug(plugins) << "Plugin libdaydream.so loaded successfully";
+                    loadedPlugins.push_back(loader);
+                } else {
+                    qCDebug(plugins) << "Plugin libdaydream.so failed to load:";
+                    qCDebug(plugins) << " " << qPrintable(loader->errorString());
+                }
+            }
+
+
+
+#else
             auto candidates = pluginDir.entryList();
             for (auto plugin : candidates) {
                 qCDebug(plugins) << "Attempting plugin" << qPrintable(plugin);
@@ -125,6 +150,7 @@ const LoaderList& getLoadedPlugins() {
                     qCDebug(plugins) << " " << qPrintable(loader->errorString());
                 }
             }
+#endif
         }
     });
     return loadedPlugins;
