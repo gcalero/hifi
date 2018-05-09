@@ -182,6 +182,8 @@ void Basic2DWindowOpenGLDisplayPlugin::compositeExtra() {
                 batch.draw(gpu::TRIANGLE_STRIP, 4);
             });
         }
+    } else {
+        qDebug() << "[VPAD-TEXTURE-DEBUG] hiding the virtualpad";
     }
 #endif
     Parent::compositeExtra();
