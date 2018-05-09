@@ -117,11 +117,14 @@ GLTexture::~GLTexture() {
 
 Size GLTexture::copyMipFaceFromTexture(uint16_t sourceMip, uint16_t targetMip, uint8_t face) const {
     if (!_gpuObject.isStoredMipFaceAvailable(sourceMip)) {
+        qDebug() << "[VPAD-TEXTURE-DEBUG] not isStoredMipFaceAvailable " << sourceMip;
         return 0;
     }
     auto dim = _gpuObject.evalMipDimensions(sourceMip);
     auto mipData = _gpuObject.accessStoredMipFace(sourceMip, face);
     auto mipSize = _gpuObject.getStoredMipFaceSize(sourceMip, face);
+    qDebug() << "[VPAD-TEXTURE-DEBUG] copyMipFaceFromTexture mipSize: " << mipSize << " dim " << dim.x << "," << dim.y << ", " << dim.z;
+
     if (mipData) {
         GLTexelFormat texelFormat = GLTexelFormat::evalGLTexelFormat(_gpuObject.getTexelFormat(), _gpuObject.getStoredMipFormat());
         return copyMipFaceLinesFromTexture(targetMip, face, dim, 0, texelFormat.internalFormat, texelFormat.format, texelFormat.type, mipSize, mipData->readData());

@@ -27,6 +27,10 @@ GLuint GLBackend::getTextureID(const TexturePointer& texture) {
 
 GLTexture* GLBackend::syncGPUObject(const TexturePointer& texturePointer) {
     const Texture& texture = *texturePointer;
+    if ("renderQmlUi" != texture.source()) {
+        qDebug() << "[VPAD-TEXTURE-DEBUG] GLBackend::syncGPUObject " << texture.source().c_str();
+    }
+
     // Special case external textures
     if (TextureUsageType::EXTERNAL == texture.getUsageType()) {
         Texture::ExternalUpdates updates = texture.getUpdates();

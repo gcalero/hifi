@@ -23,6 +23,18 @@ const QString Basic2DWindowOpenGLDisplayPlugin::NAME("Desktop");
 
 static const QString FULLSCREEN = "Fullscreen";
 
+unsigned long long quickhash64(const unsigned char *str, unsigned long long size = 0)
+{ // set 'mix' to some value other than zero if you want a tagged hash
+    const unsigned long long mulp = 2654435789;
+    unsigned long long mix = size;
+    mix ^= 104395301;
+
+    while(size-->0)
+        mix += (*str++ * mulp) ^ (mix >> 23);
+
+    return mix ^ (mix << 37);
+}
+
 void Basic2DWindowOpenGLDisplayPlugin::customizeContext() {
 #if defined(Q_OS_ANDROID)
     qreal dpi = getFullscreenTarget()->physicalDotsPerInch();
@@ -47,6 +59,7 @@ void Basic2DWindowOpenGLDisplayPlugin::customizeContext() {
             _virtualPadStickTexture->setUsage(usage.build());
             _virtualPadStickTexture->setStoredMipFormat(gpu::Element(gpu::VEC4, gpu::NUINT8, gpu::RGBA));
             _virtualPadStickTexture->assignStoredMip(0, image.byteCount(), image.constBits());
+            qDebug() << "[VPAD-TEXTURE-DEBUG] " << _virtualPadStickTexture->source().c_str() << "(" << _virtualPadStickTexture->getSize() << ")" << quickhash64(image.constBits(), _virtualPadStickTexture->getSize());
             _virtualPadStickTexture->setAutoGenerateMips(true);
         }
     }

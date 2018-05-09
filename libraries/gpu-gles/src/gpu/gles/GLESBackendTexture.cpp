@@ -42,7 +42,13 @@ GLTexture* GLESBackend::syncGPUObject(const TexturePointer& texturePointer) {
         return nullptr;
     }
 
-    const Texture& texture = *texturePointer;
+    const Texture &texture = *texturePointer;
+    if (texture.source().find("virtualPad") != std::string::npos) {
+        qDebug() << "[VPAD-TEXTURE-DEBUG] GLESBackend::syncGPUObject " << texture.source().c_str()
+                 << " external? " << (TextureUsageType::EXTERNAL == texture.getUsageType())
+                 << " isDef:" << texture.isDefined() << " supported:"
+                 << supportedTextureFormat(texture.getTexelFormat());
+    }
     if (TextureUsageType::EXTERNAL == texture.getUsageType()) {
         return Parent::syncGPUObject(texturePointer);
     }
@@ -95,7 +101,10 @@ GLTexture* GLESBackend::syncGPUObject(const TexturePointer& texturePointer) {
             }
         }
     }
-
+    if (texture.source().find("virtualPad") != std::string::npos) {
+        qDebug() << "[VPAD-TEXTURE-DEBUG] END GLESBackend::syncGPUObject "
+                 << texture.source().c_str();
+    }
     return object;
 }
 
@@ -108,6 +117,7 @@ GLESTexture::GLESTexture(const std::weak_ptr<GLBackend>& backend, const Texture&
 void GLESTexture::withPreservedTexture(std::function<void()> f) const {
     glActiveTexture(GL_TEXTURE0 + GLESBackend::RESOURCE_TRANSFER_TEX_UNIT);
     glBindTexture(_target, _texture);
+    qDebug() << "[VPAD-TEXTURE-DEBUG] glBindTexture(" <<_target << "," << _texture << ")";
     (void)CHECK_GL_ERROR();
 
     f();
@@ -125,6 +135,7 @@ GLuint GLESTexture::allocate(const Texture& texture) {
 
 
 void GLESTexture::generateMips() const {
+    qDebug() << "[VPAD-TEXTURE-DEBUG] glGenerateMipmap(" << _target << ")";
     withPreservedTexture([&] {
         glGenerateMipmap(_target);
     });
@@ -177,14 +188,29 @@ bool isCompressedFormat(GLenum internalFormat) {
     }
 }
 
+unsigned long long quickhash64(const unsigned char *str, unsigned long long size = 0)
+{ // set 'mix' to some value other than zero if you want a tagged hash
+    const unsigned long long mulp = 2654435789;
+    unsigned long long mix = size;
+    mix ^= 104395301;
+
+    while(size-->0)
+        mix += (*str++ * mulp) ^ (mix >> 23);
+
+    return mix ^ (mix << 37);
+}
+
 
 Size GLESTexture::copyMipFaceLinesFromTexture(uint16_t mip, uint8_t face, const uvec3& size, uint32_t yOffset, GLenum internalFormat, GLenum format, GLenum type, Size sourceSize, const void* sourcePointer) const {
+    qDebug() << "[VPAD-TEXTURE-DEBUG] GLESTexture::copyMipFaceLinesFromTexture target " << _target << " isCompressed: " << isCompressedFormat(internalFormat) << "(" << GL_TEXTURE_2D << ")";
     Size amountCopied = sourceSize;
     if (GL_TEXTURE_2D == _target) {
         if (isCompressedFormat(internalFormat)) {
             glCompressedTexSubImage2D(_target, mip, 0, yOffset, size.x, size.y, internalFormat,
                                       static_cast<GLsizei>(sourceSize), sourcePointer);
         } else {
+            qDebug() << "[VPAD-TEXTURE-DEBUG] glTexSubImage2D size (" <<amountCopied<<")" <<  quickhash64(
+                    (const unsigned char *) sourcePointer, amountCopied);
             glTexSubImage2D(_target, mip, 0, yOffset, size.x, size.y, format, type, sourcePointer);
         }
     } else if (GL_TEXTURE_CUBE_MAP == _target) {
@@ -235,6 +261,7 @@ using GLESFixedAllocationTexture = GLESBackend::GLESFixedAllocationTexture;
 
 GLESFixedAllocationTexture::GLESFixedAllocationTexture(const std::weak_ptr<GLBackend>& backend, const Texture& texture) : GLESTexture(backend, texture), _size(texture.evalTotalSize()) {
     withPreservedTexture([&] {
+        qDebug() << "[VPAD-TEXTURE-DEBUG] GLESFixedAllocationTexture";
         allocateStorage();
         syncSampler();
     });
@@ -277,7 +304,9 @@ void GLESFixedAllocationTexture::allocateStorage() const {
             if (texelFormat.isCompressed()) {
                 glCompressedTexImage2D(target, level, texelFormat.internalFormat, dimensions.x, dimensions.y, 0,
                                        getCompressedImageSize(dimensions.x, dimensions.y, texelFormat.internalFormat), nullptr);
+                qDebug() << "[VPAD-TEXTURE-DEBUG] allocateStorage glCompressedTexImage2D(" << target << "," << level << "," << texelFormat.internalFormat << ","<< dimensions.x << "," << dimensions.y << "," <<texelFormat.format << "," << texelFormat.type;
             } else {
+                qDebug() << "[VPAD-TEXTURE-DEBUG] allocateStorage glTexImage2D(" << target << "," << level << "," << texelFormat.internalFormat << ","<< dimensions.x << "," << dimensions.y << "," <<texelFormat.format << "," << texelFormat.type << ") numMips:"<< numMips;
                 glTexImage2D(target, level, texelFormat.internalFormat, dimensions.x, dimensions.y, 0, texelFormat.format, texelFormat.type, nullptr);
             }
         }
@@ -291,6 +320,7 @@ void GLESFixedAllocationTexture::allocateStorage() const {
 void GLESFixedAllocationTexture::syncSampler() const {
     Parent::syncSampler();
     const Sampler& sampler = _gpuObject.getSampler();
+    qDebug() << "[VPAD-TEXTURE-DEBUG] glTexParameterf MIN and MAX lod " << (float)sampler.getMinMip() << " and " << (sampler.getMaxMip() == Sampler::MAX_MIP_LEVEL ? 1000.0f : sampler.getMaxMip());
     glTexParameterf(_target, GL_TEXTURE_MIN_LOD, (float)sampler.getMinMip());
     glTexParameterf(_target, GL_TEXTURE_MAX_LOD, (sampler.getMaxMip() == Sampler::MAX_MIP_LEVEL ? 1000.0f : sampler.getMaxMip()));
 }
@@ -318,6 +348,7 @@ GLESStrictResourceTexture::GLESStrictResourceTexture(const std::weak_ptr<GLBacke
     withPreservedTexture([&] {
    
         auto mipLevels = _gpuObject.getNumMips();
+        qDebug() << "[VPAD-TEXTURE-DEBUG] " << texture.source().c_str() << " mipLevels: " << mipLevels << " maxFace: " << GLTexture::getFaceCount(_target);;
         for (uint16_t sourceMip = 0; sourceMip < mipLevels; sourceMip++) {
             uint16_t targetMip = sourceMip;
             size_t maxFace = GLTexture::getFaceCount(_target);
@@ -409,6 +440,7 @@ Size GLESVariableAllocationTexture::copyMipsFromTexture() {
 }
 
 Size GLESVariableAllocationTexture::copyMipFaceLinesFromTexture(uint16_t mip, uint8_t face, const uvec3& size, uint32_t yOffset, GLenum internalFormat, GLenum format, GLenum type, Size sourceSize, const void* sourcePointer) const {
+    qDebug() << "[VPAD-TEXTURE-DEBUG] GLESVariableAllocationTexture::copyMipFaceLinesFromTexture";
     Size amountCopied = 0;
     withPreservedTexture([&] {
         amountCopied = Parent::copyMipFaceLinesFromTexture(mip, face, size, yOffset, internalFormat, format, type, sourceSize, sourcePointer);
