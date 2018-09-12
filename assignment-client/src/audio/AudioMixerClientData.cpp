@@ -25,12 +25,15 @@
 #include "AudioHelpers.h"
 #include "AudioMixer.h"
 
+#include <QtCore/QDateTime>
 AudioMixerClientData::AudioMixerClientData(const QUuid& nodeID, Node::LocalID nodeLocalID) :
     NodeData(nodeID, nodeLocalID),
     audioLimiter(AudioConstants::SAMPLE_RATE, AudioConstants::STEREO),
     _ignoreZone(*this),
     _outgoingMixedAudioSequenceNumber(0),
-    _downstreamAudioStreamStats()
+    _downstreamAudioStreamStats(),
+    _lastReceivedPacketTime(0),
+    _previousProcessTime(0)
 {
     // of the ~94 blocks in a second of audio sent from the AudioMixer, pick a random one to send out a stats packet on
     // this ensures we send out stats to this client around every second
@@ -53,14 +56,27 @@ void AudioMixerClientData::queuePacket(QSharedPointer<ReceivedMessage> message, 
     if (!_packetQueue.node) {
         _packetQueue.node = node;
     }
+
+    long long pushTime = QDateTime::currentMSecsSinceEpoch();
+
     _packetQueue.push(message);
+
+    if (pushTime - _lastReceivedPacketTime > 80) {
+    qDebug() << "[THREAD] AudioMixerClientData::queuePacket " << QThread::currentThread()->objectName() << "(" << QThread::currentThreadId() << ")" << QThread::currentThread()->priority() << " t: " << (pushTime - _lastReceivedPacketTime);
+    }
+    //qDebug() << "[AUDIO-PACKET-QUEUE] enqueuing " << _packetQueue.size() << " t: " << (pushTime - _lastReceivedPacketTime);
+    
+    _lastReceivedPacketTime = pushTime;
 }
 
 void AudioMixerClientData::processPackets() {
+    long long ms = QDateTime::currentMSecsSinceEpoch();
     SharedNodePointer node = _packetQueue.node;
     assert(_packetQueue.empty() || node);
     _packetQueue.node.clear();
 
+    QString str("");
+   
     while (!_packetQueue.empty()) {
         auto& packet = _packetQueue.front();
 
@@ -69,6 +85,9 @@ void AudioMixerClientData::processPackets() {
             case PacketType::MicrophoneAudioWithEcho:
             case PacketType::InjectAudio:
             case PacketType::SilentAudioFrame: {
+                quint16 sequence;
+                packet->readPrimitive(&sequence);
+                str = QString("%1 %2").arg(str).arg(sequence);
 
                 if (node->isUpstream()) {
                     setupCodecForReplicatedAgent(packet);
@@ -108,6 +127,11 @@ void AudioMixerClientData::processPackets() {
 
         _packetQueue.pop();
     }
+    if (ms-_previousProcessTime > 80) {
+        qDebug() << "[THREAD] processPackets " << QThread::currentThread()->objectName() << "(" << QThread::currentThreadId() << ")" << QThread::currentThread()->priority() << " t: " << (ms-_previousProcessTime);
+        qDebug() << "[AUDIO-PACKET-QUEUE] processPackets " << str;
+    }
+    _previousProcessTime = ms;
     assert(_packetQueue.empty());
 }
 

@@ -2278,7 +2278,7 @@ void Application::updateVerboseLogging() {
     if (!menu) {
         return;
     }
-    bool enable = menu->isOptionChecked(MenuOption::VerboseLogging);
+    /*bool enable = menu->isOptionChecked(MenuOption::VerboseLogging);
 
     QString rules =
         "hifi.*.debug=%1\n"
@@ -2286,7 +2286,7 @@ void Application::updateVerboseLogging() {
         "hifi.audio-stream.debug=false\n"
         "hifi.audio-stream.info=false";
     rules = rules.arg(enable ? "true" : "false");
-    QLoggingCategory::setFilterRules(rules);
+    QLoggingCategory::setFilterRules(rules);*/
 }
 
 void Application::domainConnectionRefused(const QString& reasonMessage, int reasonCodeInt, const QString& extraInfo) {

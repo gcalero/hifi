@@ -16,7 +16,7 @@
 #include <NLPacket.h>
 #include <Node.h>
 #include <NodeList.h>
-
+#include <QFile>
 #include "AudioLogging.h"
 
 const bool InboundAudioStream::DEFAULT_DYNAMIC_JITTER_BUFFER_ENABLED = true;
@@ -53,6 +53,7 @@ static const int MAX_MISMATCHED_AUDIO_CODEC_COUNT = 10;
 
 InboundAudioStream::InboundAudioStream(int numChannels, int numFrames, int numBlocks, int numStaticJitterBlocks) :
     _ringBuffer(numChannels * numFrames, numBlocks),
+    _mockBuffer(),
     _numChannels(numChannels),
     _dynamicJitterBufferEnabled(numStaticJitterBlocks == -1),
     _staticJitterBufferFrames(std::max(numStaticJitterBlocks, DEFAULT_STATIC_JITTER_FRAMES)),
@@ -60,7 +61,12 @@ InboundAudioStream::InboundAudioStream(int numChannels, int numFrames, int numBl
     _incomingSequenceNumberStats(STATS_FOR_STATS_PACKET_WINDOW_SECONDS),
     _starveHistory(STARVE_HISTORY_CAPACITY),
     _unplayedMs(0, UNPLAYED_MS_WINDOW_SECS),
-    _timeGapStatsForStatsPacket(0, STATS_FOR_STATS_PACKET_WINDOW_SECONDS) {}
+    _timeGapStatsForStatsPacket(0, STATS_FOR_STATS_PACKET_WINDOW_SECONDS) {
+        QFile file("/Users/gcalero1984/Downloads/audio-sinus.raw");
+        if (!file.open(QIODevice::ReadOnly)) return;
+        _mockBuffer = file.readAll();
+        qDebug() << "[MOCK] _mockbuffer size " << _mockBuffer.size();
+    }
 
 InboundAudioStream::~InboundAudioStream() {
     cleanupCodec();
@@ -148,7 +154,7 @@ int InboundAudioStream::parseData(ReceivedMessage& message) {
             // fall through to the "on time" logic to actually handle this packet
             int packetsDropped = arrivalInfo._seqDiffFromExpected;
             lostAudioData(packetsDropped);
-
+            qDebug() << "[AUDIO-STATS] early packet. Dropped " << packetsDropped;
             // fall through to OnTime case
         }
         // FALLTHRU
@@ -214,7 +220,7 @@ int InboundAudioStream::parseData(ReceivedMessage& message) {
     // if the ringbuffer exceeds the desired size by more than the threshold specified,
     // drop the oldest frames so the ringbuffer is down to the desired size.
     if (framesAvailable > _desiredJitterBufferFrames + MAX_FRAMES_OVER_DESIRED) {
-        int framesToDrop = framesAvailable - (_desiredJitterBufferFrames + DESIRED_JITTER_BUFFER_FRAMES_PADDING);
+        int framesToDrop = framesAvailable - (_desiredJitterBufferFrames + MAX_FRAMES_OVER_DESIRED);
         _ringBuffer.shiftReadPosition(framesToDrop * _ringBuffer.getNumFrameSamples());
         
         _framesAvailableStat.reset();
@@ -222,7 +228,7 @@ int InboundAudioStream::parseData(ReceivedMessage& message) {
 
         _oldFramesDropped += framesToDrop;
 
-        qCInfo(audiostream, "Dropped %d frames", framesToDrop);
+        qCInfo(audiostream, "Dropped %d frames (avail:%d, desiredJitter:%d)", framesToDrop, framesAvailable, _desiredJitterBufferFrames);
         qCInfo(audiostream, "Reset current jitter frames");
     }
 
@@ -339,6 +345,10 @@ int InboundAudioStream::popSamples(int maxSamples, bool allOrNothing) {
             popSamplesNoCheck(samplesAvailable);
             samplesPopped = samplesAvailable;
         } else {
+            // TODO: push maxSamples into _ringBuffer
+            //qDebug() << "[MOCK] written " << _ringBuffer.writeData(_mockBuffer.data(), maxSamples);
+            //popSamplesNoCheck(maxSamples);
+            //samplesPopped = maxSamples;
             // we can't pop any samples, set this stream to starved
             setToStarved();
             _consecutiveNotMixedCount++;
@@ -378,14 +388,15 @@ void InboundAudioStream::framesAvailableChanged() {
 }
 
 void InboundAudioStream::setToStarved() {
-    if (!_isStarved) {
-        qCInfo(audiostream, "Starved");
-    }
 
     _consecutiveNotMixedCount = 0;
     _starveCount++;
     // if we have more than the desired frames when setToStarved() is called, then we'll immediately
     // be considered refilled. in that case, there's no need to set _isStarved to true.
+    if (!_isStarved && (_ringBuffer.framesAvailable() < _desiredJitterBufferFrames)) {
+        qCInfo(audiostream, "[CHOPPY-AUDIO-DETAIL-ERROR] Starved (%d / %d", _ringBuffer.framesAvailable(), _desiredJitterBufferFrames);
+    }
+
     _isStarved = (_ringBuffer.framesAvailable() < _desiredJitterBufferFrames);
 
     // record the time of this starve in the starve history
@@ -420,7 +431,7 @@ void InboundAudioStream::setToStarved() {
             // make sure _desiredJitterBufferFrames does not become lower here
             if (calculatedJitterBufferFrames >= _desiredJitterBufferFrames) {
                 _desiredJitterBufferFrames = calculatedJitterBufferFrames;
-                qCInfo(audiostream, "Set desired jitter frames to %d (starved)", _desiredJitterBufferFrames);
+                qCInfo(audiostream, "[CHOPPY-AUDIO-DETAIL-ERROR] Set desired jitter frames to %d (starved)", _desiredJitterBufferFrames);
             }
         }
     }

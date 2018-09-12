@@ -37,6 +37,7 @@
 #include "AudioMixerClientData.h"
 #include "AvatarAudioStream.h"
 #include "InjectedAudioStream.h"
+#include <QDateTime>
 
 static const float DEFAULT_ATTENUATION_PER_DOUBLING_IN_DISTANCE = 0.5f;    // attenuation = -6dB * log2(distance)
 static const int DISABLE_STATIC_JITTER_FRAMES = -1;
@@ -56,9 +57,14 @@ QVector<AudioMixer::ZoneSettings> AudioMixer::_zoneSettings;
 QVector<AudioMixer::ReverbSettings> AudioMixer::_zoneReverbSettings;
 
 AudioMixer::AudioMixer(ReceivedMessage& message) :
-    ThreadedAssignment(message)
+    ThreadedAssignment(message),
+    _timeReceivedPacket(0),
+    _countPacketsReceived(0),
+    _sumBytesReceived(0),
+    _countClients(0),
+    _maxIntervalInput(0),
+    _previousRecTime(0)
 {
-
     // Always clear settings first
     // This prevents previous assignment settings from sticking around
     clearDomainSettings();
@@ -112,8 +118,36 @@ void AudioMixer::aboutToFinish() {
 }
 
 void AudioMixer::queueAudioPacket(QSharedPointer<ReceivedMessage> message, SharedNodePointer node) {
+    
     if (message->getType() == PacketType::SilentAudioFrame) {
         _numSilentPackets++;
+    }
+
+    long long ms = QDateTime::currentMSecsSinceEpoch();
+
+    if (ms - _previousRecTime > _maxIntervalInput) {
+        _maxIntervalInput = ms - _previousRecTime;
+    }
+
+    if (ms - _previousRecTime > 80) {
+        qDebug() << "[THREAD] AudioMixer::queueAudioPacket " << QThread::currentThread()->objectName() << "(" << QThread::currentThreadId() << ")" << QThread::currentThread()->priority() << " t:"  << (ms - _previousRecTime);
+    }
+    _previousRecTime = ms;
+    
+    
+    if (ms >= _timeReceivedPacket + 1000) {
+        qDebug() << "[AUDIO-STATS] " << _countPacketsReceived << "p;" << _sumBytesReceived << "b;" << _countClients << " clients" << _maxIntervalInput << " max int;";
+        _timeReceivedPacket = ms;
+        _countPacketsReceived = 0;
+        _sumBytesReceived = 0;
+        _maxIntervalInput = 0;
+    }
+
+    if (message->getType() == PacketType::MicrophoneAudioNoEcho ||
+        message->getType() == PacketType::MicrophoneAudioWithEcho ||
+        message->getType() == PacketType::SilentAudioFrame) {
+        _countPacketsReceived++;
+        _sumBytesReceived += message->getSize();
     }
 
     getOrCreateClientData(node.data())->queuePacket(message, node);
@@ -201,6 +235,7 @@ void AudioMixer::handleNodeKilled(SharedNodePointer killedNode) {
     nodeList->eachNode([&killedNode](const SharedNodePointer& node) {
         auto clientData = dynamic_cast<AudioMixerClientData*>(node->getLinkedData());
         if (clientData) {
+            //mixer->_countClients--;
             clientData->removeNode(killedNode->getUUID());
         }
     });

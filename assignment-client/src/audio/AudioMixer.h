@@ -78,6 +78,14 @@ private slots:
     void start();
 
 private:
+    long long _timeReceivedPacket;
+    long long _countPacketsReceived;
+    long long _sumBytesReceived;
+    long _countClients;
+    long long _maxIntervalInput;
+    long long _previousRecTime;
+    
+
     // mixing helpers
     std::chrono::microseconds timeFrame(p_high_resolution_clock::time_point& timestamp);
     void throttle(std::chrono::microseconds frameDuration, int frame);

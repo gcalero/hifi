@@ -35,6 +35,8 @@
 #include "SequenceNumberStats.h"
 #include "StatTracker.h"
 
+#include <cmath>        // std::abs
+#include <algorithm>    // std::min
 
 HIFI_QML_DEF(Stats)
 
@@ -55,6 +57,16 @@ Stats::Stats(QQuickItem* parent) :  QQuickItem(parent) {
     const QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     _monospaceFont = font.family();
     _audioStats = &DependencyManager::get<AudioClient>()->getStats();
+    _audioMixerInKbpsMinRecent = 0;
+    _audioMixerInKbpsMaxRecent = 0;
+    _lastAudioMixerMinInKbpsTime = 0;
+    _lastAudioMixerMaxInKbpsTime = 0;
+
+    _audioMixerOutKbpsMinRecent = 0;
+    _audioMixerOutKbpsMaxRecent = 0;
+    _lastAudioMixerMinOutKbpsTime = 0;
+    _lastAudioMixerMaxOutKbpsTime = 0;
+
 }
 
 bool Stats::includeTimingRecord(const QString& name) {
@@ -229,10 +241,46 @@ void Stats::updateStats(bool force) {
                 bandwidthRecorder->getAverageInputPacketsPerSecond(NodeType::AudioMixer) +
                 bandwidthRecorder->getAverageOutputPacketsPerSecond(NodeType::AudioMixer)));
 
-            STAT_UPDATE(audioMixerInKbps, (int)roundf(bandwidthRecorder->getAverageInputKilobitsPerSecond(NodeType::AudioMixer)));
-            STAT_UPDATE(audioMixerInPps, (int)roundf(bandwidthRecorder->getAverageInputPacketsPerSecond(NodeType::AudioMixer)));
-            STAT_UPDATE(audioMixerOutKbps, (int)roundf(bandwidthRecorder->getAverageOutputKilobitsPerSecond(NodeType::AudioMixer)));
-            STAT_UPDATE(audioMixerOutPps, (int)roundf(bandwidthRecorder->getAverageOutputPacketsPerSecond(NodeType::AudioMixer)));
+            int newAudioMixerInKbps = (int)roundf(bandwidthRecorder->getAverageInputKilobitsPerSecond(NodeType::AudioMixer));
+
+            long long currentTime = QDateTime::currentMSecsSinceEpoch();
+
+            if (currentTime > _lastAudioMixerMinInKbpsTime + 1000 || newAudioMixerInKbps < _audioMixerInKbpsMinRecent) {
+                if (newAudioMixerInKbps < _audioMixerInKbpsMinRecent) {
+                    qDebug() << "[CHOPPY-AUDIO-DETAIL-ERROR] new audio mixer in MIN: " << newAudioMixerInKbps;
+                }
+                _audioMixerInKbpsMinRecent = newAudioMixerInKbps;
+                _lastAudioMixerMinInKbpsTime = currentTime;
+
+                STAT_UPDATE(audioMixerInKbps, newAudioMixerInKbps);
+            }
+
+            if (currentTime > _lastAudioMixerMaxInKbpsTime + 1000 || newAudioMixerInKbps > _audioMixerInKbpsMaxRecent) {
+                _audioMixerInKbpsMaxRecent = newAudioMixerInKbps;
+                _lastAudioMixerMaxInKbpsTime = currentTime;
+                STAT_UPDATE(audioMixerInPps, newAudioMixerInKbps);
+            }
+
+            int newAudioMixerOutKbps = (int)roundf(bandwidthRecorder->getAverageOutputKilobitsPerSecond(NodeType::AudioMixer));
+
+            if (currentTime > _lastAudioMixerMinOutKbpsTime + 1000 || newAudioMixerOutKbps < _audioMixerOutKbpsMinRecent) {
+                if (newAudioMixerOutKbps < _audioMixerOutKbpsMinRecent) {
+                    qDebug() << "[CHOPPY-AUDIO-DETAIL-ERROR] new audio mixer out MIN: " << newAudioMixerOutKbps;
+                }
+                _audioMixerOutKbpsMinRecent = newAudioMixerOutKbps;
+                _lastAudioMixerMinOutKbpsTime = currentTime;
+                STAT_UPDATE(audioMixerOutKbps, newAudioMixerOutKbps);
+            }
+
+            if (currentTime > _lastAudioMixerMaxOutKbpsTime + 1000 || newAudioMixerOutKbps > _audioMixerOutKbpsMaxRecent) {
+                _audioMixerOutKbpsMaxRecent = newAudioMixerOutKbps;
+                _lastAudioMixerMaxOutKbpsTime = currentTime;
+                STAT_UPDATE(audioMixerOutPps, newAudioMixerOutKbps);
+            }
+
+            //STAT_UPDATE(audioMixerInPps, (int)roundf(bandwidthRecorder->getAverageInputPacketsPerSecond(NodeType::AudioMixer)));
+            //STAT_UPDATE(audioMixerOutKbps, (int)roundf(bandwidthRecorder->getAverageOutputKilobitsPerSecond(NodeType::AudioMixer)));
+            //STAT_UPDATE(audioMixerOutPps, (int)roundf(bandwidthRecorder->getAverageOutputPacketsPerSecond(NodeType::AudioMixer)));
             STAT_UPDATE(audioAudioInboundPPS, (int)audioClient->getAudioInboundPPS());
             STAT_UPDATE(audioSilentInboundPPS, (int)audioClient->getSilentInboundPPS());
             STAT_UPDATE(audioOutboundPPS, (int)audioClient->getAudioOutboundPPS());

@@ -196,8 +196,8 @@ AudioClient::AudioClient() :
     _timeSinceLastClip(-1.0f),
     _muted(false),
     _shouldEchoLocally(false),
-    _shouldEchoToServer(false),
-    _isNoiseGateEnabled(true),
+    _shouldEchoToServer(true),
+    _isNoiseGateEnabled(false),
     _reverb(false),
     _reverbOptions(&_scriptReverbOptions),
     _inputToNetworkResampler(NULL),
@@ -206,14 +206,34 @@ AudioClient::AudioClient() :
     _audioLimiter(AudioConstants::SAMPLE_RATE, OUTPUT_CHANNEL_COUNT),
     _outgoingAvatarAudioSequenceNumber(0),
     _audioOutputIODevice(_localInjectorsStream, _receivedAudioStream, this),
+    _lastInputSentTime(0),
+    _packetsSentRecently(0),
+    _silentPacketsSentRecently(0),
+    _lastAudioReceivedTime(0),
+    _packetsReceivedRecently(0),
+    _silentPacketsReceivedRecently(0),
+    _lastMicReadTime(0),
+    _bytesReadRecently(0),
+    _amountOfReadsRecently(0),
+    _sumIntervalsBetweenBuffers(0),
+    _minIntervalsBetweenBuffers(-1),
+    _maxIntervalsBetweenBuffers(-1),
+    _amountIntervalsBetweenBuffers(0),
+    _lastMicInputReadTime(0),
     _stats(&_receivedAudioStream),
     _positionGetter(DEFAULT_POSITION_GETTER),
 #if defined(Q_OS_ANDROID)
     _checkInputTimer(this),
+    _simulateInput(this),
 #endif
     _orientationGetter(DEFAULT_ORIENTATION_GETTER) {
     // avoid putting a lock in the device callback
     assert(_localSamplesAvailable.is_lock_free());
+
+    QFile rawFile("/sdcard/audio-sinus.raw");
+    rawFile.open(QIODevice::ReadOnly);
+    _rawByteArray = rawFile.readAll();
+    qDebug() << "[CHOPPY-AUDIO-DETAIL] beep loaded " << _rawByteArray.size() << " bytes read";
 
     // deprecate legacy settings
     {
@@ -632,8 +652,11 @@ void AudioClient::start() {
         qCDebug(audioclient) << "The closest format available is" << outputDeviceInfo.nearestFormat(_desiredOutputFormat);
     }
 #if defined(Q_OS_ANDROID)
-    connect(&_checkInputTimer, &QTimer::timeout, this, &AudioClient::checkInputTimeout);
+    connect(&_checkInputTimer, &QTimer::timeout, [this] {
+        checkInputTimeout();
+    });
     _checkInputTimer.start(CHECK_INPUT_READS_MSECS);
+    //_simulateInput.start(10);
 #endif
 }
 
@@ -671,6 +694,7 @@ void AudioClient::handleAudioDataPacket(QSharedPointer<ReceivedMessage> message)
 
     if (message->getType() == PacketType::SilentAudioFrame) {
         _silentInbound.increment();
+        _silentPacketsReceivedRecently++;
     } else {
         _audioInbound.increment();
     }
@@ -693,6 +717,17 @@ void AudioClient::handleAudioDataPacket(QSharedPointer<ReceivedMessage> message)
         // Audio output must exist and be correctly set up if we're going to process received audio
         _receivedAudioStream.parseData(*message);
 #endif
+        long long currentTime = QDateTime::currentMSecsSinceEpoch();
+        _packetsReceivedRecently++;
+        if (currentTime > _lastAudioReceivedTime + 500) {
+            qDebug() << "[CHOPPY-AUDIO-DETAIL] Packets received in last 500 ms: " << (_packetsReceivedRecently-_silentPacketsReceivedRecently) << " + " << _silentPacketsReceivedRecently;
+            if (_silentPacketsReceivedRecently > 0) {
+                qDebug() << "[CHOPPY-AUDIO-DETAIL-ERROR] Packets received in last 500 ms: " << (_packetsReceivedRecently-_silentPacketsReceivedRecently) << " + " << _silentPacketsReceivedRecently;
+            }
+            _lastAudioReceivedTime = currentTime;
+            _packetsReceivedRecently = 0;
+            _silentPacketsReceivedRecently = 0;
+        }
     }
 }
 
@@ -1081,6 +1116,7 @@ void AudioClient::handleAudioInput(QByteArray& audioBuffer) {
     if (!audioGateOpen && !closedInLastBlock) {
         packetType = PacketType::SilentAudioFrame;
         _silentOutbound.increment();
+        _silentPacketsSentRecently++;
     } else {
         _audioOutbound.increment();
     }
@@ -1095,17 +1131,30 @@ void AudioClient::handleAudioInput(QByteArray& audioBuffer) {
     } else {
         encodedBuffer = audioBuffer;
     }
-
+    long long currentSentTime = QDateTime::currentMSecsSinceEpoch();
     emitAudioPacket(encodedBuffer.data(), encodedBuffer.size(), _outgoingAvatarAudioSequenceNumber, _isStereoInput,
             audioTransform, avatarBoundingBoxCorner, avatarBoundingBoxScale,
             packetType, _selectedCodecName);
+
+    _packetsSentRecently++;
+    if (currentSentTime >= _lastInputSentTime + 500) {
+        qDebug() << "[CHOPPY-AUDIO-DETAIL] Packets sent in last 500 ms: " << (_packetsSentRecently-_silentPacketsSentRecently) << " + " << _silentPacketsSentRecently;
+        if (_silentPacketsSentRecently > 0) {
+            qDebug() << "[CHOPPY-AUDIO-DETAIL-ERROR] Packets sent in last 500 ms: " << (_packetsSentRecently-_silentPacketsSentRecently) << " + " << _silentPacketsSentRecently;
+        }
+        _lastInputSentTime = currentSentTime;
+        _packetsSentRecently = 0;
+        _silentPacketsSentRecently = 0;
+    }
     _stats.sentPacket();
 }
 
 void AudioClient::handleMicAudioInput() {
-    if (!_inputDevice || _isPlayingBackRecording) {
+
+    long long initFunctionTime = QDateTime::currentMSecsSinceEpoch();
+    /*if (!_inputDevice || _isPlayingBackRecording) {
         return;
-    }
+    }*/
 
 #if defined(Q_OS_ANDROID)
     _inputReadsSinceLastCheck++;
@@ -1119,6 +1168,48 @@ void AudioClient::handleMicAudioInput() {
     const auto inputAudioSamples = std::unique_ptr<int16_t[]>(new int16_t[inputSamplesRequired]);
     QByteArray inputByteArray = _inputDevice->readAll();
 
+    //QByteArray inputByteArray(960, 0);
+    //_inputRecordFile.write(inputByteArray);
+
+    _amountOfReadsRecently++;
+    _bytesReadRecently += inputByteArray.size();
+    long long currentTime = QDateTime::currentMSecsSinceEpoch();
+    if (currentTime >= _lastMicReadTime + 1000) {
+        int numInputSamples = _bytesReadRecently / AudioConstants::SAMPLE_SIZE;
+
+        if (_amountIntervalsBetweenBuffers > 0) {
+            qDebug() << "[MIC-INPUT] Read " << _bytesReadRecently << " bytes; " << numInputSamples << " samples; " << _amountOfReadsRecently << " reads in " << (currentTime - _lastMicReadTime) << " msecs. Interval between mic reads: " << (_sumIntervalsBetweenBuffers / _amountIntervalsBetweenBuffers) << "; min Interval: " << _minIntervalsBetweenBuffers << "; max Interval: " << _maxIntervalsBetweenBuffers;
+
+        }
+        _lastMicReadTime = currentTime;
+        _amountOfReadsRecently = 0;
+        _bytesReadRecently = 0;
+        _sumIntervalsBetweenBuffers=0;
+        _amountIntervalsBetweenBuffers=0;
+        _sumFunctionTime = 0;
+        _minIntervalsBetweenBuffers = -1;
+        _maxIntervalsBetweenBuffers = -1;
+
+    }
+
+    if (_lastMicInputReadTime != 0) {
+        long long diff = currentTime - _lastMicInputReadTime;
+        _sumIntervalsBetweenBuffers += diff;
+        if (_minIntervalsBetweenBuffers < 0 || diff < _minIntervalsBetweenBuffers) {
+            _minIntervalsBetweenBuffers = diff;
+        }
+        if (_maxIntervalsBetweenBuffers < 0 || diff > _maxIntervalsBetweenBuffers) {
+            _maxIntervalsBetweenBuffers = diff;
+        }
+        _amountIntervalsBetweenBuffers++;
+    }
+    _lastMicInputReadTime = currentTime;
+/*
+    if (inputByteArray.size() > _rawByteArray.size()) {
+        qDebug() << "[CHOPPY-AUDIO-DETAIL-ERROR] NOT ENOUGH DATA TO REPLACE MIC INPUT BYTES";
+    }
+    inputByteArray = _rawByteArray.left(inputByteArray.size());
+*/
     handleLocalEchoAndReverb(inputByteArray);
 
     _inputRingBuffer.writeData(inputByteArray.data(), inputByteArray.size());
@@ -1152,6 +1243,8 @@ void AudioClient::handleMicAudioInput() {
         QByteArray audioBuffer(reinterpret_cast<char*>(networkAudioSamples), numNetworkBytes);
         handleAudioInput(audioBuffer);
     }
+    long long endFunctionTime = QDateTime::currentMSecsSinceEpoch();
+    _sumFunctionTime += endFunctionTime - initFunctionTime;
 }
 
 void AudioClient::handleDummyAudioInput() {
@@ -1479,6 +1572,8 @@ bool AudioClient::switchInputToAudioDevice(const QAudioDeviceInfo inputDeviceInf
         // That in turn causes it to be disconnected (see for example
         // http://stackoverflow.com/questions/9264750/qt-signals-and-slots-object-disconnect).
         _audioInput->stop();
+        _inputRecordFile.close();
+
         _inputDevice = NULL;
 
         _audioInput->deleteLater();
@@ -1543,6 +1638,7 @@ bool AudioClient::switchInputToAudioDevice(const QAudioDeviceInfo inputDeviceInf
             if (!_isStereoInput || _inputFormat.channelCount() == 2) {
                 _audioInput = new QAudioInput(inputDeviceInfo, _inputFormat, this);
                 _numInputCallbackBytes = calculateNumberOfInputCallbackBytes(_inputFormat);
+                qDebug() << "[MIC-INPUT] setting bufferSize " << _numInputCallbackBytes;
                 _audioInput->setBufferSize(_numInputCallbackBytes);
                 // different audio input devices may have different volumes
                 emit inputVolumeChanged(_audioInput->volume());
@@ -1554,10 +1650,17 @@ bool AudioClient::switchInputToAudioDevice(const QAudioDeviceInfo inputDeviceInf
 #if defined(Q_OS_ANDROID)
                 if (_audioInput) {
                     _shouldRestartInputSetup = true;
-                    connect(_audioInput, &QAudioInput::stateChanged, this, &AudioClient::audioInputStateChanged);
+                    connect(_audioInput, &QAudioInput::stateChanged, this, [this](QAudio::State state) {
+                        audioInputStateChanged(state);
+                    });
                 }
 #endif
+                _inputRecordFile.setFileName(QString("/sdcard/audio_input_%1").arg(QDateTime::currentMSecsSinceEpoch()));
+                _inputRecordFile.open(QIODevice::ReadWrite);
+
                 _inputDevice = _audioInput->start();
+                qDebug() << "[MIC-INPUT] audio input bufferSize = " << _audioInput->bufferSize();
+
 
                 if (_inputDevice) {
                     connect(_inputDevice, SIGNAL(readyRead()), this, SLOT(handleMicAudioInput()));
@@ -1605,7 +1708,11 @@ void AudioClient::audioInputStateChanged(QAudio::State state) {
             // Stopped on purpose
             if (_shouldRestartInputSetup) {
                 Lock lock(_deviceMutex);
+                _inputRecordFile.setFileName(QString("/sdcard/audio_input_%1").arg(QDateTime::currentMSecsSinceEpoch()));
+                _inputRecordFile.open(QIODevice::ReadWrite);
+
                 _inputDevice = _audioInput->start();
+
                 lock.unlock();
                 if (_inputDevice) {
                     connect(_inputDevice, SIGNAL(readyRead()), this, SLOT(handleMicAudioInput()));
@@ -1624,6 +1731,9 @@ void AudioClient::checkInputTimeout() {
 #if defined(Q_OS_ANDROID)
     if (_audioInput && _inputReadsSinceLastCheck < MIN_READS_TO_CONSIDER_INPUT_ALIVE) {
         _audioInput->stop();
+        _inputRecordFile.close();
+
+        qDebug() << "[CHOPPY-AUDIO-DETAIL-ERROR] too few input reads";
     } else {
         _inputReadsSinceLastCheck = 0;
     }
@@ -1789,7 +1899,6 @@ bool AudioClient::switchOutputToAudioDevice(const QAudioDeviceInfo outputDeviceI
             connect(_audioOutput, &QAudioOutput::notify, this, &AudioClient::outputNotify);
 
             _audioOutputIODevice.start();
-
             _audioOutput->start(&_audioOutputIODevice);
 
             // setup a loopback audio output device
@@ -1832,10 +1941,10 @@ const float AudioClient::CALLBACK_ACCELERATOR_RATIO = IsWindows8OrGreater() ? 1.
 const float AudioClient::CALLBACK_ACCELERATOR_RATIO = 2.0f;
 #endif
 
-#ifdef Q_OS_ANDROID
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 const float AudioClient::CALLBACK_ACCELERATOR_RATIO = 0.5f;
-#elif defined(Q_OS_LINUX)
-const float AudioClient::CALLBACK_ACCELERATOR_RATIO = 2.0f;
+#elif defined(Q_OS_ANDROID)
+const float AudioClient::CALLBACK_ACCELERATOR_RATIO = 1.0f;
 #endif
 
 int AudioClient::calculateNumberOfInputCallbackBytes(const QAudioFormat& format) const {

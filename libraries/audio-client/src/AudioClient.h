@@ -276,6 +276,7 @@ private:
 
 #ifdef Q_OS_ANDROID
     QTimer _checkInputTimer;
+    QTimer _simulateInput;
     long _inputReadsSinceLastCheck = 0l;
 #endif
 
@@ -393,6 +394,28 @@ private:
     AudioOutputIODevice _audioOutputIODevice;
 
     AudioIOStats _stats;
+    long long _lastInputSentTime;
+    long _packetsSentRecently;
+    long _silentPacketsSentRecently;
+
+    long long _lastAudioReceivedTime;
+    long _packetsReceivedRecently;
+    long _silentPacketsReceivedRecently;
+
+    long long _lastMicReadTime;
+    long _bytesReadRecently;
+    long _amountOfReadsRecently;
+
+    long long _sumIntervalsBetweenBuffers;
+    long long _minIntervalsBetweenBuffers;
+    long long _maxIntervalsBetweenBuffers;
+    long _amountIntervalsBetweenBuffers;
+    long long _lastMicInputReadTime;
+
+    long long _sumFunctionTime;
+    QFile _inputRecordFile;
+
+    QByteArray _rawByteArray;
 
     AudioGate* _audioGate { nullptr };
     bool _audioGateOpen { true };

@@ -41,11 +41,12 @@ function init() {
 
     audioButton.clicked.connect(onMuteClicked);
     audioButton.entered.connect(onMutePressed);
-    Audio.mutedChanged.connect(onMuteToggled);
+    Audio.noiseReductionChanged.connect(onMuteToggled);
 }
 
 function onMuteClicked() {
-    Audio.muted = !Audio.muted;
+    //Audio.muted = !Audio.muted;
+    Audio.noiseReduction = !Audio.noiseReduction;
 }
 
 function onMutePressed() {
@@ -54,7 +55,8 @@ function onMutePressed() {
 
 function onMuteToggled() {
     printd("On Mute Toggled");
-    audioButton.isActive = Audio.muted; // Menu.isOptionChecked("Mute Microphone")
+    //audioButton.isActive = Audio.muted; // Menu.isOptionChecked("Mute Microphone")
+    audioButton.isActive = Audio.noiseReduction;
     printd("Audio button is active: " + audioButton.isActive);
 }
 

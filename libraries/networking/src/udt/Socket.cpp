@@ -28,13 +28,16 @@
 #include "../NLPacketList.h"
 #include "PacketList.h"
 #include <Trace.h>
+#include <QDateTime>
 
 using namespace udt;
 
-Socket::Socket(QObject* parent, bool shouldChangeSocketOptions) :
+Socket::Socket(QObject* parent, bool shouldChangeSocketOptions, int tos) :
     QObject(parent),
     _readyReadBackupTimer(new QTimer(this)),
-    _shouldChangeSocketOptions(shouldChangeSocketOptions)
+    _previousReadTime(0),
+    _shouldChangeSocketOptions(shouldChangeSocketOptions),
+    _tos(tos)
 {
     connect(&_udpSocket, &QUdpSocket::readyRead, this, &Socket::readPendingDatagrams);
 
@@ -51,10 +54,17 @@ Socket::Socket(QObject* parent, bool shouldChangeSocketOptions) :
 
 void Socket::bind(const QHostAddress& address, quint16 port) {
     _udpSocket.bind(address, port);
-
+    
     if (_shouldChangeSocketOptions) {
         setSystemBufferSizes();
-
+        
+#if !defined(Q_OS_WINDOWS)
+        if (_tos != SOCKET_TOS_ROUTINE) {
+            // This option is not supported on Windows.
+            _udpSocket.setSocketOption(QAbstractSocket::TypeOfServiceOption, QVariant(_tos));
+        }
+#endif
+        
 #if defined(Q_OS_LINUX)
         auto sd = _udpSocket.socketDescriptor();
         int val = IP_PMTUDISC_DONT;
@@ -316,9 +326,14 @@ void Socket::checkForReadyReadBackup() {
 
 void Socket::readPendingDatagrams() {
     int packetSizeWithHeader = -1;
-
+    long long ms = QDateTime::currentMSecsSinceEpoch();
+    long datagrams = 0;
+    if (ms - _previousReadTime > 80) {
+        qDebug() << "[THREAD] Socket::readPendingDatagrams " << QThread::currentThread()->objectName() << "(" << QThread::currentThreadId() << ")" << QThread::currentThread()->priority() << " t: " << (ms - _previousReadTime);
+    }
+    _previousReadTime = ms;
     while (_udpSocket.hasPendingDatagrams() && (packetSizeWithHeader = _udpSocket.pendingDatagramSize()) != -1) {
-
+        datagrams++;
         // we're reading a packet so re-start the readyRead backup timer
         _readyReadBackupTimer->start();
 
@@ -410,6 +425,10 @@ void Socket::readPendingDatagrams() {
                 }
             }
         }
+    }
+    long long ms2 = QDateTime::currentMSecsSinceEpoch();
+    if (datagrams > 2) {
+        qDebug() << "[READ-DATAGRAMS] time (d:" << datagrams << ") t: " << (ms2 - ms) ;
     }
 }
 

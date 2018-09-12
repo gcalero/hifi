@@ -18,8 +18,10 @@
 #include "NetworkLogging.h"
 #include "NodeList.h"
 #include "SharedUtil.h"
+#include <QtCore/QThread>
+#include <QDateTime>
 
-PacketReceiver::PacketReceiver(QObject* parent) : QObject(parent) {
+PacketReceiver::PacketReceiver(QObject* parent) : QObject(parent), _previousTime(0) {
     qRegisterMetaType<QSharedPointer<NLPacket>>();
     qRegisterMetaType<QSharedPointer<NLPacketList>>();
     qRegisterMetaType<QSharedPointer<ReceivedMessage>>();
@@ -203,6 +205,7 @@ void PacketReceiver::unregisterListener(QObject* listener) {
 void PacketReceiver::handleVerifiedPacket(std::unique_ptr<udt::Packet> packet) {
     // if we're supposed to drop this packet then break out here
     if (_shouldDropPackets) {
+        qDebug() << "[THREAD] handleVerifiedPacket (ShouldDropPackets!) " << QThread::currentThread()->objectName() << "(" << QThread::currentThreadId() << ")" << QThread::currentThread()->priority();
         return;
     }
     
@@ -293,15 +296,22 @@ void PacketReceiver::handleVerifiedMessage(QSharedPointer<ReceivedMessage> recei
         static const QByteArray QSHAREDPOINTER_NODE_NORMALIZED = QMetaObject::normalizedType("QSharedPointer<Node>");
         static const QByteArray SHARED_NODE_NORMALIZED = QMetaObject::normalizedType("SharedNodePointer");
 
+        long long ms = QDateTime::currentMSecsSinceEpoch();
+
         // one final check on the QPointer before we go to invoke
         if (listener.object) {
             if (metaMethod.parameterTypes().contains(SHARED_NODE_NORMALIZED)) {
+                if (_previousTime - ms  > 80) {
+                    qDebug() << "[THREAD] PacketReceiver::handleVerifiedMessage " <<  listener.object << " " <<  QThread::currentThread()->objectName() << "(" << QThread::currentThreadId() << ")" << QThread::currentThread()->priority() << " t:" << (ms-_previousTime);
+                }
                 success = metaMethod.invoke(listener.object,
                                             connectionType,
                                             Q_ARG(QSharedPointer<ReceivedMessage>, receivedMessage),
                                             Q_ARG(SharedNodePointer, matchingNode));
+                _previousTime =  ms;
 
             } else if (metaMethod.parameterTypes().contains(QSHAREDPOINTER_NODE_NORMALIZED)) {
+                qDebug() << "[THREAD] handleVerifiedMessage QSHAREDPOINTER_NODE_NORMALIZED " << QThread::currentThread()->objectName() << "(" << QThread::currentThreadId() << ")" << QThread::currentThread()->priority();
                 success = metaMethod.invoke(listener.object,
                                             connectionType,
                                             Q_ARG(QSharedPointer<ReceivedMessage>, receivedMessage),

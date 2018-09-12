@@ -102,6 +102,7 @@ public:
 
     void setupCodec(CodecPluginPointer codec, const QString& codecName, int numChannels);
     void cleanupCodec();
+    QByteArray _mockBuffer;
 
 signals:
     void mismatchedAudioCodec(SharedNodePointer sendingNode, const QString& currentCodec, const QString& recievedCodec);

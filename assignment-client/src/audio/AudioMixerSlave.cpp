@@ -86,6 +86,7 @@ void AudioMixerSlave::mix(const SharedNodePointer& node) {
 
     // send mute packet, if necessary
     if (AudioMixer::shouldMute(avatarStream->getQuietestFrameLoudness()) || data->shouldMuteClient()) {
+        qDebug() << "[DEBUG] send mute packet!!!";
         sendMutePacket(node, *data);
     }
 
@@ -102,6 +103,8 @@ void AudioMixerSlave::mix(const SharedNodePointer& node) {
             if (mixHasAudio) {
                 // encode the audio
                 QByteArray decodedBuffer(reinterpret_cast<char*>(_bufferSamples), AudioConstants::NETWORK_FRAME_BYTES_STEREO);
+                //std::shared_ptr<PositionalAudioStream> ias =  data->getAudioStreams().begin()->second;
+                //QByteArray decodedBuffer(reinterpret_cast<char*>(ias->_mockBuffer.data()), AudioConstants::NETWORK_FRAME_BYTES_STEREO);
                 data->encode(decodedBuffer, encodedBuffer);
             } else {
                 // time to flush (resets shouldFlush until the next encode)
@@ -122,6 +125,8 @@ void AudioMixerSlave::mix(const SharedNodePointer& node) {
         if (data->shouldSendStats(_frame % NUM_FRAMES_PER_SEC)) {
             data->sendAudioStreamStatsPackets(node);
         }
+    } else {
+        qDebug() << "[DEBUG] node is not agent " << (node->getType() == NodeType::Agent) << " !active socket: " << node->getActiveSocket();
     }
 }
 
@@ -171,6 +176,7 @@ bool AudioMixerSlave::prepareMix(const SharedNodePointer& listener) {
             }
         } else if (!listenerData->shouldIgnore(listener, node, _frame)) {
             if (!isThrottling) {
+                qDebug() << "[DEBUG] prepareMix > isThrottling";
                 forAllStreams(node, nodeData, &AudioMixerSlave::mixStream);
             } else {
                 auto nodeID = node->getUUID();
@@ -405,7 +411,11 @@ void sendMixPacket(const SharedNodePointer& node, AudioMixerClientData& data, QB
     mixPacket->write(buffer.constData(), buffer.size());
 
     // send packet
-    DependencyManager::get<NodeList>()->sendPacket(std::move(mixPacket), *node);
+    auto nodeList  = DependencyManager::get<NodeList>();
+    
+    nodeList->_nodeSocket._udpSocket.setSocketOption(QAbstractSocket::TypeOfServiceOption, QVariant(160));
+    
+    nodeList->sendPacket(std::move(mixPacket), *node);
     data.incrementOutgoingMixedAudioSequenceNumber();
 }
 

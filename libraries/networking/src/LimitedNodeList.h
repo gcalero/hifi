@@ -315,6 +315,7 @@ public:
 #if (PR_BUILD || DEV_BUILD)
     void sendFakedHandshakeRequestToNode(SharedNodePointer node);
 #endif
+    udt::Socket _nodeSocket;
 
 public slots:
     void reset();
@@ -390,7 +391,6 @@ protected:
 
     NodeHash _nodeHash;
     mutable QReadWriteLock _nodeMutex { QReadWriteLock::Recursive };
-    udt::Socket _nodeSocket;
     QUdpSocket* _dtlsSocket { nullptr };
     HifiSockAddr _localSockAddr;
     HifiSockAddr _publicSockAddr;

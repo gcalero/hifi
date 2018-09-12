@@ -287,6 +287,16 @@ class Stats : public QQuickItem {
     STATS_PROPERTY(float, avatarSimulationTime, 0)
     Q_PROPERTY(QStringList animStackNames READ animStackNames NOTIFY animStackNamesChanged)
 
+    long long _lastAudioMixerMinInKbpsTime;
+    long long _lastAudioMixerMaxInKbpsTime;
+    int _audioMixerInKbpsMinRecent;
+    int _audioMixerInKbpsMaxRecent;
+
+    long long _lastAudioMixerMinOutKbpsTime;
+    long long _lastAudioMixerMaxOutKbpsTime;
+    int _audioMixerOutKbpsMinRecent;
+    int _audioMixerOutKbpsMaxRecent;
+
 public:
     static Stats* getInstance();
 

@@ -69,6 +69,7 @@ public:
     void handleMessageFailure(HifiSockAddr from, udt::Packet::MessageNumber messageNumber);
     
 private:
+    long long _previousTime;
     struct Listener {
         QPointer<QObject> object;
         QMetaMethod method;

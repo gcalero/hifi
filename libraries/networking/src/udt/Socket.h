@@ -25,7 +25,8 @@
 #include "../HifiSockAddr.h"
 #include "TCPVegasCC.h"
 #include "Connection.h"
-
+#define SOCKET_TOS_CRITIC_ECP 160
+#define SOCKET_TOS_ROUTINE 0
 //#define UDT_CONNECTION_DEBUG
 
 class UDTTest;
@@ -54,7 +55,7 @@ class Socket : public QObject {
 public:
     using StatsVector = std::vector<std::pair<HifiSockAddr, ConnectionStats::Stats>>;
     
-    Socket(QObject* object = 0, bool shouldChangeSocketOptions = true);
+    Socket(QObject* object = 0, bool shouldChangeSocketOptions = true, int tos = SOCKET_TOS_ROUTINE);
     
     quint16 localPort() const { return _udpSocket.localPort(); }
     
@@ -87,6 +88,7 @@ public:
     void messageFailed(Connection* connection, Packet::MessageNumber messageNumber);
     
     StatsVector sampleStatsForAllConnections();
+    QUdpSocket _udpSocket { this };
 
 #if (PR_BUILD || DEV_BUILD)
     void sendFakedHandshakeRequest(const HifiSockAddr& sockAddr);
@@ -107,6 +109,7 @@ private slots:
     void handleStateChanged(QAbstractSocket::SocketState socketState);
 
 private:
+    long long _previousReadTime;
     void setSystemBufferSizes();
     Connection* findOrCreateConnection(const HifiSockAddr& sockAddr);
     bool socketMatchesNodeOrDomain(const HifiSockAddr& sockAddr);
@@ -120,7 +123,6 @@ private:
     Q_INVOKABLE void writeReliablePacket(Packet* packet, const HifiSockAddr& sockAddr);
     Q_INVOKABLE void writeReliablePacketList(PacketList* packetList, const HifiSockAddr& sockAddr);
     
-    QUdpSocket _udpSocket { this };
     PacketFilterOperator _packetFilterOperator;
     PacketHandler _packetHandler;
     MessageHandler _messageHandler;
@@ -140,6 +142,7 @@ private:
     std::unique_ptr<CongestionControlVirtualFactory> _ccFactory { new CongestionControlFactory<TCPVegasCC>() };
 
     bool _shouldChangeSocketOptions { true };
+    int _tos { 0 };
 
     int _lastPacketSizeRead { 0 };
     SequenceNumber _lastReceivedSequenceNumber;

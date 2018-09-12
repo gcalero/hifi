@@ -121,11 +121,12 @@ public slots:
     void sendSelectAudioFormat(SharedNodePointer node, const QString& selectedCodecName);
 
 private:
+    long long _previousProcessTime;
     struct PacketQueue : public std::queue<QSharedPointer<ReceivedMessage>> {
         QWeakPointer<Node> node;
     };
     PacketQueue _packetQueue;
-
+    long long _lastReceivedPacketTime;
     QReadWriteLock _streamsLock;
     AudioStreamMap _audioStreams; // microphone stream from avatar is stored under key of null UUID
 

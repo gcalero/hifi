@@ -50,7 +50,7 @@ const std::set<NodeType_t> SOLO_NODE_TYPES = {
 };
 
 LimitedNodeList::LimitedNodeList(int socketListenPort, int dtlsListenPort) :
-    _nodeSocket(this),
+    _nodeSocket(this, true, SOCKET_TOS_CRITIC_ECP),
     _packetReceiver(new PacketReceiver(this))
 {
     qRegisterMetaType<ConnectionStep>("ConnectionStep");
