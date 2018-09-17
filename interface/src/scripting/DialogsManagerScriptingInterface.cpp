@@ -41,6 +41,11 @@ void DialogsManagerScriptingInterface::showLoginDialog() {
         "showLoginDialog", Qt::QueuedConnection);
 }
 
+void DialogsManagerScriptingInterface::enableAndroidLogin(bool enable) {
+    QMetaObject::invokeMethod(DependencyManager::get<DialogsManager>().data(),
+                              "enableAndroidLogin", Qt::QueuedConnection, Q_ARG(bool, enable));
+}
+
 void DialogsManagerScriptingInterface::showFeed() {
     QMetaObject::invokeMethod(DependencyManager::get<DialogsManager>().data(),
         "showFeed", Qt::QueuedConnection);

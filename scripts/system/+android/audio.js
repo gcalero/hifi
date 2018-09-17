@@ -46,6 +46,7 @@ function init() {
 
 function onMuteClicked() {
     Audio.muted = !Audio.muted;
+    DialogsManager.enableAndroidLogin(Audio.muted);
 }
 
 function onMutePressed() {

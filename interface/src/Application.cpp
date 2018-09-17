@@ -1234,13 +1234,13 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
             nodeList.data(), SLOT(reset()));
 
     auto dialogsManager = DependencyManager::get<DialogsManager>();
-#if defined(Q_OS_ANDROID)
+/*#if defined(Q_OS_ANDROID)
     connect(accountManager.data(), &AccountManager::authRequired, this, []() {
         AndroidHelper::instance().showLoginDialog();
     });
 #else
     connect(accountManager.data(), &AccountManager::authRequired, dialogsManager.data(), &DialogsManager::showLoginDialog);
-#endif
+#endif*/
     connect(accountManager.data(), &AccountManager::usernameChanged, this, &Application::updateWindowTitle);
 
     // set the account manager's root URL and trigger a login request if we don't have the access token
@@ -2302,7 +2302,8 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
     connect(&AndroidHelper::instance(), &AndroidHelper::enterBackground, this, &Application::enterBackground);
     connect(&AndroidHelper::instance(), &AndroidHelper::enterForeground, this, &Application::enterForeground);
     AndroidHelper::instance().notifyLoadComplete();
-#else
+#endif
+
     static int CHECK_LOGIN_TIMER = 3000;
     QTimer* checkLoginTimer = new QTimer(this);
     checkLoginTimer->setInterval(CHECK_LOGIN_TIMER);
@@ -2320,7 +2321,6 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
     });
     Setting::Handle<bool>{"loginDialogPoppedUp", false}.set(false);
     checkLoginTimer->start();
-#endif
 }
 
 void Application::updateVerboseLogging() {

@@ -18,6 +18,7 @@
 #include <MainWindow.h>
 #include <PathUtils.h>
 #include <ui/TabletScriptingInterface.h>
+#include "AndroidHelper.h"
 
 #include "AddressBarDialog.h"
 #include "ConnectionFailureDialog.h"
@@ -115,6 +116,21 @@ void DialogsManager::toggleLoginDialog() {
 
 void DialogsManager::showLoginDialog() {
     LoginDialog::showWithSelection();
+}
+
+void DialogsManager::enableAndroidLogin(bool enable) {
+#if defined(Q_OS_ANDROID)
+    auto accountManager = DependencyManager::get<AccountManager>();
+    disconnect(accountManager.data(), &AccountManager::authRequired, this, nullptr);
+    if (enable) {
+        connect(accountManager.data(), &AccountManager::authRequired, this, [] {
+            AndroidHelper::instance().showLoginDialog();
+        });
+    } else {
+        connect(accountManager.data(), &AccountManager::authRequired, this, &DialogsManager::showLoginDialog);
+    }
+    emit androidLoginEnabled(enable);
+#endif
 }
 
 void DialogsManager::showUpdateDialog() {

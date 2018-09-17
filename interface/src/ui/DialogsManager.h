@@ -48,6 +48,7 @@ public slots:
     void setDomainConnectionFailureVisibility(bool visible);
     void toggleLoginDialog();
     void showLoginDialog();
+    void enableAndroidLogin(bool enable);
     void octreeStatsDetails();
     void lodTools();
     void hmdTools(bool showTools);
@@ -61,6 +62,8 @@ public slots:
 signals:
     void addressBarShown(bool visible);
     void setUseFeed(bool useFeed);
+
+    void androidLoginEnabled(bool enabled);
 
 private slots:
     void hmdToolsClosed();

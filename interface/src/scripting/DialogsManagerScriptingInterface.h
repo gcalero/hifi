@@ -25,6 +25,7 @@ public slots:
     void showAddressBar();
     void hideAddressBar();
     void showLoginDialog();
+    void enableAndroidLogin(bool enable);
 
 signals:
     void addressBarShown(bool visible);

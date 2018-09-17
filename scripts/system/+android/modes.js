@@ -75,6 +75,7 @@ function modeButtonPressed() {
 
 function modeButtonClicked() {
     switchToMode(nextMode[currentMode]);
+    Account.checkAndSignalForAccessToken();
 }
 
 function saveCurrentModeSetting(mode) {

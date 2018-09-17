@@ -19,6 +19,7 @@
 #include <plugins/PluginManager.h>
 #include <plugins/SteamClientPlugin.h>
 #include <ui/TabletScriptingInterface.h>
+#include <ui/DialogsManager.h>
 #include <UserActivityLogger.h>
 
 #include "AccountManager.h"
@@ -32,12 +33,17 @@ HIFI_QML_DEF(LoginDialog)
 
 LoginDialog::LoginDialog(QQuickItem *parent) : OffscreenQmlDialog(parent) {
     auto accountManager = DependencyManager::get<AccountManager>();
-#if !defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID)
+    auto dialogsManager = DependencyManager::get<DialogsManager>();
+    connect(dialogsManager.data(), &DialogsManager::androidLoginEnabled, this, &LoginDialog::enableDialog);
+#else
     connect(accountManager.data(), &AccountManager::loginComplete,
         this, &LoginDialog::handleLoginCompleted);
     connect(accountManager.data(), &AccountManager::loginFailed,
             this, &LoginDialog::handleLoginFailed);
 #endif
+
+
 }
 
 LoginDialog::~LoginDialog() {
@@ -278,4 +284,23 @@ void LoginDialog::signupFailed(QNetworkReply* reply) {
         static const QString DEFAULT_SIGN_UP_FAILURE_MESSAGE = "There was an unknown error while creating your account. Please try again later.";
         emit handleSignupFailed(DEFAULT_SIGN_UP_FAILURE_MESSAGE);
     }
+}
+
+void LoginDialog::enableDialog(bool androidLoginEnabled) {
+#if defined(Q_OS_ANDROID)
+    auto accountManager = DependencyManager::get<AccountManager>();
+    if (androidLoginEnabled) {
+        // if android login is enabled let's disconnect qml login
+        disconnect(accountManager.data(), &AccountManager::loginComplete,
+                this, &LoginDialog::handleLoginCompleted);
+        disconnect(accountManager.data(), &AccountManager::loginFailed,
+                this, &LoginDialog::handleLoginFailed);
+    } else {
+        // android login is disabled, connect qml login
+        connect(accountManager.data(), &AccountManager::loginComplete,
+                this, &LoginDialog::handleLoginCompleted);
+        connect(accountManager.data(), &AccountManager::loginFailed,
+                this, &LoginDialog::handleLoginFailed);
+    }
+#endif
 }
