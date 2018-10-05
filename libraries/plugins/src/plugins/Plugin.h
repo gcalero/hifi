@@ -75,6 +75,7 @@ public:
 
     virtual void saveSettings() const {}
     virtual void loadSettings() {}
+    virtual bool isRunning() const { return _active; }
 
 signals:
     // These signals should be emitted when a device is first known to be available. In some cases this will

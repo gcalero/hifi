@@ -143,11 +143,9 @@ def packages = [
         includeLibs: ['libtbb.so', 'libtbbmalloc.so'],
     ],
     hifiAC: [
-        file: 'libplugins_libhifiCodec.zip',
-        versionId: 'i31pW.qNbvFOXRxbyiJUxg3sphaFNmZU',
-        checksum: '9412a8e12c88a4096c1fc843bb9fe52d',
-        sharedLibFolder: '',
-        includeLibs: ['libplugins_libhifiCodec.so']
+        baseUrl: 'https://public.highfidelity.com/dependencies/',
+        file: 'codecSDK-android-2.0.zip',
+        checksum: 'aef2a852600d498d58aa586668191683',
     ],
     etc2comp: [
         file: 'etc2comp-patched-armv8-libcpp.tgz',
@@ -367,7 +365,8 @@ task downloadDependencies {
     doLast {
         packages.each { entry ->
             def filename = entry.value['file'];
-            def url = baseUrl + filename;
+            def dependencyBaseUrl = entry.value['baseUrl']
+            def url = (dependencyBaseUrl?.trim() ? dependencyBaseUrl : baseUrl) + filename;
             if (entry.value.containsKey('versionId')) {
                 url = url + '?versionId=' + entry.value['versionId']
             }

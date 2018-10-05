@@ -18,8 +18,11 @@ elseif (UNIX)
   set(DOWNLOAD_URL https://public.highfidelity.com/dependencies/codecSDK-linux-2.0.zip)
   set(DOWNLOAD_MD5 67fb7755f9bcafb98a9fceea53bc7481)
 else()
+  MESSAGE(STATUS "External hifiAudioCodec returning")
   return()
 endif()
+
+  MESSAGE(STATUS "[HIFI-AUDIO-CODEC] External hifiAudioCodec download url ${DOWNLOAD_URL}")
 
 ExternalProject_Add(
   ${EXTERNAL_NAME}
@@ -35,6 +38,7 @@ ExternalProject_Add(
 set_target_properties(${EXTERNAL_NAME} PROPERTIES FOLDER "hidden/externals")
 
 ExternalProject_Get_Property(${EXTERNAL_NAME} SOURCE_DIR)
+  MESSAGE(STATUS "[HIFI-AUDIO-CODEC] ${SOURCE_DIR} ${EXTERNAL_NAME}")
 
 set(${EXTERNAL_NAME_UPPER}_INCLUDE_DIRS ${SOURCE_DIR}/include CACHE TYPE INTERNAL)
 
