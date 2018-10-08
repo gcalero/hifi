@@ -115,6 +115,9 @@ protected:
 
     void renderFromTexture(gpu::Batch& batch, const gpu::TexturePointer texture, glm::ivec4 viewport, const glm::ivec4 scissor, gpu::FramebufferPointer fbo);
     void renderFromTexture(gpu::Batch& batch, const gpu::TexturePointer texture, glm::ivec4 viewport, const glm::ivec4 scissor);
+
+    virtual void prepareFrameBuffer();
+
     virtual void updateFrameData();
     virtual glm::mat4 getViewCorrection() { return glm::mat4(); }
 

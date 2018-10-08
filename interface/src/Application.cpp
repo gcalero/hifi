@@ -4879,6 +4879,7 @@ void Application::loadSettings() {
     Setting::Handle<bool> firstRun { Settings::firstRun, true };
     bool isFirstPerson = false;
     if (firstRun.get()) {
+#if !defined(Q_OS_ANDROID) // CLD
         // If this is our first run, and no preferred devices were set, default to
         // an HMD device if available.
         auto displayPlugins = pluginManager->getDisplayPlugins();
@@ -4893,6 +4894,7 @@ void Application::loadSettings() {
         }
 
         isFirstPerson = (qApp->isHMDMode());
+#endif
 
     } else {
         // if this is not the first run, the camera will be initialized differently depending on user settings

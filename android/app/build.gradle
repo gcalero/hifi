@@ -31,6 +31,8 @@ android {
                     '-DSTABLE_BUILD=' + STABLE_BUILD,
                     '-DDISABLE_QML=OFF',
                     '-DDISABLE_KTX_CACHE=OFF',
+                    '-DGVR_LIBPATH=' + HIFI_ANDROID_PRECOMPILED + '/gvr/gvr-android-sdk-1.170/libraries/jni',
+                    '-DGVR_INCLUDE=' + HIFI_ANDROID_PRECOMPILED + '/gvr/gvr-android-sdk-1.170/libraries/headers',
                     '-DUSE_BREAKPAD=' + (System.getenv("CMAKE_BACKTRACE_URL") && System.getenv("CMAKE_BACKTRACE_TOKEN") ? 'ON' : 'OFF');
             }
         }
@@ -127,8 +129,6 @@ android {
 }
 
 dependencies {
-    implementation 'com.google.vr:sdk-audio:1.80.0'
-    implementation 'com.google.vr:sdk-base:1.80.0'
 
 
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
@@ -146,6 +146,9 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.71828'
 
     compile 'com.sothree.slidinguppanel:library:3.4.0'
+
+    compile 'com.google.vr:sdk-audio:1.170.0'
+    compile 'com.google.vr:sdk-base:1.170.0'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 }

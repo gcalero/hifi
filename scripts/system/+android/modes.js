@@ -74,7 +74,8 @@ function modeButtonPressed() {
 }
 
 function modeButtonClicked() {
-    switchToMode(nextMode[currentMode]);
+    //switchToMode(nextMode[currentMode]);
+    Menu.setIsOptionChecked("Daydream", true);
 }
 
 function saveCurrentModeSetting(mode) {

@@ -44,7 +44,7 @@ public:
     void setInputPluginProvider(const InputPluginProvider& provider);
     void setCodecPluginProvider(const CodecPluginProvider& provider);
     void setInputPluginSettingsPersister(const InputPluginSettingsPersister& persister);
-    
+
 private:
     PluginManager() = default;
 

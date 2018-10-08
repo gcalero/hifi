@@ -1,6 +1,6 @@
 set(TARGET_NAME native-lib)
 setup_hifi_library()
-link_hifi_libraries(shared task networking gl gpu qml image fbx render-utils physics entities octree ${PLATFORM_GL_BACKEND})
+link_hifi_libraries(shared task networking gl gpu qml image fbx render-utils physics entities octree ${PLATFORM_GL_BACKEND} daydream)
 target_opengl()
 target_bullet()
 
@@ -10,9 +10,9 @@ include_directories("${INTERFACE_DIR}/src")
 
 target_link_libraries(native-lib android log m interface)
 
-set(GVR_ROOT "${HIFI_ANDROID_PRECOMPILED}/gvr/gvr-android-sdk-1.101.0/")
+set(GVR_ROOT "${HIFI_ANDROID_PRECOMPILED}/gvr/gvr-android-sdk-1.170/")
 target_include_directories(native-lib PRIVATE  "${GVR_ROOT}/libraries/headers" "libraries/ui/src")
-target_link_libraries(native-lib "${GVR_ROOT}/libraries/libgvr.so" ui)
+target_link_libraries(native-lib "${GVR_ROOT}/libraries/jni/arm64-v8a/libgvr.so" ui)
 
 # finished libraries
 # core -> qt

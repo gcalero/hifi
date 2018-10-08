@@ -640,6 +640,8 @@ void OpenGLDisplayPlugin::compositeLayers() {
     }
 }
 
+void OpenGLDisplayPlugin::prepareFrameBuffer() { }
+
 void OpenGLDisplayPlugin::internalPresent() {
     render([&](gpu::Batch& batch) {
         // Note: _displayTexture must currently be the same size as the display.
@@ -676,6 +678,11 @@ void OpenGLDisplayPlugin::present() {
             // Execute the frame rendering commands
             PROFILE_RANGE_EX(render, "execute", 0xff00ff00, frameId)
             _gpuContext->executeFrame(_currentFrame);
+        }
+
+        {
+            PROFILE_RANGE_EX(render, "prepareFrameBuffer", 0xff00ffff, (uint64_t)presentCount())
+            prepareFrameBuffer(); // CLD Added only for daydream, review
         }
 
         // Write all layers to a local framebuffer

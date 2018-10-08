@@ -109,7 +109,8 @@ const LoaderList& getLoadedPlugins() {
             qInfo() << "Loading runtime plugins from " << pluginPath;
 #if defined(Q_OS_ANDROID)
             // Can be a better filter and those libs may have a better name to destinguish them from qt plugins
-            pluginDir.setNameFilters(QStringList() << "libplugins_lib*.so");
+            // For android only, add daydream lib as a plugin too
+            pluginDir.setNameFilters(QStringList() << "libplugins_lib*.so" << "libdaydream.so");
 #endif
             auto candidates = pluginDir.entryList();
             for (auto plugin : candidates) {

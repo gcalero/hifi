@@ -30,6 +30,10 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.SlidingDrawer;
 
+import com.google.vr.cardboard.DisplaySynchronizer;
+import com.google.vr.cardboard.DisplayUtils;
+import com.google.vr.ndk.base.GvrApi;
+
 import org.qtproject.qt5.android.QtLayout;
 import org.qtproject.qt5.android.QtSurface;
 import org.qtproject.qt5.android.bindings.QtActivity;
@@ -58,6 +62,7 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
 
     //public static native void handleHifiURL(String hifiURLString);
     private native long nativeOnCreate(InterfaceActivity instance, AssetManager assetManager);
+    private native long nativeOnCreateGvrSetup(InterfaceActivity instance, long gvrContextPtr);
     private native void nativeOnDestroy();
     private native void nativeGotoUrl(String url);
     private native void nativeGoToUser(String username);
@@ -72,7 +77,7 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
 
     private boolean nativeEnterBackgroundCallEnqueued = false;
     private SlidingDrawer webSlidingDrawer;
-//    private GvrApi gvrApi;
+    private GvrApi gvrApi;
     // Opaque native pointer to the Application C++ object.
     // This object is owned by the InterfaceActivity instance and passed to the native methods.
     //private long nativeGvrApi;
@@ -101,16 +106,16 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
 //            }
         }
         
-/*        DisplaySynchronizer displaySynchronizer = new DisplaySynchronizer(this, DisplayUtils.getDefaultDisplay(this));
+        DisplaySynchronizer displaySynchronizer = new DisplaySynchronizer(this, DisplayUtils.getDefaultDisplay(this));
         gvrApi = new GvrApi(this, displaySynchronizer);
-        */
+
 //        Log.d("GVR", "gvrApi.toString(): " + gvrApi.toString());
 
         assetManager = getResources().getAssets();
 
         //nativeGvrApi =
-            nativeOnCreate(this, assetManager /*, gvrApi.getNativeGvrContext()*/);
-
+        nativeOnCreate(this, assetManager);
+        nativeOnCreateGvrSetup(this, gvrApi.getNativeGvrContext());
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getRealSize(size);
 
@@ -361,4 +366,5 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
     public void onExpand() {
         keepInterfaceRunning = true;
     }
+
 }
