@@ -13,6 +13,7 @@ package io.highfidelity.hifiinterface;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -42,8 +43,10 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.highfidelity.hifiinterface.fragment.WebViewFragment;
+import io.highfidelity.hifiinterface.receiver.HeadsetStateReceiver;
 
 /*import com.google.vr.cardboard.DisplaySynchronizer;
 import com.google.vr.cardboard.DisplayUtils;
@@ -59,6 +62,7 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
     private static final int NORMAL_DPI = 160;
 
     private Vibrator mVibrator;
+    private HeadsetStateReceiver headsetStateReceiver;
 
     //public static native void handleHifiURL(String hifiURLString);
     private native long nativeOnCreate(InterfaceActivity instance, AssetManager assetManager);
@@ -70,6 +74,7 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
     private native void nativeEnterBackground();
     private native void nativeEnterForeground();
     private native long nativeOnExitVr();
+    private native void nativeInitAfterAppLoaded();
 
     private AssetManager assetManager;
 
@@ -156,6 +161,8 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         layoutParams.resolveLayoutDirection(View.LAYOUT_DIRECTION_RTL);
         qtLayout.addView(webSlidingDrawer, layoutParams);
         webSlidingDrawer.setVisibility(View.GONE);
+
+        headsetStateReceiver = new HeadsetStateReceiver();
     }
 
     @Override
@@ -166,6 +173,7 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         } else {
             nativeEnterBackground();
         }
+        unregisterReceiver(headsetStateReceiver);
         //gvrApi.pauseTracking();
     }
 
@@ -188,6 +196,7 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         nativeEnterForeground();
         surfacesWorkaround();
         keepInterfaceRunning = false;
+        registerReceiver(headsetStateReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
         //gvrApi.resumeTracking();
     }
 
@@ -301,14 +310,22 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         switch (activityName) {
             case "Home":
             case "Privacy Policy":
-            case "Login": {
                 nativeBeforeEnterBackground();
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.putExtra(MainActivity.EXTRA_FRAGMENT, activityName);
                 intent.putExtra(MainActivity.EXTRA_BACK_TO_SCENE, backToScene);
                 startActivity(intent);
                 break;
-            }
+            case "Login":
+                nativeBeforeEnterBackground();
+                Intent loginIntent = new Intent(this, MainActivity.class);
+                loginIntent.putExtra(MainActivity.EXTRA_FRAGMENT, activityName);
+                loginIntent.putExtra(MainActivity.EXTRA_BACK_TO_SCENE, backToScene);
+                if (args != null && args.containsKey(DOMAIN_URL)) {
+                    loginIntent.putExtra(DOMAIN_URL, (String) args.get(DOMAIN_URL));
+                }
+                startActivity(loginIntent);
+                break;
             case "WebView":
                 runOnUiThread(() -> {
                     webSlidingDrawer.setVisibility(View.VISIBLE);
@@ -340,6 +357,9 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         if (nativeEnterBackgroundCallEnqueued) {
             nativeEnterBackground();
         }
+        runOnUiThread(() -> {
+            nativeInitAfterAppLoaded();
+        });
     }
 
     public void performHapticFeedback(int duration) {
