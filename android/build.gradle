@@ -112,9 +112,9 @@ def packages = [
         checksum: '067b5fe16b220b5b1a1039ba51b062ae',
     ],
     gvr: [
-        file: 'gvrsdk_v1.101.0.tgz',
-        versionId: 'nqBV_j81Uc31rC7bKIrlya_Hah4v3y5r',
-        checksum: '57fd02baa069176ba18597a29b6b4fc7',
+        file: 'gvr-android-sdk-1.170.zip',
+        versionId: 'gUsR7xpdGycomizWF0MCx9PRm8CuBKqL',
+        checksum: 'b1da8c18f121cab0634c7d35a82f8f90',
     ],
     nvtt: [
         file: 'nvtt_armv8-libcpp.zip',
