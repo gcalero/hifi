@@ -11,7 +11,7 @@ if (ANDROID)
 
   set(GVR_ROOT "${HIFI_ANDROID_PRECOMPILED}/gvr/gvr-android-sdk-1.170/")
   target_include_directories(${TARGET_NAME} PRIVATE "${GVR_ROOT}/libraries/headers")
-  target_link_libraries(${TARGET_NAME} "${GVR_ROOT}/libraries/jni/arm64-v8a/libgvr.so")
+  target_link_libraries(${TARGET_NAME} "${GVR_ROOT}/libraries/libgvr.so")
 
   #find_package (GVR)
   #find_package (Qt5 COMPONENTS ${PLATFORM_QT_COMPONENTS})
