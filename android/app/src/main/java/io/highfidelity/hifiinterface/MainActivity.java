@@ -40,6 +40,8 @@ import io.highfidelity.hifiinterface.fragment.SettingsFragment;
 import io.highfidelity.hifiinterface.fragment.SignedInFragment;
 import io.highfidelity.hifiinterface.fragment.SignupFragment;import io.highfidelity.hifiinterface.task.DownloadProfileImageTask;
 
+import static io.highfidelity.hifiinterface.service.FirebaseMessagingService.NOTIFICATION_CONNECTED_USER;
+
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,
                                                                 LoginFragment.OnLoginInteractionListener,
                                                                 HomeFragment.OnHomeInteractionListener,
@@ -48,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                                                 SignedInFragment.OnSignedInInteractionListener {
 
     private static final int PROFILE_PICTURE_PLACEHOLDER = R.drawable.default_profile_avatar;
-    public static final String DEFAULT_FRAGMENT = "Home";
+    public static final String DEFAULT_FRAGMENT = "Login";
     public static final String EXTRA_FRAGMENT = "fragment";
     public static final String EXTRA_BACK_TO_SCENE = "backToScene";
     public static final String EXTRA_BACK_TO_URL = "url";
@@ -109,6 +111,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (getIntent() != null) {
             if (getIntent().hasExtra(EXTRA_FRAGMENT)) {
                 loadFragment(getIntent().getStringExtra(EXTRA_FRAGMENT));
+            } else if (getIntent().hasExtra(NOTIFICATION_CONNECTED_USER)) {
+                Log.d("[NOTIFICATION]", "MainActivity activity received user param: " + getIntent().getStringExtra(NOTIFICATION_CONNECTED_USER));
+                goToDomain(getIntent().getStringExtra(NOTIFICATION_CONNECTED_USER));
             } else {
                 loadFragment(DEFAULT_FRAGMENT);
             }

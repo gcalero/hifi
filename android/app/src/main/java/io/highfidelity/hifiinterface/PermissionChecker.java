@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
@@ -21,17 +22,27 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.highfidelity.hifiinterface.service.FirebaseMessagingService.NOTIFICATION_CONNECTED_USER;
+
 public class PermissionChecker extends Activity {
     private static final int REQUEST_PERMISSIONS = 20;
 
     private static final boolean CHOOSE_AVATAR_ON_STARTUP = false;
     private static final String TAG = "Interface";
 
+    private String notificationUserConnected;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent myIntent = new Intent(this, BreakpadUploaderService.class);
         startService(myIntent);
+
+        if (getIntent().hasExtra(NOTIFICATION_CONNECTED_USER)) {
+            Log.d("[NOTIFICATION]", "PermissionChecker activity received user param: " + getIntent().getStringExtra(NOTIFICATION_CONNECTED_USER));
+            notificationUserConnected = getIntent().getStringExtra(NOTIFICATION_CONNECTED_USER);
+        }
+
         if (CHOOSE_AVATAR_ON_STARTUP) {
             showMenu();
         }
@@ -76,6 +87,9 @@ public class PermissionChecker extends Activity {
 
     private void launchActivityWithPermissions(){
         Intent i = new Intent(this, InterfaceActivity.class);
+        if (!TextUtils.isEmpty(notificationUserConnected)) {
+            i.putExtra(NOTIFICATION_CONNECTED_USER, notificationUserConnected);
+        }
         startActivity(i);
         finish();
     }

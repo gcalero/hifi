@@ -130,7 +130,8 @@ dependencies {
     implementation 'com.google.vr:sdk-audio:1.80.0'
     implementation 'com.google.vr:sdk-base:1.80.0'
 
-
+    implementation 'com.google.firebase:firebase-core:16.0.3'
+    implementation 'com.google.firebase:firebase-messaging:17.3.2'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation 'com.android.support:design:26.1.0'
     compile 'com.android.support:support-v4:26.1.0'
@@ -153,3 +154,5 @@ dependencies {
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 }
+
+apply plugin: 'com.google.gms.google-services'

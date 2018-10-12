@@ -4,17 +4,27 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.view.View;
+
+import static io.highfidelity.hifiinterface.service.FirebaseMessagingService.NOTIFICATION_CONNECTED_USER;
 
 public class SplashActivity extends Activity {
 
     private native void registerLoadCompleteListener();
+
+    private String notificationUserConnected;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         registerLoadCompleteListener();
+
+        if (getIntent().hasExtra(NOTIFICATION_CONNECTED_USER)) {
+            notificationUserConnected = getIntent().getStringExtra(NOTIFICATION_CONNECTED_USER);
+        }
+
     }
 
     @Override
@@ -37,7 +47,11 @@ public class SplashActivity extends Activity {
     }
 
     public void onAppLoadedComplete() {
-        startActivity(new Intent(this, MainActivity.class));
+        Intent mainIntent = new Intent(this, MainActivity.class);
+        if (!TextUtils.isEmpty(notificationUserConnected)) {
+            mainIntent.putExtra(NOTIFICATION_CONNECTED_USER, notificationUserConnected);
+        }
+        startActivity(mainIntent);
         SplashActivity.this.finish();
     }
 }

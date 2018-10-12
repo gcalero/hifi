@@ -44,6 +44,8 @@ import java.util.Map;
 import io.highfidelity.hifiinterface.fragment.WebViewFragment;
 import io.highfidelity.hifiinterface.receiver.HeadsetStateReceiver;
 
+import static io.highfidelity.hifiinterface.service.FirebaseMessagingService.NOTIFICATION_CONNECTED_USER;
+
 /*import com.google.vr.cardboard.DisplaySynchronizer;
 import com.google.vr.cardboard.DisplayUtils;
 import com.google.vr.ndk.base.GvrApi;*/
@@ -135,7 +137,13 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
                 getActionBar().hide();
             }
         });
-        startActivity(new Intent(this, SplashActivity.class));
+
+        Intent splashIntent = new Intent(this, SplashActivity.class);
+        if (intent.hasExtra(NOTIFICATION_CONNECTED_USER) && !intent.getStringExtra(NOTIFICATION_CONNECTED_USER).isEmpty()) {
+            Log.d("[NOTIFICATION]", "Interface activity received user param: " + intent.getStringExtra(NOTIFICATION_CONNECTED_USER));
+            splashIntent.putExtra(NOTIFICATION_CONNECTED_USER, intent.getStringExtra(NOTIFICATION_CONNECTED_USER));
+        }
+        startActivity(splashIntent);
         mVibrator = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
 
         FrameLayout mainLayout = findViewById(android.R.id.content);

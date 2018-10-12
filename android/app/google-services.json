@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1038089206382",
+    "firebase_url": "https://hifitest-c121e.firebaseio.com",
+    "project_id": "hifitest-c121e",
+    "storage_bucket": "hifitest-c121e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1038089206382:android:805aa1891cde39bd",
+        "android_client_info": {
+          "package_name": "io.highfidelity.hifiinterface"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1038089206382-aru4mhg4qdudkfi1n4mdepttj3ut6rt3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "io.highfidelity.hifiinterface",
+            "certificate_hash": "c0d8287aa6385a1d7dfa2154193c971a5005dc95"
+          }
+        },
+        {
+          "client_id": "1038089206382-0dveffi2jgqq9t5cnv8u959kjdq3n6ot.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0dH0Rx1uKe7v4QcOhRJqWdlifmzj3TIM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1038089206382-0dveffi2jgqq9t5cnv8u959kjdq3n6ot.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
