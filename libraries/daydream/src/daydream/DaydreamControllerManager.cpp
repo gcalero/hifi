@@ -45,12 +45,12 @@ bool DaydreamControllerManager::activate() {
     GvrState::init(__gvr_context);
     GvrState *gvrState = GvrState::getInstance();
 
-    if (gvrState->_gvr_api) {
+    if (gvrState->_gvr_api && !gvrState->_controller_api) {
         gvrState->_controller_api.reset(new gvr::ControllerApi);
         gvrState->_controller_api->Init(gvr::ControllerApi::DefaultOptions(), gvrState->_gvr_context);
-        gvrState->_controller_api->Resume();
     }
 
+    gvrState->_controller_api->Resume();
     // TODO: retrieve state from daydream API
     unsigned int controllerConnected = true;
 
@@ -137,8 +137,9 @@ void DaydreamControllerManager::DaydreamControllerDevice::update(float deltaTime
     // Print new API status and connection state, if they changed.
     if (currentApiStatus != gvrState->_last_controller_api_status ||
           currentConnectionState != gvrState->_last_controller_connection_state) {
-            //gvr_controller_api_status_to_string(currentApiStatus) << ", connection state: " <<
-            //gvr_controller_connection_state_to_string(currentConnectionState);
+            qDebug() << "[teleport.js] controller API status " <<
+                gvr_controller_api_status_to_string(currentApiStatus) << ", connection state: " <<
+                gvr_controller_connection_state_to_string(currentConnectionState);
 
             gvrState->_last_controller_api_status = currentApiStatus;
             gvrState->_last_controller_connection_state = currentConnectionState;
@@ -181,18 +182,18 @@ void DaydreamControllerManager::DaydreamControllerDevice::handleController(GvrSt
 
       bool trackpadClicked = false;
 
-      if (gvrState->_last_controller_api_status == gvr_controller_api_status::GVR_CONTROLLER_API_OK && 
+      if (gvrState->_last_controller_api_status == gvr_controller_api_status::GVR_CONTROLLER_API_OK &&
           gvrState->_last_controller_connection_state == gvr_controller_connection_state::GVR_CONTROLLER_CONNECTED) {
         for (int k = gvr_controller_button::GVR_CONTROLLER_BUTTON_NONE; k < gvr_controller_button::GVR_CONTROLLER_BUTTON_COUNT ;k++) {
-          bool pressed = gvrState->_controller_state.GetButtonDown(static_cast<gvr::ControllerButton>(k)); // Returns whether the given button was just pressed (transient).
-          bool pressing = gvrState->_controller_state.GetButtonState(static_cast<gvr::ControllerButton>(k)); // Returns whether the given button is currently pressed.
-          bool touched = gvrState->_controller_state.GetButtonUp(static_cast<gvr::ControllerButton>(k)); // Returns whether the given button was just released (transient).
-          //if ((pressed || touched || pressing) || rand() % 100 > 98)
+          bool justPressed = gvrState->_controller_state.GetButtonDown(static_cast<gvr::ControllerButton>(k)); // Returns whether the given button was just justPressed (transient).
+          bool currentlyPressed = gvrState->_controller_state.GetButtonState(static_cast<gvr::ControllerButton>(k)); // Returns whether the given button is currently justPressed.
+          bool justReleased = gvrState->_controller_state.GetButtonUp(static_cast<gvr::ControllerButton>(k)); // Returns whether the given button was just released (transient).
+          //if ((justPressed || justReleased || currentlyPressed) || rand() % 100 > 98)
               //qDebug() << "[DAYDREAM-CONTROLLER]: call handleButtonEvent(deltaTime: " << deltaTime << ", k: " << k <<
-              //        ", pressed: " << pressed << ", touched: " << touched << ",  pressing: " <<  pressing;
+              //        ", justPressed: " << justPressed << ", justReleased: " << justReleased << ",  currentlyPressed: " <<  currentlyPressed;
 
-          trackpadClicked = trackpadClicked || ( gvr_controller_button::GVR_CONTROLLER_BUTTON_CLICK && (pressed || touched || pressing) );
-          handleButtonEvent(deltaTime, k, pressed, touched, pressing);
+          trackpadClicked = trackpadClicked || ( gvr_controller_button::GVR_CONTROLLER_BUTTON_CLICK && (justPressed || justReleased || currentlyPressed) );
+          handleButtonEvent(deltaTime, k, justPressed, justReleased, currentlyPressed);
 
         }
       }
@@ -230,7 +231,7 @@ void DaydreamControllerManager::DaydreamControllerDevice::handlePoseEvent(float 
 }
 
 // These functions do translation from the Steam IDs to the standard controller IDs
-void DaydreamControllerManager::DaydreamControllerDevice::handleButtonEvent(float deltaTime, uint32_t button, bool pressed, bool touched, bool pressing) {
+void DaydreamControllerManager::DaydreamControllerDevice::handleButtonEvent(float deltaTime, uint32_t button, bool justPressed, bool justReleased, bool currentlyPressed) {
 
     using namespace controller;
     // gvr_controller_button::GVR_CONTROLLER_BUTTON_CLICK = 1,  ///< Touchpad Click.
@@ -238,8 +239,7 @@ void DaydreamControllerManager::DaydreamControllerDevice::handleButtonEvent(floa
     // gvr_controller_button::GVR_CONTROLLER_BUTTON_APP = 3,
     // gvr_controller_button::GVR_CONTROLLER_BUTTON_VOLUME_UP = 4,
     // gvr_controller_button::GVR_CONTROLLER_BUTTON_VOLUME_DOWN = 5,
-
-    if (pressed) {
+    if (justPressed) {
         if (button == gvr_controller_button::GVR_CONTROLLER_BUTTON_CLICK) {
             //qDebug() << "[DAYDREAM-CONTROLLER]: RT_CLICK inserted";
             //_buttonPressedMap.insert(RT_CLICK);
@@ -259,7 +259,7 @@ void DaydreamControllerManager::DaydreamControllerDevice::handleButtonEvent(floa
         }
     }
 
-    if (pressing) {
+    if (currentlyPressed) {
         if (button == gvr_controller_button::GVR_CONTROLLER_BUTTON_CLICK) {
             //qDebug() << "[DAYDREAM-CONTROLLER]: RT_CLICK inserted (continues)";
             //_buttonPressedMap.insert(RT_CLICK);
@@ -272,7 +272,7 @@ void DaydreamControllerManager::DaydreamControllerDevice::handleButtonEvent(floa
         }
     }
 
-    if (touched) {
+    if (justReleased) {
           // TODO: this is also duplicated. Perhaps we discard some feature later
          if (button == gvr_controller_button::GVR_CONTROLLER_BUTTON_CLICK) {
           // TODO: this is also duplicated. Perhaps we discard some feature later

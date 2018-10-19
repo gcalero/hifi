@@ -33,6 +33,7 @@ import android.widget.SlidingDrawer;
 
 import com.google.vr.cardboard.DisplaySynchronizer;
 import com.google.vr.cardboard.DisplayUtils;
+import com.google.vr.ndk.base.AndroidCompat;
 import com.google.vr.ndk.base.GvrApi;
 
 import org.qtproject.qt5.android.QtLayout;
@@ -91,6 +92,8 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         //Log.d("[VR]", "Entering Vr mode (java)");
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         inVrMode = true;
+        // Enable VR Mode.
+        AndroidCompat.setVrModeEnabled(this, true);
     }
 
     @Override

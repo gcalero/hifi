@@ -36,7 +36,7 @@ var DEBUG_SCRIPTS = [
     "system/+android/stats.js"
 ];
 
-var DEFAULT_SCRIPTS_SEPARATE = [ ];
+var DEFAULT_SCRIPTS_SEPARATE = [ "system/controllers/controllerScripts.js" ];
 
 // add a menu item for debugging
 var MENU_CATEGORY = "Developer";
