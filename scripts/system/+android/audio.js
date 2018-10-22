@@ -39,6 +39,20 @@ function init() {
 
     onMuteToggled();
 
+    if (!HMD.active) {
+        connectButton();        
+    }
+    
+    HMD.displayModeChanged.connect(function (isHMDMode) {
+        if (isHMDMode && HMD.active) {
+            tearDown();
+        } else {
+            connectButton();
+        }
+    });
+}
+
+function connectButton() {
     audioButton.clicked.connect(onMuteClicked);
     audioButton.entered.connect(onMutePressed);
     Audio.mutedChanged.connect(onMuteToggled);
@@ -58,12 +72,16 @@ function onMuteToggled() {
     printd("Audio button is active: " + audioButton.isActive);
 }
 
-Script.scriptEnding.connect(function () {
+function tearDown() {
     if(audioButton) {
         audioButton.clicked.disconnect(onMuteClicked);
         audioButton.entered.disconnect(onMutePressed);
-        Audio.mutedChanged.connect(onMuteToggled);
+        Audio.mutedChanged.disconnect(onMuteToggled);
     }
+}
+
+Script.scriptEnding.connect(function () {
+    tearDown();
 });
 
 init();

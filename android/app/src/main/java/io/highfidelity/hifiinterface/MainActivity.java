@@ -48,7 +48,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                                                 SignedInFragment.OnSignedInInteractionListener {
 
     private static final int PROFILE_PICTURE_PLACEHOLDER = R.drawable.default_profile_avatar;
-    public static final String DEFAULT_FRAGMENT = "Home";
+    public static final String FRAGMENT_HOME = "Home";
+    public static final String FRAGMENT_LOGIN = "Login";
+    public static final String FRAGMENT_PRIVACY_POLICY = "Privacy Policy";
+    public static final String FRAGMENT_PEOPLE = "People";
+    public static final String FRAGMENT_SETTINGS = "Settings";
+    public static final String DEFAULT_FRAGMENT = FRAGMENT_HOME;
     public static final String EXTRA_FRAGMENT = "fragment";
     public static final String EXTRA_BACK_TO_SCENE = "backToScene";
     public static final String EXTRA_BACK_TO_URL = "url";
@@ -130,17 +135,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void loadFragment(String fragment) {
         switch (fragment) {
-            case "Login":
+            case FRAGMENT_LOGIN:
                 loadLoginFragment();
                 break;
-            case "Home":
+            case FRAGMENT_HOME:
                 loadHomeFragment(true);
                 break;
-            case "Privacy Policy":
+            case FRAGMENT_PRIVACY_POLICY:
                 loadPrivacyPolicyFragment();
                 break;
-            case "People":
+            case FRAGMENT_PEOPLE:
                 loadPeopleFragment();
+                break;
+            case FRAGMENT_SETTINGS:
+                loadSettingsFragment();
                 break;
             default:
                 Log.e(TAG, "Unknown fragment " + fragment);
@@ -438,6 +446,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 backToScene = false;
                 goToLastLocation();
             }
+        } else if (backToScene) {
+            backToScene = false;
+            goToLastLocation();
         } else {
             finishAffinity();
         }

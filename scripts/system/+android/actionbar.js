@@ -34,8 +34,18 @@ function init() {
         activeBgOpacity: 0.0
     });
     
-    backButton.entered.connect(onBackPressed);
-    backButton.clicked.connect(onBackClicked);
+    if (!HMD.active) {
+        connectButton();        
+    }
+
+    HMD.displayModeChanged.connect(function (isHMDMode) {
+    backButton.clicked.connect(onBackClicked);          if (isHMDMode && HMD.active) {
+            tearDown();
+        } else {
+            connectButton();
+        }
+    });
+
 }
 
 function onBackPressed() {
@@ -46,12 +56,22 @@ function onBackClicked() {
    Window.openAndroidActivity("Home", false);
 }
 
+function connectButton() {
+    if (backButton) {
+        backButton.entered.connect(onBackPressed);
+        backButton.clicked.connect(onBackClicked);
+    }
+}
 
-Script.scriptEnding.connect(function() {
+function tearDown() {
     if(backButton) {
         backButton.entered.disconnect(onBackPressed);
         backButton.clicked.disconnect(onBackClicked);
     }
+}
+
+Script.scriptEnding.connect(function() {
+    tearDown();
 });
 
 init();
