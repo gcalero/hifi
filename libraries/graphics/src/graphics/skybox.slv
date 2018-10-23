@@ -29,7 +29,7 @@ void main(void) {
 
     // standard transform
     TransformCamera cam = getTransformCamera();
-    vec3 clipDir = vec3(inPosition.xy, 0.0);
+    vec3 clipDir = vec3(inPosition.xy, 1.0);
     vec3 eyeDir;
     <$transformClipToEyeDir(cam, clipDir, eyeDir)$>
     <$transformEyeToWorldDir(cam, eyeDir, _normal)$>
