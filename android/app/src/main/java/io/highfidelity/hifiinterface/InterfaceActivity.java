@@ -93,8 +93,6 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
     //private long nativeGvrApi;
     
     public void enterVr() {
-        //Log.d("[VR]", "Entering Vr mode (java)");
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         inVrMode = true;
         // Enable VR Mode.
         AndroidCompat.setVrModeEnabled(this, true);
@@ -247,12 +245,6 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         // Checks the orientation of the screen
         if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-            if (inVrMode) {
-                inVrMode = false;
-                nativeOnExitVr();
-            } else {
-                Log.w("[VR]", "Portrait detected but not in VR mode. Should not happen");
-            }
         }
         surfacesWorkaround();
     }
