@@ -9,16 +9,15 @@
 #include <QtCore/QStringList>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QTextStream>
-
 #include <QtAndroidExtras/QAndroidJniObject>
+#include <QObject>
 
 #include <android/log.h>
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 
 #include <shared/Storage.h>
-#include <QObject>
-
+#include <scripting/MenuScriptingInterface.h>
 #include <AddressManager.h>
 #include "AndroidHelper.h"
 #include <udt/PacketHeaders.h>
@@ -224,6 +223,7 @@ JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnResu
 }
 
 JNIEXPORT void Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnExitVr(JNIEnv* env, jobject obj) {
+    MenuScriptingInterface::getInstance()->setIsOptionChecked("Android", true);
 }
 
 // HifiUtils

@@ -19,16 +19,20 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.SlidingDrawer;
 
 import com.google.vr.cardboard.DisplaySynchronizer;
@@ -44,14 +48,10 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import io.highfidelity.hifiinterface.fragment.WebViewFragment;
 import io.highfidelity.hifiinterface.receiver.HeadsetStateReceiver;
 
-/*import com.google.vr.cardboard.DisplaySynchronizer;
-import com.google.vr.cardboard.DisplayUtils;
-import com.google.vr.ndk.base.GvrApi;*/
 
 public class InterfaceActivity extends QtActivity implements WebViewFragment.OnWebViewInteractionListener {
 
@@ -61,6 +61,7 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
     private static final int WEB_DRAWER_RIGHT_MARGIN = 262;
     private static final int WEB_DRAWER_BOTTOM_MARGIN = 150;
     private static final int NORMAL_DPI = 160;
+    private static final int MARGIN_GVR_BUTTONS_DP = 10;
 
     private Vibrator mVibrator;
     private HeadsetStateReceiver headsetStateReceiver;
@@ -84,6 +85,9 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
     private boolean nativeEnterBackgroundCallEnqueued = false;
     private SlidingDrawer webSlidingDrawer;
     private GvrApi gvrApi;
+    private ImageView vrCloseButton;
+    private ImageView vrSettingsButton;
+
     // Opaque native pointer to the Application C++ object.
     // This object is owned by the InterfaceActivity instance and passed to the native methods.
     //private long nativeGvrApi;
@@ -94,6 +98,9 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         inVrMode = true;
         // Enable VR Mode.
         AndroidCompat.setVrModeEnabled(this, true);
+        runOnUiThread( () -> {
+            setGvrButtonsVisibility(true);
+        } );
     }
 
     @Override
@@ -121,19 +128,10 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
 
         assetManager = getResources().getAssets();
 
-        //nativeGvrApi =
         nativeOnCreate(this, assetManager);
         nativeOnCreateGvrSetup(this, gvrApi.getNativeGvrContext());
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getRealSize(size);
-
-        try {
-            PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
-            String version = pInfo.versionName;
-//            setAppVersion(version);
-        } catch (PackageManager.NameNotFoundException e) {
-            Log.e("GVR", "Error getting application version", e);
-        }
 
         final View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
 
@@ -166,6 +164,40 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         webSlidingDrawer.setVisibility(View.GONE);
 
         headsetStateReceiver = new HeadsetStateReceiver();
+        addGvrButtons(mainLayout);
+    }
+
+    private void addGvrButtons(FrameLayout mainLayout) {
+        float density = Resources.getSystem().getDisplayMetrics().density;
+        vrCloseButton = new ImageView(this);
+        vrCloseButton.setImageResource(R.drawable.ic_gvr_close);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.TOP | Gravity.LEFT;
+        lp.topMargin = ((int)(density * MARGIN_GVR_BUTTONS_DP));
+        lp.leftMargin = ((int)(density * MARGIN_GVR_BUTTONS_DP));
+        vrCloseButton.setLayoutParams(lp);
+        vrCloseButton.setOnClickListener(view -> onGvrCloseButtonClick());
+        vrCloseButton.setVisibility(View.GONE);
+        mainLayout.addView(vrCloseButton);
+        vrSettingsButton = new ImageView(this);
+        vrSettingsButton.setImageResource(R.drawable.ic_gvr_settings);
+        lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.TOP | Gravity.RIGHT;
+        lp.topMargin = ((int)(density * MARGIN_GVR_BUTTONS_DP));
+        lp.rightMargin = ((int)(density * MARGIN_GVR_BUTTONS_DP));
+        vrSettingsButton.setLayoutParams(lp);
+        vrSettingsButton.setOnClickListener(view -> onGvrSettingsButtonClick());
+        vrSettingsButton.setVisibility(View.GONE);
+        mainLayout.addView(vrSettingsButton);
+    }
+    private void onGvrCloseButtonClick() {
+        assert inVrMode;
+        inVrMode = false;
+        setGvrButtonsVisibility(false);
+        nativeOnExitVr();
+    }
+    private void onGvrSettingsButtonClick() {
+        openAndroidActivity(MainActivity.FRAGMENT_SETTINGS, true);
     }
 
     @Override
@@ -214,12 +246,10 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         super.onConfigurationChanged(newConfig);
         // Checks the orientation of the screen
         if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-//            Log.d("[VR]", "Portrait, forcing landscape");
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             if (inVrMode) {
                 inVrMode = false;
-//                Log.d("[VR]", "Starting VR exit");
-                nativeOnExitVr();                
+                nativeOnExitVr();
             } else {
                 Log.w("[VR]", "Portrait detected but not in VR mode. Should not happen");
             }
@@ -311,15 +341,16 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
 
     public void openAndroidActivity(String activityName, boolean backToScene, HashMap args) {
         switch (activityName) {
-            case "Home":
-            case "Privacy Policy":
+            case MainActivity.FRAGMENT_HOME:
+            case MainActivity.FRAGMENT_PRIVACY_POLICY:
+            case MainActivity.FRAGMENT_SETTINGS:
                 nativeBeforeEnterBackground();
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.putExtra(MainActivity.EXTRA_FRAGMENT, activityName);
                 intent.putExtra(MainActivity.EXTRA_BACK_TO_SCENE, backToScene);
                 startActivity(intent);
                 break;
-            case "Login":
+            case MainActivity.FRAGMENT_LOGIN:
                 nativeBeforeEnterBackground();
                 Intent loginIntent = new Intent(this, MainActivity.class);
                 loginIntent.putExtra(MainActivity.EXTRA_FRAGMENT, activityName);
@@ -390,4 +421,13 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         keepInterfaceRunning = true;
     }
 
+    public void setGvrButtonsVisibility(boolean visible) {
+        if (visible) {
+            vrCloseButton.setVisibility(View.VISIBLE);
+            vrSettingsButton.setVisibility(View.VISIBLE);
+        } else {
+            vrCloseButton.setVisibility(View.GONE);
+            vrSettingsButton.setVisibility(View.GONE);
+        }
+    }
 }
