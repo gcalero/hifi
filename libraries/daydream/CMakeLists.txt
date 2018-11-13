@@ -1,7 +1,7 @@
 set(TARGET_NAME daydream)
 #AUTOSCRIBE_SHADER_LIB(gpu daydream)
 setup_hifi_library(OpenGL)
-link_hifi_libraries(shared plugins ui-plugins gl gpu ${PLATFORM_GL_BACKEND} graphics render ui display-plugins qml task ktx image networking model-networking procedural render-utils  controllers input-plugins)
+link_hifi_libraries(shared shaders plugins ui-plugins gl gpu ${PLATFORM_GL_BACKEND} graphics render ui display-plugins qml task ktx image networking model-networking procedural render-utils  controllers input-plugins)
 
 target_opengl()
 
