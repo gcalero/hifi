@@ -90,19 +90,7 @@ function keyPressEvent(event) {
     }
 }
 
-function toggleRadarMode() {
-    if (radar) {
-        endRadar();
-    } else {
-        startRadar();
-    }
-}
-
 function fakeDoubleTap(event) {
-    // CLD - temporarily disable toggling mode through double tap
-    // * As we have a new UI for toggling between modes, it may be discarded
-    // completely in the future.
-    // toggleRadarMode();
     teleporter.dragTeleportUpdate(event);
     teleporter.dragTeleportRelease(event);
 }
@@ -1119,21 +1107,12 @@ function startRadar() {
 
 function endRadar() {
     printd("-- endRadar");
-    Camera.mode = "third person";
     radar = false;
 
     Controller.setVPadEnabled(true);
 
     disconnectRadarModeEvents();
     hideAllAvatarIcons();
-}
-
-function onRadarModeClicked() {
-    startRadar();
-}
-
-function onMyViewModeClicked() {
-    endRadar();
 }
 
 radarModeInterface.startRadarMode = function() {

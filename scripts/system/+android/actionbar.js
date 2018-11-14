@@ -39,7 +39,7 @@ function init() {
     }
 
     HMD.displayModeChanged.connect(function (isHMDMode) {
-    backButton.clicked.connect(onBackClicked);          if (isHMDMode && HMD.active) {
+        if (isHMDMode && HMD.active) {
             tearDown();
         } else {
             connectButton();

@@ -60,8 +60,26 @@ function init() {
     
     switchToMode(getCurrentModeSetting());
     
-    modeButton.entered.connect(modeButtonPressed);
-    modeButton.clicked.connect(modeButtonClicked);
+    if (!HMD.active) {
+        connectButton();        
+    }
+
+    HMD.displayModeChanged.connect(function (isHMDMode) {
+        if (isHMDMode && HMD.active) {
+            connectButton();
+            shutdown();
+        } else {
+            printd("exit VR?");
+            switchToMode(getCurrentModeSetting());
+        }
+    });
+}
+
+function connectButton() {
+    if (modeButton) {
+        modeButton.entered.connect(modeButtonPressed);
+        modeButton.clicked.connect(modeButtonClicked);
+    }
 }
 
 function shutdown() {
@@ -82,7 +100,7 @@ function saveCurrentModeSetting(mode) {
     Settings.setValue(SETTING_CURRENT_MODE_KEY, mode);
 }
 
-function getCurrentModeSetting(mode) {
+function getCurrentModeSetting() {
     return Settings.getValue(SETTING_CURRENT_MODE_KEY, DEFAULT_MODE);
 }
 
@@ -101,6 +119,7 @@ function switchToMode(newMode) {
         displayNames.ending();
         clickWeb.ending();
     } else  if (currentMode == MODE_MY_VIEW) {
+        Menu.setIsOptionChecked("Third Person", true);
         // nothing to do yet
         displayNames.init();
         clickWeb.init();
