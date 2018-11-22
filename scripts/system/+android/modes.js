@@ -67,6 +67,9 @@ function init() {
 function shutdown() {
     modeButton.entered.disconnect(modeButtonPressed);
     modeButton.clicked.disconnect(modeButtonClicked);
+    if (barQml) {
+        barQml.close();
+    }
 }
 
 function modeButtonPressed() {

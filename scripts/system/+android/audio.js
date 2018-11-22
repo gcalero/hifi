@@ -58,12 +58,19 @@ function onMuteToggled() {
     printd("Audio button is active: " + audioButton.isActive);
 }
 
-Script.scriptEnding.connect(function () {
+function tearDown() {
     if(audioButton) {
         audioButton.clicked.disconnect(onMuteClicked);
         audioButton.entered.disconnect(onMutePressed);
-        Audio.mutedChanged.connect(onMuteToggled);
+        Audio.mutedChanged.disconnect(onMuteToggled);
     }
+    if (audiobar) {
+        audiobar.close();
+    }
+}
+
+Script.scriptEnding.connect(function () {
+    tearDown();
 });
 
 init();

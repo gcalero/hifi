@@ -158,7 +158,7 @@ void AndroidHelper::stopScriptEngine() {
     QMetaObject::invokeMethod(qApp, [] {
         auto scriptEngines = DependencyManager::get<ScriptEngines>().data();
         scriptEngines->stopAllScripts();
-    });
+    }, Qt::BlockingQueuedConnection);
 }
 
 void AndroidHelper::restartScriptEngine() {

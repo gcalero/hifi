@@ -47,11 +47,18 @@ function onBackClicked() {
 }
 
 
-Script.scriptEnding.connect(function() {
+function tearDown() {
     if(backButton) {
         backButton.entered.disconnect(onBackPressed);
         backButton.clicked.disconnect(onBackClicked);
     }
+    if (actionbar) {
+        actionbar.close();
+    }
+}
+
+Script.scriptEnding.connect(function() {
+    tearDown();
 });
 
 init();

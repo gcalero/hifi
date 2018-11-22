@@ -34,6 +34,16 @@ function init() {
     });
 }
 
+function tearDown() {
+    if (statsbar) {
+        statsbar.close();
+    }
+}
+
+Script.scriptEnding.connect(function () {
+    tearDown();
+});
+
 init();
 
 }()); // END LOCAL_SCOPE
