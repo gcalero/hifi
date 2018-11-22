@@ -547,7 +547,18 @@ JNIEXPORT void Java_io_highfidelity_hifiinterface_WebViewActivity_nativeProcessU
 }
 
 JNIEXPORT void JNICALL
-Java_io_highfidelity_hifiinterface_receiver_HeadsetStateReceiver_notifyHeadsetOn(JNIEnv *env,
+Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnStart(JNIEnv *env, jobject instance, jboolean isStartingApp) {
+    if (!isStartingApp) {
+        AndroidHelper::instance().restartScriptEngine();
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnStop(JNIEnv *env, jobject instance) {
+    AndroidHelper::instance().stopScriptEngine();
+}
+
+JNIEXPORT void JNICALLJava_io_highfidelity_hifiinterface_receiver_HeadsetStateReceiver_notifyHeadsetOn(JNIEnv *env,
                                                                                  jobject instance,
                                                                                  jboolean pluggedIn) {
     AndroidHelper::instance().notifyHeadsetOn(pluggedIn);

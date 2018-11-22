@@ -15,6 +15,7 @@
 #include <src/ui/LoginDialog.h>
 #include "Application.h"
 #include "Constants.h"
+#include <ScriptEngines.h>
 
 #if defined(qApp)
 #undef qApp
@@ -152,3 +153,18 @@ void AndroidHelper::signupFailed(QNetworkReply* reply) {
         emit handleSignupFailed(DEFAULT_SIGN_UP_FAILURE_MESSAGE);
     }
 }
+
+void AndroidHelper::stopScriptEngine() {
+    QMetaObject::invokeMethod(qApp, [] {
+        auto scriptEngines = DependencyManager::get<ScriptEngines>().data();
+        scriptEngines->stopAllScripts();
+    });
+}
+
+void AndroidHelper::restartScriptEngine() {
+    QMetaObject::invokeMethod(qApp, [] {
+        auto scriptEngines = DependencyManager::get<ScriptEngines>().data();
+        scriptEngines->loadScripts();
+    });
+}
+

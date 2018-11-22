@@ -32,6 +32,9 @@ public:
     void notifyBeforeEnterBackground();
     void notifyEnterBackground();
 
+    void stopScriptEngine();
+    void restartScriptEngine();
+    
     void performHapticFeedback(int duration);
     void processURL(const QString &url);
     void notifyHeadsetOn(bool pluggedIn);

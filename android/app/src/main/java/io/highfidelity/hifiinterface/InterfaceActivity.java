@@ -15,8 +15,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.graphics.Point;
@@ -62,6 +60,8 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
 
     //public static native void handleHifiURL(String hifiURLString);
     private native long nativeOnCreate(InterfaceActivity instance, AssetManager assetManager);
+    private native void nativeOnStart(boolean isStarting);
+    private native void nativeOnStop();
     private native void nativeOnDestroy();
     private native void nativeGotoUrl(String url);
     private native void nativeGoToUser(String username);
@@ -146,12 +146,13 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         super.onStart();
         nativeEnterBackgroundCallEnqueued = false;
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        nativeOnStart(isLoading);
     }
 
     @Override
     protected void onStop() {
+        nativeOnStop();
         super.onStop();
-
     }
 
     @Override
