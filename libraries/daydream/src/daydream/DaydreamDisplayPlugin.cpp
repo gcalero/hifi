@@ -60,7 +60,13 @@ void DaydreamDisplayPlugin::compositeLayers() {
         compositeOverlay(compBatch);
     }*/
 
-    // CLD Call/use hud operator as opengldis..
+    {
+        PROFILE_RANGE_EX(render_detail, "handleHUDBatch", 0xff0077ff, (uint64_t)presentCount())
+        auto hudOperator = getHUDOperator();
+        withPresentThreadLock([&] {
+            _hudOperator = hudOperator;
+        });
+    }
 
     /*auto compositorHelper = DependencyManager::get<CompositorHelper>();
     if (compositorHelper->getReticleVisible()) {

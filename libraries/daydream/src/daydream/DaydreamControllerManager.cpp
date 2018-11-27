@@ -137,12 +137,17 @@ void DaydreamControllerManager::DaydreamControllerDevice::update(float deltaTime
     // Print new API status and connection state, if they changed.
     if (currentApiStatus != gvrState->_last_controller_api_status ||
           currentConnectionState != gvrState->_last_controller_connection_state) {
-            qDebug() << "[teleport.js] controller API status " <<
+            qDebug() << "[DAY] controller API status " <<
                 gvr_controller_api_status_to_string(currentApiStatus) << ", connection state: " <<
                 gvr_controller_connection_state_to_string(currentConnectionState);
 
             gvrState->_last_controller_api_status = currentApiStatus;
             gvrState->_last_controller_connection_state = currentConnectionState;
+    }
+
+    // Will update this 'button' status in every update
+    if (currentConnectionState == GVR_CONTROLLER_CONNECTED) {
+        _buttonPressedMap.insert(controller::GUIDE);
     }
 
     handleController(gvrState, deltaTime, inputCalibrationData);
@@ -357,6 +362,8 @@ controller::Input::NamedVector DaydreamControllerManager::DaydreamControllerDevi
         // 3d location of controller
         makePair(RIGHT_HAND, "RightHand"),
 
+        // This will tell us if the controller is connected
+        makePair(GUIDE, "Guide"),
     };
 
     return availableInputs;
