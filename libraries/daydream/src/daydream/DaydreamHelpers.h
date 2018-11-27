@@ -16,7 +16,7 @@
 #include "vr/gvr/capi/include/gvr_types.h"
 
 
-std::array<float, 16> MatrixToGLArray(const gvr::Mat4f& matrix);
+glm::mat4 GvrMat4fToGlmMat4(const gvr::Mat4f& matrix);
 
 gvr::Mat4f MatrixMul(const gvr::Mat4f& m1, const gvr::Mat4f& m2);
 

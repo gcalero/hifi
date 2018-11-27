@@ -85,6 +85,7 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
     private boolean nativeEnterBackgroundCallEnqueued = false;
     private SlidingDrawer mWebSlidingDrawer;
     private GvrApi gvrApi;
+    private DisplaySynchronizer displaySynchronizer;
     private ImageView vrCloseButton;
     private ImageView vrSettingsButton;
 
@@ -119,15 +120,15 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
 //            }
         }
         
-        DisplaySynchronizer displaySynchronizer = new DisplaySynchronizer(this, DisplayUtils.getDefaultDisplay(this));
+        displaySynchronizer = new DisplaySynchronizer(this, DisplayUtils.getDefaultDisplay(this));
         gvrApi = new GvrApi(this, displaySynchronizer);
 
 //        Log.d("GVR", "gvrApi.toString(): " + gvrApi.toString());
 
         assetManager = getResources().getAssets();
 
-        nativeOnCreate(this, assetManager);
         nativeOnCreateGvrSetup(this, gvrApi.getNativeGvrContext());
+        nativeOnCreate(this, assetManager);
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getRealSize(size);
 
@@ -180,14 +181,15 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
 
     @Override
     protected void onPause() {
-        super.onPause();
         if (super.isLoading) {
             nativeEnterBackgroundCallEnqueued = true;
         } else {
             nativeEnterBackground();
         }
         unregisterReceiver(headsetStateReceiver);
-        //gvrApi.pauseTracking();
+        gvrApi.pauseTracking();
+        displaySynchronizer.onPause();
+        super.onPause();
     }
 
     @Override
@@ -210,7 +212,8 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         surfacesWorkaround();
         keepInterfaceRunning = false;
         registerReceiver(headsetStateReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
-        //gvrApi.resumeTracking();
+        gvrApi.resumeTracking();
+        displaySynchronizer.onResume();
     }
 
     @Override

@@ -10,6 +10,7 @@
         { "from": "Daydream.RSTouch", "to": "Standard.RSTouch" },
 		{ "from": "Daydream.RightPrimaryThumb", "to": "Standard.RightPrimaryThumb" },
 
-        { "from": "Daydream.RightHand", "to": "Standard.RightHand", "when": [ "Application.InHMD" ]  }    
+        { "from": "Daydream.RightHand", "to": "Standard.RightHand", "when": [ "Application.InHMD" ]  },
+        { "from": "Daydream.Head", "to" : "Standard.Head", "when" : [ "Application.InHMD"] }
     ]
 }

@@ -106,6 +106,8 @@ GvrState::GvrState(gvr_context *ctx) :
 void GvrState::init(gvr_context *ctx) {
     if (ctx && !instance) {
         instance = new GvrState(ctx);
+    } else if (!ctx) {
+        qWarning() << "[HEAD] GVR context not present.";
     }
 }
 

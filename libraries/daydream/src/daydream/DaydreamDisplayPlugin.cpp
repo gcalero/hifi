@@ -116,7 +116,7 @@ void DaydreamDisplayPlugin::internalPresent() {
     gvr::ClockTimePoint pred_time = gvr::GvrApi::GetTimePointNow();
     pred_time.monotonic_system_time_nanos += 50000000; // 50ms
 
-    gvr::Mat4f head_view = gvrState->_gvr_api->GetHeadSpaceFromStartSpaceRotation(pred_time);
+    gvr::Mat4f head_view = gvrState->_gvr_api->GetHeadSpaceFromStartSpaceTransform(pred_time);
     _frame.Unbind();
     {PROFILE_RANGE_EX(render, "gvrFrameSubmit", 0xff33ff22, (uint64_t)presentCount())
     _frame.Submit(gvrState->_viewport_list, head_view);
@@ -194,10 +194,8 @@ bool DaydreamDisplayPlugin::beginFrameRender(uint32_t frameIndex) {
     gvr::ClockTimePoint pred_time = gvr::GvrApi::GetTimePointNow();
     pred_time.monotonic_system_time_nanos += 50000000; // 50ms
 
-    gvr::Mat4f head_view =
-    gvrState->_gvr_api->GetHeadSpaceFromStartSpaceRotation(pred_time);
-
-    glm::mat4 glmHeadView = glm::inverse(glm::make_mat4(&(MatrixToGLArray(head_view)[0])));
+    gvr::Mat4f head_view = gvrState->_gvr_api->GetHeadSpaceFromStartSpaceTransform(pred_time);
+    glm::mat4 glmHeadView = glm::inverse(GvrMat4fToGlmMat4(head_view));
     _currentRenderFrameInfo.renderPose = glmHeadView;
     _currentRenderFrameInfo.presentPose = _currentRenderFrameInfo.renderPose;
 
@@ -254,6 +252,9 @@ void DaydreamDisplayPlugin::daydreamGLSetup() {
     if (!executed) {
         executed = 1;
 
+        if (!__gvr_context) {
+            qWarning() << "[HEAD] GVR context not present (DaydreamDisplayPlugin).";
+        }
         GvrState::init(__gvr_context);
         GvrState *gvrState = GvrState::getInstance();
 
@@ -302,13 +303,10 @@ void DaydreamDisplayPlugin::daydreamGLSetup() {
 void DaydreamDisplayPlugin::updatePresentPose() {
     gvr::ClockTimePoint pred_time = gvr::GvrApi::GetTimePointNow();
     pred_time.monotonic_system_time_nanos += 50000000; // 50ms
-    
+
     GvrState *gvrState = GvrState::getInstance();
-    gvr::Mat4f head_view =
-    gvrState->_gvr_api->GetHeadSpaceFromStartSpaceRotation(pred_time);
-
-    glm::mat4 glmHeadView = glm::rotate(glm::inverse(glm::make_mat4(&(MatrixToGLArray(head_view)[0]))), glm::radians(-90.0f), glm::vec3(0,0,1)); // glm::inverse(glm::make_mat4(&(MatrixToGLArray(head_view)[0]))); // <zglm::make_mat4(&(MatrixToGLArray(head_view)[0])); // CLD testing..
-
+    gvr::Mat4f head_view = gvrState->_gvr_api->GetHeadSpaceFromStartSpaceTransform(pred_time);
+    glm::mat4 glmHeadView = glm::inverse(GvrMat4fToGlmMat4(head_view));
     _currentPresentFrameInfo.presentPose = glmHeadView;
 
     if (gvrState->_controller_state.GetApiStatus() == gvr_controller_api_status::GVR_CONTROLLER_API_OK &&
@@ -333,12 +331,9 @@ void DaydreamDisplayPlugin::resetEyeProjections(GvrState *gvrState) {
     gvr::Mat4f proj_matrix = PerspectiveMatrixFromView(scratch_viewport.GetSourceFov(), 0.08, 16384.0);
 
     gvr::Mat4f mvp = MatrixMul(proj_matrix, left_eye_view);
-    std::array<float, 16> mvpArr = MatrixToGLArray(mvp);
+    glm::mat4 mvpMat = GvrMat4fToGlmMat4(mvp);
 
-    _eyeProjections[0][0] = vec4{mvpArr[0],mvpArr[1],mvpArr[2],mvpArr[3]};
-    _eyeProjections[0][1] = vec4{mvpArr[4],mvpArr[5],mvpArr[6],mvpArr[7]};
-    _eyeProjections[0][2] = vec4{mvpArr[8],mvpArr[9],mvpArr[10],mvpArr[11]};
-    _eyeProjections[0][3] = vec4{mvpArr[12],mvpArr[13],mvpArr[14],mvpArr[15]};
+    _eyeProjections[0] = mvpMat;
 
     gvrState->_viewport_list.GetBufferViewport(1, &scratch_viewport);
 
@@ -348,12 +343,9 @@ void DaydreamDisplayPlugin::resetEyeProjections(GvrState *gvrState) {
     //qDebug() << "[SKYBOX-DEBUG] scratch_viewport.GetSourceFov() " << scratch_viewport.GetSourceFov();
     proj_matrix = PerspectiveMatrixFromView(scratch_viewport.GetSourceFov(), 0.08, 16384.0);
     mvp = MatrixMul(proj_matrix, right_eye_view);
-    mvpArr = MatrixToGLArray(mvp);
+    mvpMat = GvrMat4fToGlmMat4(mvp);
 
-    _eyeProjections[1][0] = vec4{mvpArr[0],mvpArr[1],mvpArr[2],mvpArr[3]};
-    _eyeProjections[1][1] = vec4{mvpArr[4],mvpArr[5],mvpArr[6],mvpArr[7]};
-    _eyeProjections[1][2] = vec4{mvpArr[8],mvpArr[9],mvpArr[10],mvpArr[11]};
-    _eyeProjections[1][3] = vec4{mvpArr[12],mvpArr[13],mvpArr[14],mvpArr[15]};
+    _eyeProjections[1] = mvpMat;
 
     for_each_eye([&](Eye eye) {
         _eyeInverseProjections[eye] = glm::inverse(_eyeProjections[eye]);

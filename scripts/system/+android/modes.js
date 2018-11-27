@@ -66,10 +66,12 @@ function init() {
 
     HMD.displayModeChanged.connect(function (isHMDMode) {
         if (isHMDMode && HMD.active) {
-            connectButton();
+            Controller.setVPadEnabled(false);
             shutdown();
         } else {
             printd("exit VR?");
+            connectButton();
+            Controller.setVPadEnabled(true);
             switchToMode(getCurrentModeSetting());
         }
     });

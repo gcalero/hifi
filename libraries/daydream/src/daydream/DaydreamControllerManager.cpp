@@ -147,31 +147,7 @@ void DaydreamControllerManager::DaydreamControllerDevice::update(float deltaTime
 
     handleController(gvrState, deltaTime, inputCalibrationData);
 
-    // handle haptics
-    /*
-    {
-        Locker locker(_lock);
-        if (_leftHapticDuration > 0.0f) {
-            hapticsHelper(deltaTime, true);
-        }
-        if (_rightHapticDuration > 0.0f) {
-            hapticsHelper(deltaTime, false);
-        }
-    }
-    */
-    /*using namespace controller;
-    qDebug() << "[DAYDREAM-CONTROLLER2] _buttonPressedMap and _axisStateMap FINAL STATUS: ";
-    qDebug() << "[DAYDREAM-CONTROLLER2] RX:" << nvlAxis(RX) << " RY:" << nvlAxis(RY)  << " RS:" << nvlButn(RS)
-                                            << " RS_TOUCH:" << nvlButn(RS_TOUCH) << " RT_CLICK:" << nvlButn(RT_CLICK)
-                                            << " RS_CENTER:" << nvlButn(RS_CENTER)
-                                            << " RS_X:" << nvlButn(RS_X) << " RS_Y:" << nvlButn(RS_Y);
-    qDebug() << "[DAYDREAM-CONTROLLER2] _buttonPressedMap and _axisStateMap CLEANING...: ";
-    _buttonPressedMap.erase(RS);
-    _buttonPressedMap.erase(RS_TOUCH);
-    qDebug() << "[DAYDREAM-CONTROLLER2] RX:" << nvlAxis(RX) << " RY:" << nvlAxis(RY)  << " RS:" << nvlButn(RS)
-                                            << " RS_TOUCH:" << nvlButn(RS_TOUCH) << " RT_CLICK:" << nvlButn(RT_CLICK)
-                                            << " RS_CENTER:" << nvlButn(RS_CENTER)
-                                            << " RS_X:" << nvlButn(RS_X) << " RS_Y:" << nvlButn(RS_Y);*/
+    handleHeadPose(gvrState, deltaTime, inputCalibrationData);
 }
 
 void DaydreamControllerManager::DaydreamControllerDevice::handleController(GvrState *gvrState, float deltaTime, const controller::InputCalibrationData& inputCalibrationData) {
@@ -207,20 +183,47 @@ void DaydreamControllerManager::DaydreamControllerDevice::handleController(GvrSt
 
 }
 
+void DaydreamControllerManager::DaydreamControllerDevice::handleHeadPose(GvrState *gvrState, 
+                                                                        float deltaTime, 
+                                                                        const controller::InputCalibrationData& inputCalibrationData) {
+    gvr::ClockTimePoint pred_time = gvr::GvrApi::GetTimePointNow();
+    pred_time.monotonic_system_time_nanos += 50000000; // 50ms
+
+    gvr::Mat4f head_view = gvrState->_gvr_api->GetHeadSpaceFromStartSpaceTransform(pred_time);
+    glm::mat4 glmHeadView = glm::inverse(GvrMat4fToGlmMat4(head_view));
+
+    //perform a 180 flip to make the HMD face the +z instead of -z, beacuse the head faces +z
+    glm::mat4 matYFlip = glmHeadView * Matrices::Y_180;
+
+    glm::vec3 headTranslation = extractTranslation(matYFlip);
+    glm::quat headRotation = glmExtractRotation(matYFlip);
+    glm::vec3 angles = glm::eulerAngles(headRotation);
+    controller::Pose pose(headTranslation, headRotation);
+
+    glm::mat4 worldToAvatar = glm::inverse(inputCalibrationData.avatarMat);
+    glm::mat4 sensorToAvatar = worldToAvatar * inputCalibrationData.sensorToWorldMat;
+    
+    glm::mat4 defaultHeadOffset = glm::inverse(inputCalibrationData.defaultCenterEyeMat) *
+                                                        inputCalibrationData.defaultHeadMat;
+    pose.valid = true;
+    controller::Pose result = pose.postTransform(defaultHeadOffset).transform(sensorToAvatar);
+    _poseStateMap[controller::HEAD] = result;
+}
+
 void DaydreamControllerManager::DaydreamControllerDevice::handlePoseEvent(float deltaTime, const controller::InputCalibrationData& inputCalibrationData, gvr::ControllerQuat gvrOrientation) {
     glm::quat orientation = toGlm(gvrOrientation);
     //qDebug() << "[DAYDREAM-CONTROLLER]: gvr::ControllerQuat GLM orientation: " << orientation.x << "," << orientation.y << "," << orientation.z << "," << orientation.w;
     auto pose = daydreamControllerPoseToHandPose(false, orientation);
-    vec3 tranz = pose.getTranslation();
-    quat rotz = pose.getRotation();
+    //vec3 tranz = pose.getTranslation();
+    //quat rotz = pose.getRotation();
     //qDebug() << "[DAYDREAM-CONTROLLER]: gvr::ControllerQuat handPose tranz : " << tranz.x << "," << tranz.y << "," << tranz.z;
     //qDebug() << "[DAYDREAM-CONTROLLER]: gvr::ControllerQuat handPose rotz : " << rotz.x << "," << rotz.y << "," << rotz.z << "," << rotz.w;
     //qDebug() << "[DAYDREAM-CONTROLLER]: gvr::ControllerQuat pose : " << orientation.x << "," << orientation.y "," << orientation.z "," << orientation.w;
     // transform into avatar frame
     glm::mat4 controllerToAvatar = glm::inverse(inputCalibrationData.avatarMat) * inputCalibrationData.sensorToWorldMat;
     auto pose2 = pose.transform(controllerToAvatar);
-    vec3 tranz2 = pose2.getTranslation();
-    quat rotz2 = pose2.getRotation();
+    //vec3 tranz2 = pose2.getTranslation();
+    //quat rotz2 = pose2.getRotation();
     //_poseStateMap[controller::RIGHT_HAND] = pose.transform(controllerToAvatar);
     _poseStateMap[controller::RIGHT_HAND] = pose2;
     //qDebug() << "[DAYDREAM-CONTROLLER]: gvr::ControllerQuat handPose tranz2: " << tranz2.x << "," << tranz2.y << "," << tranz2.z;
@@ -356,7 +359,7 @@ controller::Input::NamedVector DaydreamControllerManager::DaydreamControllerDevi
 
         // 3d location of controller
         makePair(RIGHT_HAND, "RightHand"),
-
+        makePair(HEAD, "Head"),
     };
 
     return availableInputs;
