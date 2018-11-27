@@ -58,10 +58,10 @@ function init() {
 
     });
     
-    switchToMode(getCurrentModeSetting());
     
     if (!HMD.active) {
         connectButton();        
+        switchToMode(getCurrentModeSetting());
     }
 
     HMD.displayModeChanged.connect(function (isHMDMode) {
