@@ -49,6 +49,7 @@ private:
         QString getDefaultMappingConfig() const override;
         void update(float deltaTime, const controller::InputCalibrationData& inputCalibrationData) override;
         void handleController(GvrState *gvrState, float deltaTime, const controller::InputCalibrationData& inputCalibrationData);
+        void handleHeadPose(GvrState *gvrState, float deltaTime, const controller::InputCalibrationData& inputCalibrationData);
         void handlePoseEvent(float deltaTime, const controller::InputCalibrationData& inputCalibrationData, gvr::ControllerQuat orientation);
         void handleButtonEvent(float deltaTime, uint32_t button, bool justPressed, bool justReleased, bool currentlyPressed);
         void handleAxisEvent(float deltaTime, bool isTouching, gvr_vec2f touchPos);

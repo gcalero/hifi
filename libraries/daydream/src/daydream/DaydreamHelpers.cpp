@@ -12,14 +12,11 @@
 #include <controllers/Pose.h>
 #include <QtCore/QDebug>
 
-/* TODO: check what matrix system to use overall and see if this is needed */
-std::array<float, 16> MatrixToGLArray(const gvr::Mat4f& matrix) {
-  // Note that this performs a *tranpose* to a column-major matrix array, as
-  // expected by GL.
-  std::array<float, 16> result;
+glm::mat4 GvrMat4fToGlmMat4(const gvr::Mat4f& matrix) {
+  glm::mat4 result;
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
-      result[j * 4 + i] = matrix.m[i][j];
+      result[j][i] = matrix.m[i][j];
     }
   }
   return result;
