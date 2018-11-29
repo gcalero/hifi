@@ -19,11 +19,12 @@ var SETTING_CURRENT_MODE_KEY = 'Android/Mode';
 var MODE_VR = "VR", MODE_RADAR = "RADAR", MODE_MY_VIEW = "MY VIEW";
 var DEFAULT_MODE = MODE_MY_VIEW;
 var nextMode = {};
-nextMode[MODE_RADAR]=MODE_MY_VIEW;
-nextMode[MODE_MY_VIEW]=MODE_RADAR;
+nextMode[MODE_MY_VIEW]=MODE_VR;
+nextMode[MODE_VR]=MODE_MY_VIEW;
 var modeLabel = {};
-modeLabel[MODE_RADAR]="TOP VIEW";
+//modeLabel[MODE_RADAR]="TOP VIEW";
 modeLabel[MODE_MY_VIEW]="MY VIEW";
+modeLabel[MODE_VR]="VR";
 
 var logEnabled = false;
 var radar = Script.require('./radar.js');
@@ -55,24 +56,24 @@ function init() {
         textSize: 38,
         fontFamily: "Raleway",
         fontBold: true
-
     });
     
     
     if (!HMD.active) {
         connectButton();        
-        switchToMode(getCurrentModeSetting());
+        switchToMode(nextMode[MODE_VR]); // adjust this if radar mode comes back
+    } else {
+        switchToMode(MODE_VR);
     }
 
     HMD.displayModeChanged.connect(function (isHMDMode) {
         if (isHMDMode && HMD.active) {
-            Controller.setVPadEnabled(false);
             shutdown();
+            switchToMode(MODE_VR);
         } else {
             printd("exit VR?");
             connectButton();
-            Controller.setVPadEnabled(true);
-            switchToMode(getCurrentModeSetting());
+            switchToMode(nextMode[MODE_VR]);
         }
     });
 
@@ -215,8 +216,7 @@ function modeButtonPressed() {
 }
 
 function modeButtonClicked() {
-    //switchToMode(nextMode[currentMode]);
-    Menu.setIsOptionChecked("Daydream", true);
+    switchToMode(nextMode[currentMode]);
 }
 
 function saveCurrentModeSetting(mode) {
@@ -241,11 +241,19 @@ function switchToMode(newMode) {
         radar.startRadarMode();
         displayNames.ending();
         clickWeb.ending();
+        barQml.setVisible(true);
+        Controller.setVPadEnabled(false);
     } else  if (currentMode == MODE_MY_VIEW) {
         Menu.setIsOptionChecked("Third Person", true);
         // nothing to do yet
         displayNames.init();
         clickWeb.init();
+        barQml.setVisible(true);
+        Controller.setVPadEnabled(true);
+    } else if (currentMode == MODE_VR) {
+        Menu.setIsOptionChecked("Daydream", true);
+        barQml.setVisible(false);
+        Controller.setVPadEnabled(false);
     } else {
         printd("Unknown view mode " + currentMode);
     }

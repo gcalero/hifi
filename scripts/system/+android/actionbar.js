@@ -35,14 +35,19 @@ function init() {
     });
     
     if (!HMD.active) {
-        connectButton();        
+        connectButton();
+        actionbar.setVisible(true);
+    } else {
+        actionbar.setVisible(false);
     }
 
     HMD.displayModeChanged.connect(function (isHMDMode) {
         if (isHMDMode && HMD.active) {
             tearDown();
+            actionbar.setVisible(false);
         } else {
             connectButton();
+            actionbar.setVisible(true);
         }
     });
 

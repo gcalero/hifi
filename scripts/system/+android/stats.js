@@ -32,6 +32,17 @@ function init() {
     statsButton.clicked.connect(function() {
         Menu.triggerOption("Show Statistics");
     });
+
+    statsbar.setVisible(!HMD.active);
+
+    HMD.displayModeChanged.connect(function (isHMDMode) {
+        if (isHMDMode && HMD.active) {
+            statsbar.setVisible(false);
+        } else {
+            statsbar.setVisible(true);
+        }
+    });
+
 }
 
 init();

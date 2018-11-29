@@ -12,6 +12,12 @@ Item {
     implicitWidth: row.width
     visible: false
 
+    property bool shown: false
+
+    onShownChanged: {
+        stats.visible = shown;
+    }
+
     Component.onCompleted: {
         stats.parentChanged.connect(fill);
         fill();

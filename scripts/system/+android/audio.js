@@ -39,15 +39,22 @@ function init() {
 
     onMuteToggled();
 
+    Audio.mutedChanged.connect(onMuteToggled);
+
     if (!HMD.active) {
-        connectButton();        
+        connectButton();
+        audiobar.setVisible(true);
+    } else {
+        audiobar.setVisible(false);
     }
     
     HMD.displayModeChanged.connect(function (isHMDMode) {
         if (isHMDMode && HMD.active) {
             tearDown();
+            audiobar.setVisible(false);
         } else {
             connectButton();
+            audiobar.setVisible(true);
         }
     });
 }
@@ -55,7 +62,6 @@ function init() {
 function connectButton() {
     audioButton.clicked.connect(onMuteClicked);
     audioButton.entered.connect(onMutePressed);
-    Audio.mutedChanged.connect(onMuteToggled);
 }
 
 function onMuteClicked() {
@@ -76,12 +82,12 @@ function tearDown() {
     if(audioButton) {
         audioButton.clicked.disconnect(onMuteClicked);
         audioButton.entered.disconnect(onMutePressed);
-        Audio.mutedChanged.disconnect(onMuteToggled);
     }
 }
 
 Script.scriptEnding.connect(function () {
     tearDown();
+    Audio.mutedChanged.disconnect(onMuteToggled);
 });
 
 init();

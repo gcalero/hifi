@@ -64,7 +64,14 @@ void DaydreamDisplayPlugin::compositeLayers() {
         PROFILE_RANGE_EX(render_detail, "handleHUDBatch", 0xff0077ff, (uint64_t)presentCount())
         auto hudOperator = getHUDOperator();
         withPresentThreadLock([&] {
-            _hudOperator = hudOperator;
+            GvrState *gvrState = GvrState::getInstance();
+
+            if (gvrState->_controller_state.GetApiStatus() != gvr_controller_api_status::GVR_CONTROLLER_API_OK ||
+                gvrState->_controller_state.GetConnectionState() != gvr_controller_connection_state::GVR_CONTROLLER_CONNECTED) { 
+                _hudOperator = hudOperator;
+            } else {
+                _hudOperator = nullptr;
+            }
         });
     }
 

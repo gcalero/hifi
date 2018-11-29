@@ -11,6 +11,11 @@ import ".."
 Item {
     id: modesbar
     y:5
+    property bool shown: false
+
+    onShownChanged: {
+        modesbar.visible = shown;
+    }
 
     function relocateAndResize(newWindowWidth, newWindowHeight) {
         width = 300;
