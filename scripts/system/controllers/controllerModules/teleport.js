@@ -521,7 +521,7 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         this.scaleInTeleport = function () {
-            _this.teleportScaleFactor = Math.min((Date.now() - _this.teleportScaleStart) / _this.TELEPORT_SCALE_DURATION, 1);
+            _this.teleportScaleFactor = Math.min((Date.now() - _this.teleportScaleStart + 0.001) / _this.TELEPORT_SCALE_DURATION, 1);
             Pointers.editRenderState(
                 _this.teleportScaleMode === "head" ? _this.teleportParabolaHeadVisuals : _this.teleportParabolaHandVisuals,
                 "teleport",
@@ -610,7 +610,7 @@ Script.include("/~/system/libraries/controllers.js");
                     "teleport",
                     {
                         path: teleportPath, // Teleport beam disappears if not included.
-                        end: { dimensions: Vec3.ZERO }
+                        end: { visible: false }
                     }
                 );
                 this.getOtherModule().cancelFade();
