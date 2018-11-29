@@ -94,7 +94,9 @@ function DaydreamControllerMonitorListener() {
     daydreamControllerQml.setVisible(HMD.active);
 
     HMD.displayModeChanged.connect(function (isHMDMode) {
-        daydreamControllerQml.setVisible(isHMDMode);
+        if (daydreamControllerQml) {
+            daydreamControllerQml.setVisible(isHMDMode);
+        }
     });
 
     this.onControllerConnected = function () {
