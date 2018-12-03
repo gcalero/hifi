@@ -25,9 +25,17 @@
         android:roundIcon="@drawable/ic_launcher">
         <activity android:name="io.highfidelity.hifiinterface.PermissionChecker"
             android:theme="@style/Theme.AppCompat.Translucent.NoActionBar.Launcher">
+            <meta-data
+                android:name="com.google.android.vr.icon"
+                android:resource="@drawable/hifi_vr_icon_front" />
+            <meta-data
+                android:name="com.google.android.vr.icon_background"
+                android:resource="@drawable/hifi_vr_icon_back" />
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="com.google.intent.category.DAYDREAM" />
             </intent-filter>
         </activity>
         <activity android:name="io.highfidelity.hifiinterface.WebViewActivity"
@@ -70,7 +78,7 @@
 
         <activity
             android:name=".SplashActivity"
-            android:screenOrientation="portrait"
+            android:configChanges="orientation"
             android:theme="@style/Theme.AppCompat.Translucent.NoActionBar" />
 
         <activity android:name=".LoginMenuActivity"

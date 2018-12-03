@@ -7,8 +7,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+
+import com.google.vr.sdk.base.Constants;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,10 +29,14 @@ public class PermissionChecker extends Activity {
 
     private static final boolean CHOOSE_AVATAR_ON_STARTUP = false;
     private static final String TAG = "Interface";
+    private boolean mIsDaydreamStarted;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mIsDaydreamStarted = getIntent().getCategories() != null && getIntent().getCategories().contains(Constants.DAYDREAM_CATEGORY);
+
         Intent myIntent = new Intent(this, BreakpadUploaderService.class);
         startService(myIntent);
         if (CHOOSE_AVATAR_ON_STARTUP) {
@@ -76,6 +83,9 @@ public class PermissionChecker extends Activity {
 
     private void launchActivityWithPermissions(){
         Intent i = new Intent(this, InterfaceActivity.class);
+        if (mIsDaydreamStarted) {
+            i.addCategory(Constants.DAYDREAM_CATEGORY);
+        }
         startActivity(i);
         finish();
     }

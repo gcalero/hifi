@@ -15,8 +15,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -39,6 +37,7 @@ import com.google.vr.cardboard.DisplaySynchronizer;
 import com.google.vr.cardboard.DisplayUtils;
 import com.google.vr.ndk.base.AndroidCompat;
 import com.google.vr.ndk.base.GvrApi;
+import com.google.vr.sdk.base.Constants;
 
 import org.qtproject.qt5.android.QtLayout;
 import org.qtproject.qt5.android.QtSurface;
@@ -76,10 +75,11 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
     private native void nativeEnterBackground();
     private native void nativeEnterForeground();
     private native long nativeOnExitVr();
-    private native void nativeInitAfterAppLoaded();
+    private native void nativeInitAfterAppLoaded(boolean isDaydreamStarted);
 
     private AssetManager assetManager;
 
+    private boolean mIsDaydreamStarted;
     private static boolean inVrMode;
 
     private boolean nativeEnterBackgroundCallEnqueued = false;
@@ -105,6 +105,8 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.isLoading = true;
+        mIsDaydreamStarted = getIntent().getCategories() != null && getIntent().getCategories().contains(Constants.DAYDREAM_CATEGORY);
+
         Intent intent = getIntent();
         if (intent.hasExtra(DOMAIN_URL) && !intent.getStringExtra(DOMAIN_URL).isEmpty()) {
             intent.putExtra("applicationArguments", "--url " + intent.getStringExtra(DOMAIN_URL));
@@ -140,7 +142,10 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
                 getActionBar().hide();
             }
         });
-        startActivity(new Intent(this, SplashActivity.class));
+
+        Intent splashIntent = new Intent(this, SplashActivity.class);
+        splashIntent.putExtra(SplashActivity.EXTRA_DAYDREAM_START, mIsDaydreamStarted);
+        startActivity(splashIntent);
         mVibrator = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
         headsetStateReceiver = new HeadsetStateReceiver();
         addGvrButtons(rootView);
@@ -400,7 +405,7 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
             nativeEnterBackground();
         }
         runOnUiThread(() -> {
-            nativeInitAfterAppLoaded();
+            nativeInitAfterAppLoaded(mIsDaydreamStarted);
         });
     }
 

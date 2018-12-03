@@ -665,7 +665,7 @@ public class QtActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        if (!keepInterfaceRunning) {
+        if (!isLoading && !keepInterfaceRunning) {
             QtApplication.invokeDelegate();
         }
     }

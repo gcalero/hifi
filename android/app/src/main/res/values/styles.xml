@@ -20,7 +20,7 @@
         <item name="windowNoTitle">true</item>
     </style>
     <style name="Theme.AppCompat.Translucent.NoActionBar.Launcher" parent="Theme.AppCompat.Translucent.NoActionBar">
-        <item name="android:windowBackground">@drawable/launch_screen</item>
+        <item name="android:windowBackground">@android:color/black</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
