@@ -9,14 +9,15 @@
 //
 
 /* global EntityListTool, Tablet, selectionManager, Entities, Camera, MyAvatar, Vec3, Menu, Messages,
-   cameraManager, MENU_EASE_ON_FOCUS, deleteSelectedEntities, toggleSelectedEntitiesLocked, toggleSelectedEntitiesVisible */
+   cameraManager, MENU_EASE_ON_FOCUS, deleteSelectedEntities, toggleSelectedEntitiesLocked, toggleSelectedEntitiesVisible,
+   keyUpEventFromUIWindow */
 
 var PROFILING_ENABLED = false;
 var profileIndent = '';
 const PROFILE_NOOP = function(_name, fn, args) {
     fn.apply(this, args);
 };
-PROFILE = !PROFILING_ENABLED ? PROFILE_NOOP : function(name, fn, args) {
+const PROFILE = !PROFILING_ENABLED ? PROFILE_NOOP : function(name, fn, args) {
     console.log("PROFILE-Script " + profileIndent + "(" + name + ") Begin");
     var previousIndent = profileIndent;
     profileIndent += '  ';
@@ -163,7 +164,7 @@ EntityListTool = function(shouldUseEditTabletApp) {
             var cameraPosition = Camera.position;
             PROFILE("getMultipleProperties", function () {
                 var multipleProperties = Entities.getMultipleEntityProperties(ids, ['name', 'type', 'locked',
-                    'visible', 'renderInfo', 'modelURL', 'materialURL', 'script']);
+                    'visible', 'renderInfo', 'modelURL', 'materialURL', 'script', 'certificateID']);
                 for (var i = 0; i < multipleProperties.length; i++) {
                     var properties = multipleProperties[i];
 
@@ -181,6 +182,7 @@ EntityListTool = function(shouldUseEditTabletApp) {
                             url: url,
                             locked: properties.locked,
                             visible: properties.visible,
+                            certificateID: properties.certificateID,
                             verticesCount: (properties.renderInfo !== undefined ?
                                 valueIfDefined(properties.renderInfo.verticesCount) : ""),
                             texturesCount: (properties.renderInfo !== undefined ?
@@ -226,7 +228,7 @@ EntityListTool = function(shouldUseEditTabletApp) {
         try {
             data = JSON.parse(data);
         } catch(e) {
-            print("entityList.js: Error parsing JSON: " + e.name + " data " + data);
+            print("entityList.js: Error parsing JSON");
             return;
         }
 
@@ -298,6 +300,8 @@ EntityListTool = function(shouldUseEditTabletApp) {
             SelectionManager._update();
         } else if (data.type === "toggleSpaceMode") {
             SelectionDisplay.toggleSpaceMode();
+        } else if (data.type === 'keyUpEvent') {
+            keyUpEventFromUIWindow(data.keyUpEvent);
         }
     };
 

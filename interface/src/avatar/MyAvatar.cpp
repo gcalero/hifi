@@ -139,7 +139,7 @@ MyAvatar::MyAvatar(QThread* thread) :
     _flyingHMDSetting(QStringList() << AVATAR_SETTINGS_GROUP_NAME << "flyingHMD", _flyingPrefHMD),
     _avatarEntityCountSetting(QStringList() << AVATAR_SETTINGS_GROUP_NAME << "avatarEntityData" << "size", 0)
 {
-    _clientTraitsHandler = std::unique_ptr<ClientTraitsHandler>(new ClientTraitsHandler(this));
+    _clientTraitsHandler.reset(new ClientTraitsHandler(this));
 
     // give the pointer to our head to inherited _headData variable from AvatarData
     _headData = new MyHead(this);
@@ -471,7 +471,7 @@ void MyAvatar::updateSitStandState(float newHeightReading, float dt) {
     const float STANDING_TIMEOUT = 0.3333f; // 1/3 second
     const float SITTING_UPPER_BOUND = 1.52f;
     if (!getIsSitStandStateLocked()) {
-        if (!getIsAway() && qApp->isHMDMode()) {
+        if (!getIsAway() && getControllerPoseInAvatarFrame(controller::Action::HEAD).isValid()) {
             if (getIsInSittingState()) {
                 if (newHeightReading > (STANDING_HEIGHT_MULTIPLE * _tippingPoint)) {
                     // if we recenter upwards then no longer in sitting state
@@ -584,7 +584,11 @@ void MyAvatar::update(float deltaTime) {
         upSpine2 = glm::normalize(upSpine2);
     }
     float angleSpine2 = glm::dot(upSpine2, glm::vec3(0.0f, 1.0f, 0.0f));
-    if (getControllerPoseInAvatarFrame(controller::Action::HEAD).getTranslation().y < (headDefaultPositionAvatarSpace.y - SQUAT_THRESHOLD) && (angleSpine2 > COSINE_THIRTY_DEGREES)) {
+
+    if (getControllerPoseInAvatarFrame(controller::Action::HEAD).getTranslation().y < (headDefaultPositionAvatarSpace.y - SQUAT_THRESHOLD) &&
+        (angleSpine2 > COSINE_THIRTY_DEGREES) &&
+        (getUserRecenterModel() != MyAvatar::SitStandModelType::ForceStand)) {
+
         _squatTimer += deltaTime;
         if (_squatTimer > SQUATTY_TIMEOUT) {
             _squatTimer = 0.0f;
@@ -728,6 +732,10 @@ void MyAvatar::recalculateChildCauterization() const {
     _cauterizationNeedsUpdate = true;
 }
 
+bool MyAvatar::isFollowActive(FollowHelper::FollowType followType) const {
+    return _follow.isActive(followType);
+}
+
 void MyAvatar::updateChildCauterization(SpatiallyNestablePointer object, bool cauterize) {
     if (object->getNestableType() == NestableType::Entity) {
         EntityItemPointer entity = std::static_pointer_cast<EntityItem>(object);
@@ -798,46 +806,6 @@ void MyAvatar::simulate(float deltaTime) {
     // update sensorToWorldMatrix for camera and hand controllers
     // before we perform rig animations and IK.
     updateSensorToWorldMatrix();
-
-    // if we detect the hand controller is at rest, i.e. lying on the table, or the hand is too far away from the hmd
-    // disable the associated hand controller input.
-    {
-        // NOTE: all poses are in sensor space.
-        auto leftHandIter = _controllerPoseMap.find(controller::Action::LEFT_HAND);
-        if (leftHandIter != _controllerPoseMap.end() && leftHandIter->second.isValid()) {
-            _leftHandAtRestDetector.update(leftHandIter->second.getTranslation(), leftHandIter->second.getRotation());
-            if (_leftHandAtRestDetector.isAtRest()) {
-                leftHandIter->second.valid = false;
-            }
-        } else {
-            _leftHandAtRestDetector.invalidate();
-        }
-
-        auto rightHandIter = _controllerPoseMap.find(controller::Action::RIGHT_HAND);
-        if (rightHandIter != _controllerPoseMap.end() && rightHandIter->second.isValid()) {
-            _rightHandAtRestDetector.update(rightHandIter->second.getTranslation(), rightHandIter->second.getRotation());
-            if (_rightHandAtRestDetector.isAtRest()) {
-                rightHandIter->second.valid = false;
-            }
-        } else {
-            _rightHandAtRestDetector.invalidate();
-        }
-
-        auto headIter = _controllerPoseMap.find(controller::Action::HEAD);
-
-        // The 99th percentile man has a spine to fingertip to height ratio of 0.45.  Lets increase that by about 10% to 0.5
-        // then measure the distance the center of the eyes to the finger tips.  To come up with this ratio.
-        // From "The Measure of Man and Woman: Human Factors in Design, Revised Edition" by Alvin R. Tilley, Henry Dreyfuss Associates
-        const float MAX_HEAD_TO_HAND_DISTANCE_RATIO = 0.52f;
-
-        float maxHeadHandDistance = getUserHeight() * MAX_HEAD_TO_HAND_DISTANCE_RATIO;
-        if (glm::length(headIter->second.getTranslation() - leftHandIter->second.getTranslation()) > maxHeadHandDistance) {
-            leftHandIter->second.valid = false;
-        }
-        if (glm::length(headIter->second.getTranslation() - rightHandIter->second.getTranslation()) > maxHeadHandDistance) {
-            rightHandIter->second.valid = false;
-        }
-    }
 
     {
         PerformanceTimer perfTimer("skeleton");
@@ -919,8 +887,7 @@ void MyAvatar::simulate(float deltaTime) {
                         moveOperator.addEntityToMoveList(entity, newCube);
                     }
                     // send an edit packet to update the entity-server about the queryAABox
-                    // unless it is client-only
-                    if (packetSender && !entity->getClientOnly()) {
+                    if (packetSender && entity->isDomainEntity()) {
                         EntityItemProperties properties = entity->getProperties();
                         properties.setQueryAACubeDirty();
                         properties.setLastEdited(now);
@@ -931,7 +898,7 @@ void MyAvatar::simulate(float deltaTime) {
 
                         entity->forEachDescendant([&](SpatiallyNestablePointer descendant) {
                             EntityItemPointer entityDescendant = std::dynamic_pointer_cast<EntityItem>(descendant);
-                            if (entityDescendant && !entityDescendant->getClientOnly() && descendant->updateQueryAACube()) {
+                            if (entityDescendant && entityDescendant->isDomainEntity() && descendant->updateQueryAACube()) {
                                 EntityItemProperties descendantProperties;
                                 descendantProperties.setQueryAACube(descendant->getQueryAACube());
                                 descendantProperties.setLastEdited(now);
@@ -955,6 +922,8 @@ void MyAvatar::simulate(float deltaTime) {
     }
 
     updateAvatarEntities();
+
+    updateFadingStatus();
 }
 
 // As far as I know no HMD system supports a play area of a kilometer in radius.
@@ -1088,9 +1057,9 @@ void MyAvatar::updateSensorToWorldMatrix() {
 void MyAvatar::updateFromTrackers(float deltaTime) {
     glm::vec3 estimatedRotation;
 
-    bool inHmd = qApp->isHMDMode();
+    bool hasHead = getControllerPoseInAvatarFrame(controller::Action::HEAD).isValid();
     bool playing = DependencyManager::get<recording::Deck>()->isPlaying();
-    if (inHmd && playing) {
+    if (hasHead && playing) {
         return;
     }
 
@@ -1124,7 +1093,7 @@ void MyAvatar::updateFromTrackers(float deltaTime) {
 
 
     Head* head = getHead();
-    if (inHmd || playing) {
+    if (hasHead || playing) {
         head->setDeltaPitch(estimatedRotation.x);
         head->setDeltaYaw(estimatedRotation.y);
         head->setDeltaRoll(estimatedRotation.z);
@@ -1485,7 +1454,7 @@ void MyAvatar::loadData() {
     _yawSpeed = _yawSpeedSetting.get(_yawSpeed);
     _pitchSpeed = _pitchSpeedSetting.get(_pitchSpeed);
 
-    _prefOverrideAnimGraphUrl.set(_prefOverrideAnimGraphUrl.get().toString());
+    _prefOverrideAnimGraphUrl.set(_animGraphURLSetting.get().toString());
     _fullAvatarURLFromPreferences = _fullAvatarURLSetting.get(QUrl(AvatarData::defaultFullAvatarModelUrl()));
     _fullAvatarModelName = _fullAvatarModelNameSetting.get(DEFAULT_FULL_AVATAR_MODEL_NAME).toString();
 
@@ -3499,7 +3468,7 @@ void MyAvatar::triggerRotationRecenter() {
 
 // old school meat hook style
 glm::mat4 MyAvatar::deriveBodyFromHMDSensor() const {
-    glm::vec3 headPosition;
+    glm::vec3 headPosition(0.0f, _userHeight.get(), 0.0f);
     glm::quat headOrientation;
     auto headPose = getControllerPoseInSensorFrame(controller::Action::HEAD);
     if (headPose.isValid()) {
@@ -3832,7 +3801,7 @@ float MyAvatar::computeStandingHeightMode(const controller::Pose& head) {
         modeInMeters = ((float)mode) / CENTIMETERS_PER_METER;
         if (!(modeInMeters > getCurrentStandingHeight())) {
             // if not greater check for a reset
-            if (getResetMode() && qApp->isHMDMode()) {
+            if (getResetMode() && getControllerPoseInAvatarFrame(controller::Action::HEAD).isValid()) {
                 setResetMode(false);
                 float resetModeInCentimeters = glm::floor((head.getTranslation().y - MODE_CORRECTION_FACTOR)*CENTIMETERS_PER_METER);
                 modeInMeters = (resetModeInCentimeters / CENTIMETERS_PER_METER);

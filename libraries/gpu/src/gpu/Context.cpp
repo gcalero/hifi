@@ -14,6 +14,7 @@
 
 #include "Frame.h"
 #include "GPULogging.h"
+#include <shaders/Shaders.h>
 
 using namespace gpu;
 
@@ -50,6 +51,7 @@ Context::~Context() {
         delete batch;
     }
     _batchPool.clear();
+    _syncedPrograms.clear();
 }
 
 void Context::shutdown() {
@@ -331,10 +333,53 @@ Size Context::getTextureResourcePopulatedGPUMemSize() {
     return Backend::textureResourcePopulatedGPUMemSize.getValue();
 }
 
+PipelinePointer Context::createMipGenerationPipeline(const ShaderPointer& ps) {
+    auto vs = gpu::Shader::createVertex(shader::gpu::vertex::DrawViewportQuadTransformTexcoord);
+	static gpu::StatePointer state(new gpu::State());
+
+	gpu::ShaderPointer program = gpu::Shader::createProgram(vs, ps);
+
+	// Good to go add the brand new pipeline
+	return gpu::Pipeline::create(program, state);
+}
+
 Size Context::getTextureResourceIdealGPUMemSize() {
     return Backend::textureResourceIdealGPUMemSize.getValue();
 }
 
+void Context::pushProgramsToSync(const std::vector<uint32_t>& programIDs, std::function<void()> callback, size_t rate) {
+    std::vector<gpu::ShaderPointer> programs;
+    for (auto programID : programIDs) {
+        programs.push_back(gpu::Shader::createProgram(programID));
+    }
+    pushProgramsToSync(programs, callback, rate);
+}
+
+void Context::pushProgramsToSync(const std::vector<gpu::ShaderPointer>& programs, std::function<void()> callback, size_t rate) {
+    Lock lock(_programsToSyncMutex);
+    _programsToSyncQueue.emplace(programs, callback, rate == 0 ? programs.size() : rate);
+}
+
+void Context::processProgramsToSync() {
+    if (!_programsToSyncQueue.empty()) {
+        Lock lock(_programsToSyncMutex);
+        ProgramsToSync programsToSync = _programsToSyncQueue.front();
+        size_t numSynced = 0;
+        while (_nextProgramToSyncIndex < programsToSync.programs.size() && numSynced < programsToSync.rate) {
+            auto nextProgram = programsToSync.programs.at(_nextProgramToSyncIndex);
+            _backend->syncProgram(nextProgram);
+            _syncedPrograms.push_back(nextProgram);
+            _nextProgramToSyncIndex++;
+            numSynced++;
+        }
+
+        if (_nextProgramToSyncIndex == programsToSync.programs.size()) {
+            programsToSync.callback();
+            _nextProgramToSyncIndex = 0;
+            _programsToSyncQueue.pop();
+        }
+    }
+}
 
 BatchPointer Context::acquireBatch(const char* name) {
     Batch* rawBatch = nullptr;

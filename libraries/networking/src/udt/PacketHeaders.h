@@ -244,7 +244,9 @@ enum class EntityVersion : PacketVersion {
     BloomEffect,
     GrabProperties,
     ScriptGlmVectors,
-    FixedLightSerialization
+    FixedLightSerialization,
+    MaterialRepeat,
+    EntityHostTypes
 };
 
 enum class EntityScriptCallMethodVersion : PacketVersion {
@@ -296,7 +298,8 @@ enum class AvatarMixerPacketVersion : PacketVersion {
     FarGrabJoints,
     MigrateSkeletonURLToTraits,
     MigrateAvatarEntitiesToTraits,
-    FarGrabJointsRedux
+    FarGrabJointsRedux,
+    JointTransScaled
 };
 
 enum class DomainConnectRequestVersion : PacketVersion {

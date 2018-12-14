@@ -123,10 +123,12 @@ Menu::Menu() {
     // Edit > Running Scripts
     auto action = addActionToQMenuAndActionHash(editMenu, MenuOption::RunningScripts, Qt::CTRL | Qt::Key_J);
     connect(action, &QAction::triggered, [] {
-        static const QUrl widgetUrl("hifi/dialogs/RunningScripts.qml");
-        static const QUrl tabletUrl("hifi/dialogs/TabletRunningScripts.qml");
-        static const QString name("RunningScripts");
-        qApp->showDialog(widgetUrl, tabletUrl, name);
+        if (!qApp->getLoginDialogPoppedUp()) {
+            static const QUrl widgetUrl("hifi/dialogs/RunningScripts.qml");
+            static const QUrl tabletUrl("hifi/dialogs/TabletRunningScripts.qml");
+            static const QString name("RunningScripts");
+            qApp->showDialog(widgetUrl, tabletUrl, name);
+        }
     });
 
     editMenu->addSeparator();
@@ -141,7 +143,7 @@ Menu::Menu() {
         assetServerAction->setEnabled(nodeList->getThisNodeCanWriteAssets());
     }
 
-    // Edit > Package Model as .fst...
+    // Edit > Package Avatar as .fst...
     addActionToQMenuAndActionHash(editMenu, MenuOption::PackageModel, 0,
         qApp, SLOT(packageModel()));
 
@@ -226,6 +228,14 @@ Menu::Menu() {
     addActionToQMenuAndActionHash(navigateMenu, MenuOption::CopyPath, 0,
         addressManager.data(), SLOT(copyPath()));
 
+    // Navigate > Start-up Location
+    MenuWrapper* startupLocationMenu = navigateMenu->addMenu(MenuOption::StartUpLocation);
+    QActionGroup* startupLocatiopnGroup = new QActionGroup(startupLocationMenu);
+    startupLocatiopnGroup->setExclusive(true);
+    startupLocatiopnGroup->addAction(addCheckableActionToQMenuAndActionHash(startupLocationMenu, MenuOption::HomeLocation, 0, 
+        false));
+    startupLocatiopnGroup->addAction(addCheckableActionToQMenuAndActionHash(startupLocationMenu, MenuOption::LastLocation, 0, 
+        true));
 
     // Settings menu ----------------------------------
     MenuWrapper* settingsMenu = addMenu("Settings");
@@ -233,8 +243,10 @@ Menu::Menu() {
     // Settings > General...
     action = addActionToQMenuAndActionHash(settingsMenu, MenuOption::Preferences, Qt::CTRL | Qt::Key_G, nullptr, nullptr);
     connect(action, &QAction::triggered, [] {
-        qApp->showDialog(QString("hifi/dialogs/GeneralPreferencesDialog.qml"),
-            QString("hifi/tablet/TabletGeneralPreferences.qml"), "GeneralPreferencesDialog");
+        if (!qApp->getLoginDialogPoppedUp()) {
+            qApp->showDialog(QString("hifi/dialogs/GeneralPreferencesDialog.qml"),
+                QString("hifi/tablet/TabletGeneralPreferences.qml"), "GeneralPreferencesDialog");
+        }
     });
 
     // Settings > Controls...
@@ -355,8 +367,6 @@ Menu::Menu() {
     connect(action, &QAction::triggered, [action] {
         qApp->setHmdTabletBecomesToolbarSetting(action->isChecked());
     });
-
-    addCheckableActionToQMenuAndActionHash(uiOptionsMenu, MenuOption::Use3DKeyboard, 0, true);
 
     // Developer > Render >>>
     MenuWrapper* renderOptionsMenu = developerMenu->addMenu("Render");
@@ -796,7 +806,7 @@ Menu::Menu() {
     connect(action, &QAction::triggered, qApp, []() { std::thread(crash::newFault).join(); });
 
     // Developer > Show Statistics
-    addCheckableActionToQMenuAndActionHash(developerMenu, MenuOption::Stats);
+    addCheckableActionToQMenuAndActionHash(developerMenu, MenuOption::Stats, 0, true);
 
     // Developer > Show Animation Statistics
     addCheckableActionToQMenuAndActionHash(developerMenu, MenuOption::AnimStats);

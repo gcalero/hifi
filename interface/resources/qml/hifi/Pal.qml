@@ -61,7 +61,7 @@ Rectangle {
                 'username';
         }
         sortAscending: connectionsTable.sortIndicatorOrder === Qt.AscendingOrder;
-        itemsPerPage: 10;
+        itemsPerPage: 1000;
         listView: connectionsTable;
         processPage: function (data) {
             return data.users.map(function (user) {
@@ -1287,7 +1287,7 @@ Rectangle {
             connectionsOnlineDot.visible = message.shouldShowDot;
             break;
         default:
-            console.log('Unrecognized message:', JSON.stringify(message));
+            console.log('Pal.qml: Unrecognized message');
         }
     }
     function sortModel() {

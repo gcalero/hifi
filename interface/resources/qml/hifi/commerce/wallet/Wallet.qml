@@ -100,6 +100,9 @@ Rectangle {
                 console.log("Failed to get Available Updates", result.data.message);
             } else {
                 exchangeMoneyButtonContainer.messagesWaiting = result.data.updates.length > 0;
+                if (!exchangeMoneyButtonContainer.messagesWaiting) {
+                    sendToScript({method: 'clearShouldShowDotUpdates'});
+                }
             }
         }
     }
@@ -803,7 +806,7 @@ Rectangle {
                 }
             break;
             default:
-                console.log('Unrecognized message from wallet.js:', JSON.stringify(message));
+                console.log('Wallet.qml: Unrecognized message from wallet.js');
         }
     }
     signal sendToScript(var message);
