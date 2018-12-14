@@ -558,7 +558,8 @@ Java_io_highfidelity_hifiinterface_InterfaceActivity_nativeOnStop(JNIEnv *env, j
     AndroidHelper::instance().stopScriptEngine();
 }
 
-JNIEXPORT void JNICALLJava_io_highfidelity_hifiinterface_receiver_HeadsetStateReceiver_notifyHeadsetOn(JNIEnv *env,
+JNIEXPORT void JNICALL
+Java_io_highfidelity_hifiinterface_receiver_HeadsetStateReceiver_notifyHeadsetOn(JNIEnv *env,
                                                                                  jobject instance,
                                                                                  jboolean pluggedIn) {
     AndroidHelper::instance().notifyHeadsetOn(pluggedIn);
