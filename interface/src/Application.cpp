@@ -208,6 +208,8 @@
 #include "InterfaceParentFinder.h"
 #include "ui/OctreeStatsProvider.h"
 
+#include "avatar/GrabManager.h"
+
 #include <GPUIdent.h>
 #include <gl/GLHelpers.h>
 #include <src/scripting/GooglePolyScriptingInterface.h>
@@ -859,7 +861,6 @@ bool setupEssentials(int& argc, char** argv, bool runningMarkerExisted) {
     DependencyManager::set<LODManager>();
     DependencyManager::set<StandAloneJSConsole>();
     DependencyManager::set<DialogsManager>();
-    DependencyManager::set<BandwidthRecorder>();
     DependencyManager::set<ResourceCacheSharedItems>();
     DependencyManager::set<DesktopScriptingInterface>();
     DependencyManager::set<EntityScriptingInterface>(true);
@@ -919,6 +920,7 @@ bool setupEssentials(int& argc, char** argv, bool runningMarkerExisted) {
     DependencyManager::set<ResourceRequestObserver>();
     DependencyManager::set<Keyboard>();
     DependencyManager::set<KeyboardScriptingInterface>();
+    DependencyManager::set<GrabManager>();
 
     return previousSessionCrashed;
 }
@@ -1078,6 +1080,7 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
 
     auto nodeList = DependencyManager::get<NodeList>();
     nodeList->startThread();
+    nodeList->setFlagTimeForConnectionStep(true);
 
     // move the AddressManager to the NodeList thread so that domain resets due to domain changes always occur
     // before we tell MyAvatar to go to a new location in the new domain
@@ -1573,13 +1576,6 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
 
     connect(this, SIGNAL(aboutToQuit()), this, SLOT(onAboutToQuit()));
 
-    // hook up bandwidth estimator
-    QSharedPointer<BandwidthRecorder> bandwidthRecorder = DependencyManager::get<BandwidthRecorder>();
-    connect(nodeList.data(), &LimitedNodeList::dataSent,
-        bandwidthRecorder.data(), &BandwidthRecorder::updateOutboundData);
-    connect(nodeList.data(), &LimitedNodeList::dataReceived,
-        bandwidthRecorder.data(), &BandwidthRecorder::updateInboundData);
-
     // FIXME -- I'm a little concerned about this.
     connect(myAvatar->getSkeletonModel().get(), &SkeletonModel::skeletonLoaded,
         this, &Application::checkSkeleton, Qt::QueuedConnection);
@@ -2045,15 +2041,12 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
         properties["deadlock_watchdog_maxElapsed"] = (int)DeadlockWatchdogThread::_maxElapsed;
         properties["deadlock_watchdog_maxElapsedAverage"] = (int)DeadlockWatchdogThread::_maxElapsedAverage;
 
-        auto bandwidthRecorder = DependencyManager::get<BandwidthRecorder>();
-        properties["packet_rate_in"] = bandwidthRecorder->getCachedTotalAverageInputPacketsPerSecond();
-        properties["packet_rate_out"] = bandwidthRecorder->getCachedTotalAverageOutputPacketsPerSecond();
-        properties["kbps_in"] = bandwidthRecorder->getCachedTotalAverageInputKilobitsPerSecond();
-        properties["kbps_out"] = bandwidthRecorder->getCachedTotalAverageOutputKilobitsPerSecond();
-
-        properties["atp_in_kbps"] = bandwidthRecorder->getAverageInputKilobitsPerSecond(NodeType::AssetServer);
-
         auto nodeList = DependencyManager::get<NodeList>();
+        properties["packet_rate_in"] = nodeList->getInboundPPS();
+        properties["packet_rate_out"] = nodeList->getOutboundPPS();
+        properties["kbps_in"] = nodeList->getInboundKbps();
+        properties["kbps_out"] = nodeList->getOutboundKbps();
+
         SharedNodePointer entityServerNode = nodeList->soloNodeOfType(NodeType::EntityServer);
         SharedNodePointer audioMixerNode = nodeList->soloNodeOfType(NodeType::AudioMixer);
         SharedNodePointer avatarMixerNode = nodeList->soloNodeOfType(NodeType::AvatarMixer);
@@ -2064,6 +2057,7 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
         properties["avatar_ping"] = avatarMixerNode ? avatarMixerNode->getPingMs() : -1;
         properties["asset_ping"] = assetServerNode ? assetServerNode->getPingMs() : -1;
         properties["messages_ping"] = messagesMixerNode ? messagesMixerNode->getPingMs() : -1;
+        properties["atp_in_kbps"] = messagesMixerNode ? assetServerNode->getInboundKbps() : 0.0f;
 
         auto loadingRequests = ResourceCache::getLoadingRequests();
 
@@ -2315,6 +2309,10 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
         DependencyManager::get<PickManager>()->setPrecisionPicking(rayPickID, value);
     });
 
+    EntityTreeRenderer::setGetAvatarUpOperator([] {
+        return DependencyManager::get<AvatarManager>()->getMyAvatar()->getWorldOrientation() * Vectors::UP;
+    });
+
     // Preload Tablet sounds
     DependencyManager::get<TabletScriptingInterface>()->preloadSounds();
     DependencyManager::get<Keyboard>()->createKeyboard();
@@ -2459,6 +2457,10 @@ void Application::updateHeartbeat() const {
 
 void Application::onAboutToQuit() {
     emit beforeAboutToQuit();
+
+    if (getLoginDialogPoppedUp() && _firstRun.get()) {
+        _firstRun.set(false);
+    }
 
     foreach(auto inputPlugin, PluginManager::getInstance()->getInputPlugins()) {
         if (inputPlugin->isActive()) {
@@ -4903,7 +4905,7 @@ void Application::calibrateEyeTracker5Points() {
 #endif
 
 bool Application::exportEntities(const QString& filename,
-                                 const QVector<EntityItemID>& entityIDs,
+                                 const QVector<QUuid>& entityIDs,
                                  const glm::vec3* givenOffset) {
     QHash<EntityItemID, EntityItemPointer> entities;
 
@@ -4978,16 +4980,12 @@ bool Application::exportEntities(const QString& filename, float x, float y, floa
     glm::vec3 minCorner = center - vec3(scale);
     float cubeSize = scale * 2;
     AACube boundingCube(minCorner, cubeSize);
-    QVector<EntityItemPointer> entities;
-    QVector<EntityItemID> ids;
+    QVector<QUuid> entities;
     auto entityTree = getEntities()->getTree();
     entityTree->withReadLock([&] {
-        entityTree->findEntities(boundingCube, entities);
-        foreach(EntityItemPointer entity, entities) {
-            ids << entity->getEntityItemID();
-        }
+        entityTree->evalEntitiesInCube(boundingCube, PickFilter(), entities);
     });
-    return exportEntities(filename, ids, &center);
+    return exportEntities(filename, entities, &center);
 }
 
 void Application::loadSettings() {
@@ -5176,7 +5174,13 @@ void Application::pauseUntilLoginDetermined() {
         return;
     }
 
-    getMyAvatar()->setEnableMeshVisible(false);
+    auto myAvatar = getMyAvatar();
+    _previousAvatarTargetScale = myAvatar->getTargetScale();
+    _previousAvatarSkeletonModel = myAvatar->getSkeletonModelURL().toString();
+    myAvatar->setTargetScale(1.0f);
+    myAvatar->setSkeletonModelURLFromScript(myAvatar->defaultFullAvatarModelUrl().toString());
+    myAvatar->setEnableMeshVisible(false);
+
     _controllerScriptingInterface->disableMapping(STANDARD_TO_ACTION_MAPPING_NAME);
 
     {
@@ -5231,7 +5235,12 @@ void Application::resumeAfterLoginDialogActionTaken() {
         userInputMapper->unloadMapping(NO_MOVEMENT_MAPPING_JSON);
         _controllerScriptingInterface->disableMapping(NO_MOVEMENT_MAPPING_NAME);
     }
-    getMyAvatar()->setEnableMeshVisible(true);
+
+    auto myAvatar = getMyAvatar();
+    myAvatar->setTargetScale(_previousAvatarTargetScale);
+    myAvatar->setSkeletonModelURLFromScript(_previousAvatarSkeletonModel);
+    myAvatar->setEnableMeshVisible(true);
+
     _controllerScriptingInterface->enableMapping(STANDARD_TO_ACTION_MAPPING_NAME);
 
     const auto& nodeList = DependencyManager::get<NodeList>();
@@ -5241,17 +5250,13 @@ void Application::resumeAfterLoginDialogActionTaken() {
         // this will force the model the look at the correct directory (weird order of operations issue)
         scriptEngines->reloadLocalFiles();
 
-        if (!_defaultScriptsLocation.exists()) {
+        // if the --scripts command-line argument was used.
+        if (!_defaultScriptsLocation.exists() && (arguments().indexOf(QString("--").append(SCRIPTS_SWITCH))) != -1) {
             scriptEngines->loadDefaultScripts();
             scriptEngines->defaultScriptsLocationOverridden(true);
         } else {
             scriptEngines->loadScripts();
         }
-    }
-
-    if (_firstRun.get()) {
-        // not first run anymore since action was taken.
-        _firstRun.set(false);
     }
 
     auto accountManager = DependencyManager::get<AccountManager>();
@@ -5260,22 +5265,19 @@ void Application::resumeAfterLoginDialogActionTaken() {
     // restart domain handler.
     nodeList->getDomainHandler().resetting();
 
-    if (!accountManager->isLoggedIn()) {
-        addressManager->goToEntry();
-    } else {
-        QVariant testProperty = property(hifi::properties::TEST);
-        if (testProperty.isValid()) {
-            const auto testScript = property(hifi::properties::TEST).toUrl();
-            // Set last parameter to exit interface when the test script finishes, if so requested
-            DependencyManager::get<ScriptEngines>()->loadScript(testScript, false, false, false, false, quitWhenFinished);
-            // This is done so we don't get a "connection time-out" message when we haven't passed in a URL.
-            if (arguments().contains("--url")) {
-                auto reply = SandboxUtils::getStatus();
-                connect(reply, &QNetworkReply::finished, this, [this, reply] { handleSandboxStatus(reply); });
-            }
-        } else {
-            addressManager->loadSettings();
+    QVariant testProperty = property(hifi::properties::TEST);
+    if (testProperty.isValid()) {
+        const auto testScript = property(hifi::properties::TEST).toUrl();
+        // Set last parameter to exit interface when the test script finishes, if so requested
+        DependencyManager::get<ScriptEngines>()->loadScript(testScript, false, false, false, false, quitWhenFinished);
+        // This is done so we don't get a "connection time-out" message when we haven't passed in a URL.
+        if (arguments().contains("--url")) {
+            auto reply = SandboxUtils::getStatus();
+            connect(reply, &QNetworkReply::finished, this, [this, reply] { handleSandboxStatus(reply); });
         }
+    } else {
+        auto reply = SandboxUtils::getStatus();
+        connect(reply, &QNetworkReply::finished, this, [this, reply] { handleSandboxStatus(reply); });
     }
 
     auto menu = Menu::getInstance();
@@ -6076,6 +6078,9 @@ void Application::update(float deltaTime) {
     updateThreads(deltaTime); // If running non-threaded, then give the threads some time to process...
     updateDialogs(deltaTime); // update various stats dialogs if present
 
+    auto grabManager = DependencyManager::get<GrabManager>();
+    grabManager->simulateGrabs();
+
     QSharedPointer<AvatarManager> avatarManager = DependencyManager::get<AvatarManager>();
 
     {
@@ -6679,6 +6684,7 @@ void Application::resetSensors(bool andReload) {
     DependencyManager::get<DdeFaceTracker>()->reset();
     DependencyManager::get<EyeTracker>()->reset();
     _overlayConductor.centerUI();
+    getActiveDisplayPlugin()->resetSensors();
     getMyAvatar()->reset(true, andReload);
     QMetaObject::invokeMethod(DependencyManager::get<AudioClient>().data(), "reset", Qt::QueuedConnection);
 }
@@ -7681,16 +7687,13 @@ void Application::addAssetToWorldSetMapping(QString filePath, QString mapping, Q
 
 void Application::addAssetToWorldAddEntity(QString filePath, QString mapping) {
     EntityItemProperties properties;
-    properties.setType(EntityTypes::Model);
     properties.setName(mapping.right(mapping.length() - 1));
     if (filePath.toLower().endsWith(PNG_EXTENSION) || filePath.toLower().endsWith(JPG_EXTENSION)) {
-        QJsonObject textures {
-            {"tex.picture", QString("atp:" + mapping) }
-        };
-        properties.setModelURL("https://hifi-content.s3.amazonaws.com/DomainContent/production/default-image-model.fbx");
-        properties.setTextures(QJsonDocument(textures).toJson(QJsonDocument::Compact));
-        properties.setShapeType(SHAPE_TYPE_BOX);
+        properties.setType(EntityTypes::Image);
+        properties.setImageURL(QString("atp:" + mapping));
+        properties.setKeepAspectRatio(false);
     } else {
+        properties.setType(EntityTypes::Model);
         properties.setModelURL("atp:" + mapping);
         properties.setShapeType(SHAPE_TYPE_SIMPLE_COMPOUND);
     }
@@ -8650,10 +8653,10 @@ void Application::createLoginDialogOverlay() {
     auto keyboard = DependencyManager::get<Keyboard>().data();
     if (!keyboard->getAnchorID().isNull() && !_loginDialogOverlayID.isNull()) {
         const auto KEYBOARD_LOCAL_ORIENTATION = glm::quat(0.0f, 0.0, 1.0f, 0.25f);
-        auto keyboardLocalOffset = glm::vec3(-0.4f * getMyAvatar()->getSensorToWorldScale(), -0.3f, 0.2f);
+        auto keyboardLocalOffset = cameraOrientation * glm::vec3(-0.4f * getMyAvatar()->getSensorToWorldScale(), -0.3f, 0.2f);
         QVariantMap properties {
-            { "position", vec3toVariant(loginOverlay->getWorldPosition() + keyboardLocalOffset) },
-            { "orientation", quatToVariant(loginOverlay->getWorldOrientation() * KEYBOARD_LOCAL_ORIENTATION) },
+            { "position", vec3toVariant(overlayPosition + keyboardLocalOffset) },
+            { "orientation", quatToVariant(cameraOrientation * KEYBOARD_LOCAL_ORIENTATION) },
         };
         overlays.editOverlay(keyboard->getAnchorID(), properties);
         keyboard->setResetKeyboardPositionOnRaise(false);
@@ -8668,7 +8671,7 @@ void Application::createLoginDialogOverlay() {
 }
 
 void Application::updateLoginDialogOverlayPosition() {
-    const float LOOK_AWAY_THRESHOLD_ANGLE = 40.0f;
+    const float LOOK_AWAY_THRESHOLD_ANGLE = 70.0f;
     const auto OVERLAY_OFFSET = glm::vec2(0.7f, -0.1f);
     auto& overlays = getOverlays();
     auto loginOverlay = std::dynamic_pointer_cast<Web3DOverlay>(overlays.getOverlay(_loginDialogOverlayID));
@@ -8692,10 +8695,10 @@ void Application::updateLoginDialogOverlayPosition() {
         };
         overlays.editOverlay(_loginDialogOverlayID, properties);
         const auto KEYBOARD_LOCAL_ORIENTATION = glm::quat(0.0f, 0.0, 1.0f, 0.25f);
-        auto keyboardLocalOffset = glm::vec3(-0.4f * getMyAvatar()->getSensorToWorldScale(), -0.3f, 0.2f);
+        auto keyboardLocalOffset = newOverlayOrientation * glm::vec3(-0.4f * getMyAvatar()->getSensorToWorldScale(), -0.3f, 0.2f);
         QVariantMap keyboardProperties {
-            { "position", vec3toVariant(loginOverlay->getWorldPosition() + keyboardLocalOffset) },
-            { "orientation", quatToVariant(loginOverlay->getWorldOrientation() * KEYBOARD_LOCAL_ORIENTATION) },
+            { "position", vec3toVariant(newOverlayPositionVec + keyboardLocalOffset) },
+            { "orientation", quatToVariant(newOverlayOrientation * KEYBOARD_LOCAL_ORIENTATION) },
         };
         auto keyboard = DependencyManager::get<Keyboard>().data();
         overlays.editOverlay(keyboard->getAnchorID(), keyboardProperties);
