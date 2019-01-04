@@ -409,6 +409,45 @@ void ScriptEngines::stopAllScripts(bool restart) {
     }
 }
 
+void ScriptEngines::pauseAllScripts() {
+    QReadLocker lock(&_scriptEnginesHashLock);
+
+    if (_isReloading) {
+        return;
+    }
+
+    for (QHash<QUrl, ScriptEnginePointer>::const_iterator it = _scriptEnginesHash.constBegin();
+        it != _scriptEnginesHash.constEnd(); it++) {
+        ScriptEnginePointer scriptEngine = it.value();
+        // skip stopped scripts
+        if (scriptEngine->isFinished() || scriptEngine->isStopping()) {
+            continue;
+        }
+
+        // pause all scripts
+        scriptEngine->pause();
+    }
+}
+
+void ScriptEngines::resumeAllScripts() {
+    QReadLocker lock(&_scriptEnginesHashLock);
+
+    if (_isReloading) {
+        return;
+    }
+
+    for (QHash<QUrl, ScriptEnginePointer>::const_iterator it = _scriptEnginesHash.constBegin();
+        it != _scriptEnginesHash.constEnd(); it++) {
+        ScriptEnginePointer scriptEngine = it.value();
+        // skip stopped scripts
+        if (scriptEngine->isFinished() || scriptEngine->isStopping()) {
+            continue;
+        }
+
+        // pause all scripts
+        scriptEngine->resume();
+    }
+}
 bool ScriptEngines::stopScript(const QString& rawScriptURL, bool restart) {
     bool stoppedScript = false;
     {

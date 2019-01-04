@@ -155,23 +155,11 @@ void AndroidHelper::signupFailed(QNetworkReply* reply) {
 }
 
 void AndroidHelper::stopScriptEngine() {
-    QMetaObject::invokeMethod(qApp, [] {
-        auto scriptEngines = DependencyManager::get<ScriptEngines>().data();
-        scriptEngines->stopAllScripts();
-        QStringList urls = scriptEngines->getRunningScripts();
-        for ( const auto& url : urls )
-        {
-            auto scriptEngine = scriptEngines->getScriptEngine(url);
-            if (scriptEngine) {
-                scriptEngine->waitTillDoneRunning();
-            }
-        }
-    }, Qt::BlockingQueuedConnection);
+    auto scriptEngines = DependencyManager::get<ScriptEngines>().data();
+    scriptEngines->pauseAllScripts();
 }
 void AndroidHelper::restartScriptEngine() {
-    QMetaObject::invokeMethod(qApp, [] {
-        auto scriptEngines = DependencyManager::get<ScriptEngines>().data();
-        scriptEngines->loadScripts();
-    });
+    auto scriptEngines = DependencyManager::get<ScriptEngines>().data();
+    scriptEngines->resumeAllScripts();
 }
 

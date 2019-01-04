@@ -114,6 +114,8 @@ public:
      */
     Q_INVOKABLE void stopAllScripts(bool restart = false);
 
+    void pauseAllScripts();
+    void resumeAllScripts();
 
     /**jsdoc
      * @function ScriptDiscoveryService.getRunning

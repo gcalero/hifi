@@ -1163,6 +1163,9 @@ void ScriptEngine::run() {
         if (_isFinished) {
             break;
         }
+        if (_isPaused) {
+            continue;
+        }
 
         // Only call this if we didn't processEvents as part of waiting for next frame
         if (!processedEvents) {
@@ -1280,6 +1283,14 @@ void ScriptEngine::stop(bool marshal) {
         _isFinished = true;
         emit runningStateChanged();
     }
+}
+
+void ScriptEngine::pause() {
+    _isPaused = true;
+}
+
+void ScriptEngine::resume() {
+    _isPaused = false;
 }
 
 // Other threads can invoke this through invokeMethod, which causes the callback to be asynchronously executed in this script's thread.
