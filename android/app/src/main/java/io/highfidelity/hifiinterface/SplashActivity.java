@@ -36,12 +36,14 @@ public class SplashActivity extends Activity {
     }
 
     public void onAppLoadedComplete() {
-        if (HifiUtils.getInstance().isUserLoggedIn()) {
-            startActivity(new Intent(this, MainActivity.class));
-        } else {
-            Intent menuIntent =  new Intent(this, LoginMenuActivity.class);
-            menuIntent.putExtra(LoginMenuActivity.EXTRA_FINISH_ON_BACK, true);
-            startActivity(menuIntent);
+        if (!BuildConfig.DEBUG) {
+            if (HifiUtils.getInstance().isUserLoggedIn()) {
+                startActivity(new Intent(this, MainActivity.class));
+            } else {
+                Intent menuIntent = new Intent(this, LoginMenuActivity.class);
+                menuIntent.putExtra(LoginMenuActivity.EXTRA_FINISH_ON_BACK, true);
+                startActivity(menuIntent);
+            }
         }
         SplashActivity.this.finish();
     }

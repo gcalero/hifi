@@ -3489,6 +3489,11 @@ void Application::handleSandboxStatus(QNetworkReply* reply) {
 #if !defined(Q_OS_ANDROID)
         DependencyManager::get<AddressManager>()->goToEntry();
         sentTo = SENT_TO_ENTRY;
+#elif DEBUG
+        if (addressLookupString.isEmpty()) {
+            addressLookupString = ANDROID_DEBUG_HIFI_ADDRESS;
+        }
+        qCDebug(interfaceapp) << "Not first run... going to" << addressLookupString;
 #endif
         _firstRun.set(false);
 
@@ -3507,6 +3512,12 @@ void Application::handleSandboxStatus(QNetworkReply* reply) {
         qCDebug(interfaceapp) << "Not first run... going to" << qPrintable(!goingTo.isEmpty() ? goingTo : addressLookupString);
         DependencyManager::get<AddressManager>()->loadSettings(addressLookupString);
         sentTo = SENT_TO_PREVIOUS_LOCATION;
+#elif DEBUG
+        if (addressLookupString.isEmpty()) {
+            addressLookupString = ANDROID_DEBUG_HIFI_ADDRESS;
+        }
+        DependencyManager::get<AddressManager>()->loadSettings(addressLookupString);
+        qCDebug(interfaceapp) << "Not first run... going to" << addressLookupString;
 #endif
     }
 
