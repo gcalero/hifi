@@ -32,7 +32,6 @@
 
 const QString DEFAULT_HIFI_ADDRESS = "file:///~/serverless/tutorial.json";
 const QString REDIRECT_HIFI_ADDRESS = "file:///~/serverless/redirect.json";
-const QString ANDROID_DEBUG_HIFI_ADDRESS = "hifi://dev-mobile";
 
 const QString ADDRESS_MANAGER_SETTINGS_GROUP = "AddressManager";
 const QString SETTINGS_CURRENT_ADDRESS_KEY = "address";

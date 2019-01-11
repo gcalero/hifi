@@ -52,6 +52,8 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
 
     public static final String DOMAIN_URL = "url";
     public static final String EXTRA_GOTO_USERNAME = "gotousername";
+    public static final String DEBUG_HIFI_ADDRESS = "hifi://dev-mobile";
+
     private static final String TAG = "Interface";
     private static final int WEB_DRAWER_RIGHT_MARGIN = 262;
     private static final int WEB_DRAWER_BOTTOM_MARGIN = 150;
@@ -356,6 +358,9 @@ public class InterfaceActivity extends QtActivity implements WebViewFragment.OnW
         }
         runOnUiThread(() -> {
             nativeInitAfterAppLoaded();
+            if (BuildConfig.DEBUG) {
+                nativeGotoUrl(DEBUG_HIFI_ADDRESS);
+            }
         });
     }
 
