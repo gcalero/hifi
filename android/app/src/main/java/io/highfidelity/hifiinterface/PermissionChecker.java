@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
@@ -26,6 +27,9 @@ public class PermissionChecker extends Activity {
 
     private static final boolean CHOOSE_AVATAR_ON_STARTUP = false;
     private static final String TAG = "Interface";
+    private static final String EXTRA_ARGS = "args";
+
+    private String mArgs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +47,7 @@ public class PermissionChecker extends Activity {
             }
         }
 
+        mArgs = getIntent().getStringExtra(EXTRA_ARGS);
         requestAppPermissions(new
                         String[]{
                         Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -74,8 +79,11 @@ public class PermissionChecker extends Activity {
         }
     }
 
-    private void launchActivityWithPermissions(){
+    private void launchActivityWithPermissions() {
         Intent i = new Intent(this, InterfaceActivity.class);
+        if (!TextUtils.isEmpty(mArgs)) {
+            i.putExtra(InterfaceActivity.EXTRA_ARGS, mArgs);
+        }
         startActivity(i);
         finish();
     }
@@ -145,4 +153,17 @@ public class PermissionChecker extends Activity {
         int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
     }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(EXTRA_ARGS, mArgs);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mArgs = savedInstanceState.getString(EXTRA_ARGS);
+    }
+
 }

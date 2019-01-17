@@ -3,9 +3,13 @@ package io.highfidelity.hifiinterface;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 
 public class SplashActivity extends Activity {
+
+    public static final String EXTRA_START_IN_DOMAIN = "start-in-domain";
+    private boolean mStartInDomain;
 
     private native void registerLoadCompleteListener();
 
@@ -14,6 +18,7 @@ public class SplashActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         registerLoadCompleteListener();
+        mStartInDomain = getIntent().getBooleanExtra(EXTRA_START_IN_DOMAIN, false);
     }
 
     @Override
@@ -36,7 +41,7 @@ public class SplashActivity extends Activity {
     }
 
     public void onAppLoadedComplete() {
-        if (!BuildConfig.DEBUG) {
+        if (!mStartInDomain) {
             if (HifiUtils.getInstance().isUserLoggedIn()) {
                 startActivity(new Intent(this, MainActivity.class));
             } else {
@@ -47,4 +52,17 @@ public class SplashActivity extends Activity {
         }
         SplashActivity.this.finish();
     }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(EXTRA_START_IN_DOMAIN, mStartInDomain);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mStartInDomain = savedInstanceState.getBoolean(EXTRA_START_IN_DOMAIN, false);
+    }
+
 }

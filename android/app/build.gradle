@@ -117,6 +117,17 @@ android {
                 }
             }
 
+            // Copy serverless domain
+            copy {
+                from new File(projectDir, "../../interface/resources/serverless")
+                into new File(outputDir, "resources/serverless")
+                duplicatesStrategy DuplicatesStrategy.INCLUDE
+                eachFile { details->
+                    youngestLastModified = Math.max(youngestLastModified, details.lastModified)
+                    assetList.add("resources/serverless/" + details.path)
+                }
+            }
+
             // Write a list of files to be unpacked to the cache folder
             new File(outputDir, 'cache_assets.txt').withWriter { out ->
                 out.println(Long.toString(youngestLastModified))
