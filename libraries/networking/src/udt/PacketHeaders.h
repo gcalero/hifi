@@ -57,7 +57,7 @@ public:
         ICEServerQuery,
         OctreeStats,
         SetAvatarTraits,
-        AvatarIdentityRequest,
+        UNUSED_PACKET_TYPE,
         AssignmentClientStatus,
         NoisyMute,
         AvatarIdentity,
@@ -311,7 +311,8 @@ enum class AvatarMixerPacketVersion : PacketVersion {
     JointTransScaled,
     GrabTraits,
     CollisionFlag,
-    AvatarTraitsAck
+    AvatarTraitsAck,
+    FasterAvatarEntities
 };
 
 enum class DomainConnectRequestVersion : PacketVersion {
